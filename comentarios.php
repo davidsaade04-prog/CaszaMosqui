@@ -2,7 +2,7 @@
 /**
  * Comentarios y Sugerencias por Barrio — CaszaMosqui
  * FormosaHack 2026
- * 1 comentario por día por dispositivo (localStorage)
+ * Sin límite: cada vecino puede comentar todas las veces que quiera; se muestran todos los comentarios.
  */
 require_once __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/db.php';
@@ -25,6 +25,7 @@ try {
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <style>
     .comentarios-container { max-width: 900px; margin: 0 auto; }
     .comentario-form { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; margin-bottom: 24px; }
@@ -49,7 +50,15 @@ try {
     .comentario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
     .comentario-barrio { font-weight: 700; color: var(--acento); font-size: .95rem; }
     .comentario-fecha { font-size: .8rem; color: var(--suave); }
-    .comentario-texto { color: var(--texto); line-height: 1.6; white-space: pre-wrap; }
+    .comentario-texto { color: var(--texto); line-height: 1.6; white-space: pre-wrap; margin: 0; overflow-wrap: anywhere; }
+    .comentario-tipo { font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #f1f5f9; color: var(--texto); margin-right: auto; }
+    .comentario-card.tipo-problema     { border-left-color: var(--rojo); }
+    .comentario-card.tipo-felicitacion { border-left-color: var(--verde); }
+    .comentario-card.tipo-otro         { border-left-color: #94a3b8; }
+    .comentario-card.comentario-nuevo  { animation: comentario-nuevo 2.5s ease-out; }
+    @keyframes comentario-nuevo { 0%, 40% { background: #ecfeff; box-shadow: 0 0 0 3px #67e8f9; } 100% { background: var(--panel); } }
+    .comentario-form .aviso.ok { color: var(--verde); font-weight: 600; }
+    #contador-comentarios { color: var(--suave); font-weight: 600; font-size: .95rem; }
     .empty-state { text-align: center; padding: 40px 20px; color: var(--suave); }
     .btn-volver-inicio { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: .85rem; font-weight: 600; color: #fff; background: var(--suave); border: none; border-radius: 8px; cursor: pointer; text-decoration: none; transition: background .15s; margin-bottom: 24px; }
     .btn-volver-inicio:hover { background: #475569; }
@@ -68,11 +77,11 @@ try {
       </div>
     </div>
     <nav>
-      <a href="#" data-nav="mapa">Mapa de riesgo</a>
-      <a href="#" data-nav="reportes">Reportes</a>
-      <a href="#" data-nav="nuevo">+ Reportar</a>
-      <a href="#" data-nav="prevencion">Prevención</a>
-      <a href="#" data-nav="quiz">Quiz</a>
+      <a href="<?= e(BASE_URL) ?>/#mapa">Mapa de riesgo</a>
+      <a href="<?= e(BASE_URL) ?>/#reportes">Reportes</a>
+      <a href="<?= e(BASE_URL) ?>/#nuevo">+ Reportar</a>
+      <a href="<?= e(BASE_URL) ?>/#prevencion">Prevención</a>
+      <a href="<?= e(BASE_URL) ?>/#quiz">Cuestionario</a>
       <a href="<?= e(BASE_URL) ?>/test-sintomas.php">Test de Síntomas</a>
       <a href="<?= e(BASE_URL) ?>/comentarios.php" class="active">Comentarios</a>
     </nav>
@@ -119,7 +128,7 @@ try {
   </section>
 
   <section>
-    <h3 style="margin-bottom: 16px;">📋 Comentarios de la comunidad</h3>
+    <h3 style="margin-bottom: 16px;">📋 Comentarios de la comunidad <span id="contador-comentarios"></span></h3>
     <div class="comentarios-lista" id="lista-comentarios">
       <p class="loading">Cargando comentarios…</p>
     </div>
@@ -136,6 +145,7 @@ try {
 <script>
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;
 </script>
-<script src="<?= e(BASE_URL) ?>/assets/js/comentarios.js?v=20240924"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/comentarios.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

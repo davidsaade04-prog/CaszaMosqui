@@ -1,0 +1,22 @@
+# Blueprint de Render (opcional): crea la base y la web en un solo paso.
+databases:
+  - name: caszamosqui-db
+    plan: free
+    databaseName: caszamosqui
+services:
+  - type: web
+    name: caszamosqui
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/index.php?route=tipos
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: caszamosqui-db
+          property: connectionString
+      - key: AUTH_USERNAME
+        value: admin
+      - key: AUTH_PASSWORD_HASH
+        sync: false
+      - key: CLAUDE_API_KEY
+        sync: false

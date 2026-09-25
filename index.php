@@ -24,7 +24,8 @@ header('Pragma: no-cache');
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260924-pagination">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260924-login">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -44,7 +45,7 @@ header('Pragma: no-cache');
       <a href="#" data-nav="reportes">Reportes</a>
       <a href="#" data-nav="nuevo">+ Reportar</a>
       <a href="#" data-nav="prevencion">Prevención</a>
-      <a href="#" data-nav="quiz">Quiz</a>
+      <a href="#" data-nav="quiz">Cuestionario</a>
       <a href="<?= e(BASE_URL) ?>/test-sintomas.php">Test de Síntomas</a>
       <a href="<?= e(BASE_URL) ?>/comentarios.php">Comentarios</a>
     </nav>
@@ -99,10 +100,14 @@ header('Pragma: no-cache');
       </aside>
       <!-- Mapa con zoom/pan -->
       <div class="mapa-wrapper">
-        <div class="mapa-imagen" data-js-mapa-imagen aria-label="Plano de barrios de El Colorado"></div>
-        <div class="mapa-burbujas" data-js-mapa-burbujas aria-label="Burbujas de riesgo por barrio"></div>
+        <!-- Lienzo con la proporción exacta del plano: imagen vectorial + nombres de barrios se mueven juntos -->
+        <div class="mapa-lienzo" data-js-mapa-lienzo>
+          <img class="mapa-imagen" data-js-mapa-imagen src="<?= e(BASE_URL) ?>/assets/img/mapa-el-colorado.svg"
+               alt="Plano de barrios de El Colorado" draggable="false" decoding="async">
+          <div class="mapa-burbujas" data-js-mapa-burbujas aria-label="Barrios y nivel de riesgo"></div>
+        </div>
       </div>
-      <p class="mapa-nota">Plano oficial de barrios de El Colorado. Usá los botones <strong>🔍+ / 🔍−</strong> para zoom, <strong>⌂</strong> para reset. <strong>Clic en un barrio</strong> (lista o burbuja) para centrar y hacer zoom. Semáforo: <strong>rojo 5+</strong> criaderos sin controlar, <strong>amarillo 3-4</strong>, <strong>verde 0-2</strong>.</p>
+      <p class="mapa-nota">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
     </div>
   </section>
 
@@ -180,7 +185,7 @@ header('Pragma: no-cache');
           <input type="hidden" name="csrf" value="<?= e($reportes_csrf) ?>">
           <label for="reportes-usuario">
             Usuario
-            <input id="reportes-usuario" name="usuario" type="text" autocomplete="username" required autofocus>
+            <input id="reportes-usuario" name="usuario" type="text" autocomplete="username" required>
           </label>
           <label for="reportes-contrasena">
             Contraseña
@@ -191,7 +196,7 @@ header('Pragma: no-cache');
           <?php endif; ?>
           <button type="submit" class="btn-login">Ingresar</button>
         </form>
-        <p class="reportes-login-note">El acceso usa una sesión de PHP y se mantiene mientras la aplicación esté abierta.</p>
+        <p class="reportes-login-note">Cualquier vecino puede <a href="#" data-nav="nuevo">reportar un criadero</a> sin usuario. El acceso es para consultar y gestionar los reportes; usa una sesión de PHP que dura mientras la aplicación esté abierta.</p>
       </div>
     <?php endif; ?>
   </section>
@@ -238,29 +243,72 @@ header('Pragma: no-cache');
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>
-    <h2>📖 Guía rápida de prevención</h2>
-    <p class="sub">El mosquito <strong>Aedes aegypti</strong> se cría en <strong>agua limpia y estancada</strong> cerca de casas. Eliminá sus criaderos:</p>
-    <div class="tips">
-      <article class="tip">🪣 <h3>Descacharrá</h3><p>Tirá latas, botellas, baldes y cacharros que junten agua.</p></article>
-      <article class="tip">🛢️ <h3>Tapá los tanques</h3><p>Tanques y recipientes grandes siempre con tapa bien ajustada.</p></article>
-      <article class="tip">🛞 <h3>Neumáticos</h3><p>Guardalos bajo techo o perforalos para que no junten agua.</p></article>
-      <article class="tip">💧 <h3>Vaciá y limpiá</h3><p>Platitos de macetas, bebederos y piletas: semanal, sin agua estancada.</p></article>
-      <article class="tip">🧹 <h3>Limpiá canaletas</h3><p>Hojas y tierra en desagües dejan charcos ideales para larvas.</p></article>
-      <article class="tip">🛡️ <h3>Protegé tu casa</h3><p>Mosquiteros, espirales, repelente y ropa clara en horas de actividad.</p></article>
+    <div class="prev-hero">
+      <div class="prev-hero-texto">
+        <span class="prev-etiqueta">Guía de prevención</span>
+        <h2>Sin agua estancada, no hay mosquito 🦟</h2>
+        <p>El <strong>Aedes aegypti</strong>, que transmite dengue, zika y chikungunya, pone sus huevos en
+           <strong>agua limpia y quieta</strong> cerca de las casas. Cortar su ciclo depende de lo que hacemos en cada patio.</p>
+      </div>
+      <div class="prev-hero-dato">
+        <strong>7 a 10</strong>
+        <span>días tarda en pasar de huevo a mosquito con calor</span>
+      </div>
     </div>
-    <p class="mapa-nota">🚨 <strong>Síntomas de alarma (dengue):</strong> fiebre alta, dolor detrás de los ojos, dolor muscular y articular, sarpullido. Ante estos síntomas, <strong>no te automediques</strong>: consultá al centro de salud más cercano.</p>
+
+    <h3 class="prev-titulo">Las 3 acciones que más sirven</h3>
+    <div class="prev-claves">
+      <article class="prev-clave"><span class="prev-num">1</span><span class="prev-ico">🪣</span>
+        <h4>Tapá</h4><p>Tanques, aljibes y todo recipiente que guarde agua, con tapa bien ajustada.</p></article>
+      <article class="prev-clave"><span class="prev-num">2</span><span class="prev-ico">🔄</span>
+        <h4>Vaciá y dá vuelta</h4><p>Baldes, macetas, bebederos y juguetes: boca abajo o vacíos, una vez por semana.</p></article>
+      <article class="prev-clave"><span class="prev-num">3</span><span class="prev-ico">🗑️</span>
+        <h4>Tirá</h4><p>Latas, botellas, cubiertas y cacharros que no uses. Menos objetos, menos criaderos.</p></article>
+    </div>
+
+    <h3 class="prev-titulo">Así crece el mosquito (por eso la revisión es semanal)</h3>
+    <ol class="prev-ciclo">
+      <li><span>🥚</span><strong>Huevo</strong><small>pegado a la pared del recipiente; resiste meses en seco</small></li>
+      <li><span>🐛</span><strong>Larva</strong><small>nace cuando el recipiente se moja con la lluvia</small></li>
+      <li><span>⏳</span><strong>Pupa</strong><small>última etapa dentro del agua</small></li>
+      <li><span>🦟</span><strong>Mosquito</strong><small>pica de día, sobre todo al amanecer y al atardecer</small></li>
+    </ol>
+
+    <h3 class="prev-titulo">Revisá tu casa</h3>
+    <div class="tips prev-tips">
+      <article class="tip" style="--c:#0ea5e9"><span class="tip-ico">🪣</span><h3>Descacharrá</h3><p>Tirá latas, botellas, baldes y cacharros que junten agua.</p></article>
+      <article class="tip" style="--c:#6366f1"><span class="tip-ico">🛢️</span><h3>Tapá los tanques</h3><p>Tanques y recipientes grandes siempre con tapa bien ajustada.</p></article>
+      <article class="tip" style="--c:#f59e0b"><span class="tip-ico">🛞</span><h3>Neumáticos</h3><p>Guardalos bajo techo o perforalos para que no junten agua.</p></article>
+      <article class="tip" style="--c:#14b8a6"><span class="tip-ico">💧</span><h3>Vaciá y limpiá</h3><p>Platitos de macetas, bebederos y piletas: semanal, sin agua estancada.</p></article>
+      <article class="tip" style="--c:#84cc16"><span class="tip-ico">🧹</span><h3>Limpiá canaletas</h3><p>Hojas y tierra en desagües dejan charcos ideales para larvas.</p></article>
+      <article class="tip" style="--c:#ec4899"><span class="tip-ico">🛡️</span><h3>Protegé tu casa</h3><p>Mosquiteros, espirales, repelente y ropa clara en horas de actividad.</p></article>
+    </div>
+
+    <div class="prev-alerta">
+      <div class="prev-alerta-ico">🚨</div>
+      <div class="prev-alerta-texto">
+        <h3>Síntomas de alarma del dengue</h3>
+        <ul>
+          <li>Fiebre alta</li><li>Dolor detrás de los ojos</li><li>Dolor muscular y articular</li><li>Sarpullido</li>
+        </ul>
+        <p><strong>No te automediques</strong> (la aspirina puede complicar el dengue): consultá al centro de salud más cercano.</p>
+      </div>
+      <a class="prev-alerta-btn" href="<?= e(BASE_URL) ?>/test-sintomas.php">Hacer el test de síntomas →</a>
+    </div>
   </section>
 
-  <!-- QUIZ -->
+  <!-- CUESTIONARIO -->
   <section class="panel" id="quiz">
     <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>
-    <h2>🎯 ¿Cuánto sabés sobre prevención?</h2>
-    <p class="sub">Respondé el quiz y recibí tu veredicto. Compartilo con tu barrio para frenar al mosquito. 🦟</p>
+    <div class="cuestionario-encabezado">
+      <h2>🎯 Cuestionario: ¿cuánto sabés sobre prevención?</h2>
+      <p class="sub">Respondé el cuestionario y recibí tu resultado. Compartilo con tu barrio para frenar al mosquito. 🦟</p>
+    </div>
     <div data-js-quiz>
-      <p class="loading">Cargando quiz…</p>
+      <p class="loading">Cargando cuestionario…</p>
     </div>
   </section>
 
@@ -279,6 +327,7 @@ header('Pragma: no-cache');
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260924-pagination"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260924-login"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

@@ -44,7 +44,7 @@ Abrir `http://localhost/formosahack-2026/` y apretar **Ctrl + F5** (para que no 
 
 Checklist:
 - [ ] Arriba aparece el panel **🌧️ Alerta climática** con el gráfico de lluvia.
-- [ ] El mapa muestra el **plano de El Colorado** con burbujas numeradas (El Arco en rojo y San Martín en amarillo con los umbrales 5+ / 3-4).
+- [ ] El mapa muestra el **plano de El Colorado** con burbujas numeradas (El Arco y San Martín en rojo).
 - [ ] Botones **Alto / Medio / Bajo** filtran los barrios del mapa.
 - [ ] Clic en **El Arco** → la lista muestra sus 5 criaderos.
 - [ ] **Verificar → Controlar** un reporte: baja el número del barrio en el mapa y suben los controlados.

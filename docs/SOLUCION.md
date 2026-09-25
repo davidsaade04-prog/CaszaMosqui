@@ -45,14 +45,18 @@ MySQL (formosahack: tipos_criadero, barrios, reportes)
 - Cada barrio tiene su posición `x, y` (en %) sobre el plano, en la tabla `barrios`.
 - **147 calles reales** por barrio (`assets/js/calles.js`, `docs/CALLES.md`): el campo "referencia" del formulario sugiere las calles del barrio elegido.
 
-## Semáforo de riesgo por barrio
+## Índice de riesgo por barrio = criaderos × clima (fórmula documentada)
 
 - **Activos** = criaderos en estado `pendiente` o `verificado` (sin controlar).
-- El número del barrio muestra únicamente la cantidad de criaderos activos.
-- **Nivel (semáforo):** 🔴 rojo = 5 o más activos · 🟠 amarillo = 3-4 activos · 🟢 verde = 0-2 activos.
-- Al cambiar un reporte a `controlado`, deja de contar como activo y el número y color se actualizan al refrescar las estadísticas.
-- La alerta climática (`api/clima.php`) se muestra como información independiente y no modifica el color del barrio.
-- Los activos se calculan en `/api/?route=stats` y se actualizan en el mapa mediante `cargarStats()`.
+- **Riesgo climático** (`api/clima.php`, datos de Open-Meteo, caché de 1 h), puntaje 0-5:
+  - Lluvia últimos 14 días: ≥ 50 mm → +2 · ≥ 20 mm → +1
+  - Temperatura media 7 días: 22-32 °C → +2 · 18-22 o 32-35 °C → +1
+  - Lluvia prevista próximos días ≥ 10 mm → +1
+  - Nivel climático: 4-5 alto (bonus +2) · 2-3 medio (+1) · 0-1 bajo (+0)
+- **Índice del barrio** = activos + bonus climático (solo si hay criaderos activos: el clima potencia los criaderos que existen, no los crea).
+- **Nivel (semáforo):** 🔴 alto = 4 o más · 🟠 medio = 2-3 · 🟢 bajo = 0-1.
+- **Por qué:** el *Aedes aegypti* eclosiona después de las lluvias y completa su ciclo en ~7-10 días con calor. El mismo criadero es más peligroso tras una semana lluviosa y cálida → **alerta anticipada**, no solo registro.
+- Los activos se calculan en `/api/?route=stats`; el bonus climático se aplica en el navegador (`app.js` + `clima.js`).
 
 ## API REST
 
@@ -60,7 +64,7 @@ MySQL (formosahack: tipos_criadero, barrios, reportes)
 |---|---|---|
 | GET | `/api/?route=tipos` | Tipos de criadero |
 | GET | `/api/?route=barrios` | Barrios y posiciones del mapa |
-| GET | `/api/?route=reportes` | Criaderos paginados (filtros: `tipo`, `barrio`, `estado`, `q`; `pagina`, `por_pagina`) |
+| GET | `/api/?route=reportes` | Criaderos (filtros: `tipo`, `barrio`, `estado`, `q`) |
 | GET | `/api/?route=reportes/{id}` | Detalle |
 | POST | `/api/?route=reportes` | Reportar criadero |
 | PATCH | `/api/?route=reportes/{id}` | Cambiar estado o sumar voto |

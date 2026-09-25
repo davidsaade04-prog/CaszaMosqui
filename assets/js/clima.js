@@ -9,12 +9,11 @@
   const cont = document.getElementById('clima');
   window.CaszaClima = { bonus: 0, nivel: 'bajo', listo: false, datos: null };
 
-  // El clima se informa aparte: no modifica el semáforo de los barrios.
-  // El color depende solo de la cantidad de criaderos sin controlar:
-  // 0-2 bajo · 3-4 medio · 5 o más alto.
+  // Riesgo final del barrio: el clima potencia los criaderos que YA existen.
+  // Mismos umbrales del semáforo: 0-1 bajo · 2-3 medio · 4+ alto.
   window.riesgoConClima = function (activos) {
-    const total = Math.max(0, Number(activos) || 0);
-    const nivel = total >= 5 ? 'alto' : total >= 3 ? 'medio' : 'bajo';
+    const total = activos > 0 ? activos + window.CaszaClima.bonus : 0;
+    const nivel = total >= 4 ? 'alto' : total >= 2 ? 'medio' : 'bajo';
     return { total, nivel };
   };
 
@@ -44,7 +43,7 @@
       <p class="mapa-nota">Fuente: ${c.fuente_texto} · ${c.ubicacion}</p>`;
   }
 
-  fetch((window.BASE_URL || '.') + '/api/clima.php')
+  fetch((window.BASE_URL ?? '.') + '/api/clima.php')
     .then(r => r.json())
     .then(c => {
       Object.assign(window.CaszaClima, { bonus: c.bonus, nivel: c.nivel, listo: true, datos: c });

@@ -13,11 +13,10 @@ criaderos de mosquitos dificulta la **prevención** del dengue/zika/chikungunya 
 la **participación de la comunidad**. CaszaMosqui permite:
 
 - 📝 **Reportar criaderos** (tipo, barrio, referencia y descripción).
-- 🗺️ **Mapa de riesgo sobre el plano oficial de El Colorado** (28 barrios) con semáforo en vivo (100% offline): rojo 5+ criaderos sin controlar, amarillo 3-4 y verde 0-2.
-- 🌧️ **Alerta climática:** lluvia y temperatura reales (Open-Meteo) para informar el riesgo ambiental de los barrios con criaderos.
+- 🗺️ **Mapa de riesgo sobre el plano oficial de El Colorado** (28 barrios) con semáforo en vivo (100% offline).
+- 🌧️ **Alerta climática:** lluvia y temperatura reales (Open-Meteo) que suben el riesgo de los barrios con criaderos.
 - 🧭 **147 calles reales** sugeridas al reportar (según el barrio elegido).
 - 📊 **KPIs y ranking** de criaderos más reportados.
-- 📄 **Listado de Reportes paginado:** la pantalla muestra 4 criaderos por página, con filtros combinables.
 - 🔎 **Gestión:** pendiente → verificado → controlado (con votos de respaldo).
 - 📖 **Guía de prevención** + 🎯 **quiz de concientización** para la comunidad.
 
@@ -34,20 +33,33 @@ http://localhost/formosahack-2026/
 > Config: `inc/config.php` (XAMPP: usuario `root`, sin contraseña). La BD se llama `formosahack`.
 > Plan B sin Apache: `php -S localhost:8000 -t .`
 
-## 🔐 Acceso temporal a Reportes
+## 🌐 Versión online (Render)
 
-La sección **Reportes** del dashboard utiliza una sesión de PHP. Para entrar, usá las credenciales iniciales definidas en `inc/config.php`:
+La misma app corre en Render con **PostgreSQL**, sin tocar la versión de XAMPP:
+
+- `Dockerfile` + `docker/`: PHP 8.2 + Apache; escucha en el puerto que asigna Render.
+- `inc/config.render.php`: se copia como `inc/config.php` dentro del contenedor y lee todo de variables de entorno (`DATABASE_URL`, `AUTH_USERNAME`, `AUTH_PASSWORD_HASH`, `CLAUDE_API_KEY`).
+- `database/schema.pgsql.sql` y `seed.pgsql.sql`: tablas y datos de ejemplo para PostgreSQL.
+- `scripts/init-db-render.php`: al arrancar crea las tablas que falten y carga los datos de ejemplo solo si la base está vacía (nunca borra datos).
+- `render.yaml`: blueprint opcional (base + web en un paso).
+
+Cada `git push` a la rama `main` vuelve a publicar la web automáticamente.
+Plan gratuito: la web "se duerme" tras 15 min sin visitas (tarda ~1 min en despertar) y la base gratuita vence a los 30 días.
+
+## 🔐 Acceso a Reportes
+
+Cualquier vecino puede **crear un reporte** sin usuario. La sección **Reportes** (listado, verificar, controlar, votar y eliminar) requiere iniciar sesión (sesión PHP con token CSRF; la API también rechaza estas operaciones sin sesión). Credenciales iniciales, definidas en `inc/config.php`:
 
 - Usuario: `admin`
 - Contraseña: `admin123`
 
-La contraseña se compara con `AUTH_PASSWORD_HASH` y no se escribe en el HTML. Para cambiarla, generá un nuevo hash con:
+Para cambiarla, generá un hash y reemplazá `AUTH_PASSWORD_HASH` en `inc/config.php`:
 
 ```bash
 C:\xampp\php\php.exe -r "echo password_hash('TU_NUEVA_CONTRASENA', PASSWORD_DEFAULT), PHP_EOL;"
 ```
 
-y reemplazá el valor de `AUTH_PASSWORD_HASH` en `inc/config.php`. El archivo `inc/config.example.php` contiene la misma configuración para una instalación nueva.
+El listado muestra 4 criaderos por página (Anterior / Siguiente / números de página). La API devuelve los registros en `data` y la paginación en `meta` (`pagina`, `por_pagina`, `total`, `total_paginas`).
 
 ## 🔌 API REST
 
@@ -61,8 +73,6 @@ y reemplazá el valor de `AUTH_PASSWORD_HASH` en `inc/config.php`. El archivo `i
 | DELETE | `/api/?route=reportes/{id}` | Eliminar · requiere sesión |
 | GET | `/api/?route=stats` | KPIs + índice de riesgo por barrio |
 | GET | `/api/clima.php` | Lluvia, temperatura y nivel de riesgo climático |
-
-La consulta de reportes devuelve los registros en `data` y los datos de paginación en `meta` (`pagina`, `por_pagina`, `total`, `total_paginas`). `por_pagina` utiliza 4 por defecto.
 
 ## 📁 Estructura
 

@@ -14,6 +14,8 @@ require_once __DIR__ . '/inc/helpers.php';
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
+  <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
     .test-container { max-width: 720px; margin: 0 auto; }
     .test-card { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; margin-bottom: 16px; }
@@ -183,7 +185,7 @@ require_once __DIR__ . '/inc/helpers.php';
            (dengue grave / shock).<br>
            No te automediques. No esperes a que pase.<br>
            <strong>Andá YA a la guardia más cercana.</strong></p>
-        <a href="${window.BASE_URL || '/formosahack-2026'}/" class="btn-volver-inicio">
+        <a href="${window.BASE_URL ?? ''}/" class="btn-volver-inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>`;
@@ -194,7 +196,7 @@ require_once __DIR__ . '/inc/helpers.php';
         <p>Tenés <strong>${total} síntoma(s)</strong> compatibles con dengue/zika/chikungunya.
            Aunque no tengas signos de alarma, <strong>requerís evaluación médica</strong>
            para confirmar y recibir tratamiento.</p>
-        <a href="${window.BASE_URL || '/formosahack-2026'}/" class="btn-volver-inicio">
+        <a href="${window.BASE_URL ?? ''}/" class="btn-volver-inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>`;
@@ -205,7 +207,7 @@ require_once __DIR__ . '/inc/helpers.php';
         <p>Tenés <strong>${total} síntoma(s)</strong> leves. Podría ser inicio de dengue u otra enfermedad.
            <strong>Controlá tu temperatura</strong> y si aparece fiebre alta o alguno de los
            síntomas de ALERTA (rojos), <strong>andá al centro de salud</strong>.</p>
-        <a href="${window.BASE_URL || '/formosahack-2026'}/" class="btn-volver-inicio">
+        <a href="${window.BASE_URL ?? ''}/" class="btn-volver-inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>`;
@@ -215,12 +217,13 @@ require_once __DIR__ . '/inc/helpers.php';
         <h2>👍 Sin síntomas marcados</h2>
         <p>No seleccionaste ningún síntoma. Seguí usando repelente, descacharrando
            y participando en CaszaMosqui reportando criaderos.</p>
-        <a href="${window.BASE_URL || '/formosahack-2026'}/" class="btn-volver-inicio">
+        <a href="${window.BASE_URL ?? ''}/" class="btn-volver-inicio">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver Al Inicio
     </a>`;
     }
   });
 </script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>
