@@ -177,7 +177,7 @@ function renderQuiz() {
   const cont = $('[data-js-quiz]');
   console.log('Quiz container found:', !!cont);
   if (!cont) {
-    console.error('Quiz container NOT found!');
+    // El panel de administración no tiene cuestionario
     return;
   }
 
@@ -779,7 +779,8 @@ function bind() {
     if (selBarrio) selBarrio.value = state.filtros.barrio;   // mantener el filtro visible sincronizado
     renderMapa(state.ultimaRiesgo || []);
     cargarReportes();
-    $('#reportes').scrollIntoView({ behavior: 'smooth' });
+    // La lista de reportes solo existe en el panel de administración
+    if (tieneAccesoReportes()) $('#reportes')?.scrollIntoView({ behavior: 'smooth' });
   });
 
   // Sidebar de barrios: clic centra el mapa en el barrio CON ZOOM
