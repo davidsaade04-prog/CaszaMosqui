@@ -4,7 +4,8 @@
  * GET api/clima.php → JSON con lluvia, temperatura y nivel de riesgo climático.
  *
  * Fuente: Open-Meteo (gratis, sin API key).
- * Caché de 1 hora en /cache/clima.json. Si no hay internet, usa la última caché
+ * Condiciones actuales (temperatura, humedad, lluvia, viento) + historial de 14 días.
+ * Caché de 10 minutos en /cache/clima.json. Si no hay internet, usa la última caché
  * y, si no existe, datos de ejemplo marcados como "sin conexión" (la demo nunca se cae).
  *
  * Modelo simplificado: el Aedes aegypti eclosiona tras lluvias y completa su ciclo
@@ -13,11 +14,12 @@
 declare(strict_types=1);
 date_default_timezone_set('America/Argentina/Cordoba');
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 const LAT        = -26.308;   // El Colorado, Formosa (verificar coordenadas)
 const LON        = -59.372;
 const UBICACION  = 'El Colorado, Formosa';
-const CACHE_TTL  = 3600;      // 1 hora
+const CACHE_TTL  = 600;       // 10 minutos (Open-Meteo actualiza las condiciones actuales cada 15 min)
 
 $cacheDir  = __DIR__ . '/../cache';
 $cacheFile = $cacheDir . '/clima.json';
@@ -51,6 +53,27 @@ function suma(array $v): float
     return array_sum(array_map(fn($x) => (float)($x ?? 0), $v));
 }
 
+/** Descripción e ícono según el código meteorológico WMO que usa Open-Meteo. */
+function describirTiempo(int $codigo, bool $dia): array
+{
+    $tabla = [
+        0  => ['Despejado', $dia ? '☀️' : '🌙'],
+        1  => ['Mayormente despejado', $dia ? '🌤️' : '🌙'],
+        2  => ['Parcialmente nublado', '⛅'],
+        3  => ['Nublado', '☁️'],
+        45 => ['Niebla', '🌫️'], 48 => ['Niebla', '🌫️'],
+        51 => ['Llovizna débil', '🌦️'], 53 => ['Llovizna', '🌦️'], 55 => ['Llovizna intensa', '🌧️'],
+        56 => ['Llovizna helada', '🌧️'], 57 => ['Llovizna helada', '🌧️'],
+        61 => ['Lluvia débil', '🌦️'], 63 => ['Lluvia', '🌧️'], 65 => ['Lluvia intensa', '🌧️'],
+        66 => ['Lluvia helada', '🌧️'], 67 => ['Lluvia helada', '🌧️'],
+        71 => ['Nieve', '🌨️'], 73 => ['Nieve', '🌨️'], 75 => ['Nieve', '🌨️'], 77 => ['Nieve', '🌨️'],
+        80 => ['Chaparrones', '🌦️'], 81 => ['Chaparrones', '🌧️'], 82 => ['Chaparrones fuertes', '⛈️'],
+        85 => ['Nieve', '🌨️'], 86 => ['Nieve', '🌨️'],
+        95 => ['Tormenta', '⛈️'], 96 => ['Tormenta con granizo', '⛈️'], 99 => ['Tormenta con granizo', '⛈️'],
+    ];
+    return $tabla[$codigo] ?? ['Sin datos', '🌡️'];
+}
+
 function evaluar(array $d, string $fuente): array
 {
     $fechas = $d['daily']['time'];
@@ -74,7 +97,7 @@ function evaluar(array $d, string $fuente): array
     $tmedia7   = $medias7 ? array_sum($medias7) / count($medias7) : 0.0;
     $prevista3 = suma(array_slice($lluvia, $hoy, 4));
 
-    // Puntaje climático 0-5 (independiente del semáforo de criaderos por barrio)
+    // Puntaje climático 0-5
     $p = 0;
     if ($lluvia14 >= 50)      $p += 2;
     elseif ($lluvia14 >= 20)  $p += 1;
@@ -105,13 +128,33 @@ function evaluar(array $d, string $fuente): array
     }
 
     $textos = [
-        'open-meteo' => 'Open-Meteo (datos en vivo)',
+        'open-meteo' => 'Open-Meteo (datos en vivo, se actualiza cada 10 min)',
         'cache'      => 'Open-Meteo (última actualización guardada)',
         'offline'    => 'sin conexión · datos de ejemplo',
     ];
 
+    // Condiciones actuales (solo con datos reales de Open-Meteo)
+    $actual = null;
+    if (isset($d['current']['temperature_2m'])) {
+        $c = $d['current'];
+        [$desc, $icono] = describirTiempo((int)($c['weather_code'] ?? -1), (bool)($c['is_day'] ?? 1));
+        $actual = [
+            'hora'        => substr((string)($c['time'] ?? ''), 11, 5),
+            'temperatura' => round((float)$c['temperature_2m'], 1),
+            'sensacion'   => round((float)($c['apparent_temperature'] ?? $c['temperature_2m']), 1),
+            'humedad'     => (int)round((float)($c['relative_humidity_2m'] ?? 0)),
+            'lluvia'      => round((float)($c['precipitation'] ?? 0), 1),
+            'viento'      => (int)round((float)($c['wind_speed_10m'] ?? 0)),
+            'descripcion' => $desc,
+            'icono'       => $icono,
+            'lloviendo'   => (float)($c['precipitation'] ?? 0) > 0,
+        ];
+    }
+
     return [
         'ok'                 => true,
+        'actual'             => $actual,
+        'consultado'         => date('H:i'),
         'fuente'             => $fuente,
         'fuente_texto'       => $textos[$fuente],
         'ubicacion'          => UBICACION,
@@ -157,6 +200,7 @@ $url = 'https://api.open-meteo.com/v1/forecast?' . http_build_query([
     'latitude'      => LAT,
     'longitude'     => LON,
     'daily'         => 'precipitation_sum,temperature_2m_max,temperature_2m_min',
+    'current'       => 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day',
     'past_days'     => 14,
     'forecast_days' => 4,
     'timezone'      => 'America/Argentina/Cordoba',

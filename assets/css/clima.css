@@ -16,3 +16,23 @@
 .clima-barras i { flex: 1; background: #38bdf8; border-radius: 4px 4px 0 0; min-height: 2px; }
 .clima-eje { margin: 0; font-size: .76rem; color: var(--suave); }
 .clima-reco { font-weight: 600; margin: 12px 0 0; }
+
+/* Condiciones actuales (en vivo) */
+.clima-ahora {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+  background: linear-gradient(135deg, #e0f2fe, #f0fdfa); border: 1px solid #bae6fd;
+  border-radius: 14px; padding: 14px 18px; margin: 4px 0 14px; position: relative;
+}
+.clima-ahora.lloviendo { background: linear-gradient(135deg, #dbeafe, #e0e7ff); border-color: #93c5fd; }
+.clima-ahora-ico { font-size: 2.6rem; line-height: 1; }
+.clima-ahora-temp strong { display: block; font-size: 2rem; color: #0f172a; line-height: 1.1; }
+.clima-ahora-temp span { font-size: .9rem; color: var(--suave); font-weight: 600; }
+.clima-ahora-extra { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; color: #334155; }
+.clima-ahora-extra b { color: #0f172a; }
+.clima-vivo {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; font-weight: 700; color: #047857; background: #d1fae5; padding: 4px 10px; border-radius: 999px;
+}
+.clima-vivo i { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: clima-pulso 1.6s infinite; }
+@keyframes clima-pulso { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+@media (max-width: 520px) { .clima-vivo { margin-left: 0; } .clima-ahora-temp strong { font-size: 1.7rem; } }

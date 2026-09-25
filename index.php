@@ -1,352 +1,333 @@
 <?php
 /**
- * API REST — CaszaMosqui · FormosaHack 2026
- * ==========================================
- * Rutas (usar ?route=):
- *   GET    /api/?route=tipos
- *   GET    /api/?route=barrios
- *   GET    /api/?route=reportes            (requiere sesión; filtros: ?tipo=&barrio=&estado=&q=&pagina=&por_pagina=)
- *   GET    /api/?route=reportes/{id}       (requiere sesión)
- *   POST   /api/?route=reportes            (body JSON · PÚBLICO: cualquier vecino puede reportar)
- *   PATCH  /api/?route=reportes/{id}       (requiere sesión · estado: pendiente|verificado|controlado, o voto)
- *   DELETE /api/?route=reportes/{id}       (requiere sesión)
- *   GET    /api/?route=stats               (KPIs + índice de riesgo por barrio)
+ * CaszaMosqui — Dashboard principal
+ * FormosaHack 2026 · Desafío: enfermedades transmitidas por mosquitos
+ * Los datos se cargan desde la API /api/?route=... con fetch().
  */
+require_once __DIR__ . '/inc/helpers.php';
+require_once __DIR__ . '/inc/auth.php';
 
-require_once __DIR__ . '/../inc/helpers.php';
-require_once __DIR__ . '/../inc/auth.php';
+$reportes_logueado = reportes_logueado();
+$reportes_error     = consumir_error_reportes();
+$reportes_csrf      = reportes_csrf_token();
+$reportes_usuario   = usuario_reportes();
 
-/* ---------- Resolución de la ruta ---------- */
-$route = $_GET['route'] ?? '';
-if ($route === '') {
-    $script = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
-    $base   = dirname($script);
-    $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
-    if (str_starts_with($uri, $base . '/')) {
-        $route = substr($uri, strlen($base) + 1);
-    }
-}
-$route  = preg_replace('#^index\.php/?#', '', $route);
-$route  = trim($route, '/');
-$method = $_SERVER['REQUEST_METHOD'];
+// Evitar que el contenido protegido pueda quedar en la caché del navegador.
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
+  <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
+  <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260924-login">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
+</head>
+<body>
 
-/* ---------- Helpers de recursos ---------- */
+<header class="topbar">
+  <div class="container">
+    <div class="brand">
+      <div class="brand-text">
+        <h1><?= e(APP_NAME) ?></h1>
+        <p><?= e(APP_TAGLINE) ?></p>
+      </div>
+      <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" alt="<?= e(APP_NAME) ?>" class="logo-img">
+    </div>
+    <nav>
+      <a href="#" data-nav="mapa" class="active">Mapa de riesgo</a>
+      <a href="#" data-nav="reportes">Reportes</a>
+      <a href="#" data-nav="nuevo">+ Reportar</a>
+      <a href="#" data-nav="prevencion">Prevención</a>
+      <a href="#" data-nav="quiz">Cuestionario</a>
+      <a href="<?= e(BASE_URL) ?>/test-sintomas.php">Test de Síntomas</a>
+      <a href="<?= e(BASE_URL) ?>/comentarios.php">Comentarios</a>
+    </nav>
+  </div>
+</header>
 
-function listar_tipos(): array
-{
-    return db()->query('SELECT id, nombre, color, icono FROM tipos_criadero ORDER BY id')->fetchAll();
-}
+<main class="container">
 
-function listar_barrios(): array
-{
-    return db()->query('SELECT id, nombre, localidad, x, y, poblacion FROM barrios ORDER BY nombre')->fetchAll();
-}
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <h2>¿Dónde se crían los mosquitos?</h2>
+      <p>Detectá y reportá los criaderos de tu barrio. Entre todos evitamos el
+         <strong>dengue, zika y chikungunya</strong>. 📍 Un reporte = un criadero menos.</p>
+      <a href="#" data-nav="nuevo" class="btn-hero">Reportar un criadero →</a>
+    </div>
+    <div class="hero-kpis" data-js-hero-kpis></div>
+  </section>
 
-function validar_estado(string $estado): bool
-{
-    return in_array($estado, ['pendiente', 'verificado', 'controlado'], true);
-}
+  <!-- ALERTA CLIMÁTICA -->
+  <section class="panel" id="clima">
+    <p class="loading">Cargando datos climáticos…</p>
+  </section>
 
-function url_base(): string
-{
-    return BASE_URL . '/api';
-}
+  <!-- MAPA DE RIESGO -->
+  <section class="panel" id="mapa">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <div class="panel-head">
+      <h2>🗺️ Mapa de riesgo por barrio</h2>
+      <div class="mapa-filtros" role="group" aria-label="Filtrar barrios por nivel de riesgo">
+        <button type="button" data-nivel="todos" class="activo">Todos</button>
+        <button type="button" data-nivel="alto"><i class="dot alto"></i> Alto</button>
+        <button type="button" data-nivel="medio"><i class="dot medio"></i> Medio</button>
+        <button type="button" data-nivel="bajo"><i class="dot bajo"></i> Bajo</button>
+      </div>
+      <div class="mapa-controles" role="group" aria-label="Controles de zoom del mapa">
+        <button type="button" id="zoom-in" aria-label="Acercar">🔍+</button>
+        <button type="button" id="zoom-out" aria-label="Alejar">🔍−</button>
+        <button type="button" id="zoom-reset" aria-label="Restablecer vista">⌂</button>
+      </div>
+    </div>
+    <div class="mapa-contenedor">
+      <!-- Sidebar con lista de barrios -->
+      <aside class="mapa-sidebar" aria-label="Lista de barrios">
+        <h3>📍 Barrios</h3>
+        <ul data-js-barra-barrios>
+          <li><button type="button" data-barrio="todos" class="activo">Todos los barrios</button></li>
+        </ul>
+      </aside>
+      <!-- Mapa con zoom/pan -->
+      <div class="mapa-wrapper">
+        <!-- Lienzo con la proporción exacta del plano: imagen vectorial + nombres de barrios se mueven juntos -->
+        <div class="mapa-lienzo" data-js-mapa-lienzo>
+          <img class="mapa-imagen" data-js-mapa-imagen src="<?= e(BASE_URL) ?>/assets/img/mapa-el-colorado.svg"
+               alt="Plano de barrios de El Colorado" draggable="false" decoding="async">
+          <div class="mapa-burbujas" data-js-mapa-burbujas aria-label="Barrios y nivel de riesgo"></div>
+        </div>
+      </div>
+      <p class="mapa-nota">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
+    </div>
+  </section>
 
-/** La consulta y la gestión de reportes requieren la sesión de Reportes. */
-function exigir_acceso_reportes(): void
-{
-    if (!reportes_logueado()) {
-        json_error('Iniciá sesión para acceder a los reportes.', 401);
-    }
-}
+  <!-- KPIs -->
+  <section class="kpis" aria-label="Indicadores">
+    <article class="kpi" data-kpi="total"><strong>—</strong><span>🦟 Criaderos reportados</span></article>
+    <article class="kpi" data-kpi="pendiente"><strong>—</strong><span>⏳ Sin controlar</span></article>
+    <article class="kpi" data-kpi="verificado"><strong>—</strong><span>🔎 Verificados</span></article>
+    <article class="kpi" data-kpi="controlado"><strong>—</strong><span>✅ Controlados</span></article>
+  </section>
 
-/* ---------- Rutas ---------- */
+  <!-- TIPOS MÁS COMUNES -->
+  <section class="panel">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <h2>🐞 Criaderos más reportados</h2>
+    <div class="sectores" data-js-tipos>
+      <p class="loading">Cargando…</p>
+    </div>
+  </section>
 
-if ($route === '' && $method === 'GET') {
-    $b = url_base();
-    json_response([
-        'ok' => true,
-        'app' => APP_NAME,
-        'version' => APP_VERSION,
-        'endpoints' => [
-            "$b?route=tipos",
-            "$b?route=barrios",
-            "$b?route=reportes",
-            "$b?route=reportes&tipo={id}&barrio={id}&estado={estado}&q={texto}&pagina={1}&por_pagina={4}",
-            "$b?route=reportes/{id}",
-            "$b?route=stats",
-        ],
-    ]);
-}
+  <!-- REPORTES -->
+  <section class="panel" id="reportes">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
 
-// Tipos de criadero
-if ($route === 'tipos' && $method === 'GET') {
-    json_response(['ok' => true, 'data' => listar_tipos()]);
-}
+    <?php if ($reportes_logueado): ?>
+      <div class="reportes-sesion">
+        <span>Sesión iniciada como <strong><?= e($reportes_usuario) ?></strong></span>
+        <form method="post" action="<?= e(BASE_URL) ?>/reportes-auth.php" class="reportes-logout-form">
+          <input type="hidden" name="accion" value="logout">
+          <input type="hidden" name="csrf" value="<?= e($reportes_csrf) ?>">
+          <button type="submit" class="btn-logout">Cerrar sesión</button>
+        </form>
+      </div>
+      <div class="panel-head">
+        <h2>📋 Criaderos reportados por la comunidad</h2>
+        <form class="filtros" data-js-filtros>
+          <select name="tipo" aria-label="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+          </select>
+          <select name="barrio" aria-label="Filtrar por barrio">
+            <option value="">Todos los barrios</option>
+          </select>
+          <select name="estado" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Sin controlar</option>
+            <option value="verificado">Verificado</option>
+            <option value="controlado">Controlado</option>
+          </select>
+          <input type="search" name="q" placeholder="Buscar…" aria-label="Buscar">
+          <button type="button" data-js-reset class="btn-ghost">Limpiar</button>
+        </form>
+      </div>
+      <div data-js-reportes>
+        <p class="loading">Cargando reportes…</p>
+      </div>
+      <nav class="reportes-paginacion" data-js-paginacion aria-label="Paginación de reportes" hidden>
+        <button type="button" class="reportes-pagina" data-pagina-anterior disabled>← Anterior</button>
+        <div class="paginacion-numeros" data-js-paginacion-numeros></div>
+        <button type="button" class="reportes-pagina" data-pagina-siguiente disabled>Siguiente →</button>
+        <span class="paginacion-info" data-js-paginacion-info aria-live="polite"></span>
+      </nav>
+    <?php else: ?>
+      <div class="reportes-login">
+        <div class="reportes-login-icon" aria-hidden="true">🔒</div>
+        <h2>Acceso a Reportes</h2>
+        <p class="sub">Ingresá con tu usuario para consultar y gestionar los criaderos reportados por la comunidad.</p>
+        <form method="post" action="<?= e(BASE_URL) ?>/reportes-auth.php" class="reportes-login-form">
+          <input type="hidden" name="accion" value="login">
+          <input type="hidden" name="csrf" value="<?= e($reportes_csrf) ?>">
+          <label for="reportes-usuario">
+            Usuario
+            <input id="reportes-usuario" name="usuario" type="text" autocomplete="username" required>
+          </label>
+          <label for="reportes-contrasena">
+            Contraseña
+            <input id="reportes-contrasena" name="contrasena" type="password" autocomplete="current-password" required>
+          </label>
+          <?php if ($reportes_error): ?>
+            <p class="reportes-login-error" role="alert"><?= e($reportes_error) ?></p>
+          <?php endif; ?>
+          <button type="submit" class="btn-login">Ingresar</button>
+        </form>
+        <p class="reportes-login-note">Cualquier vecino puede <a href="#" data-nav="nuevo">reportar un criadero</a> sin usuario. El acceso es para consultar y gestionar los reportes; usa una sesión de PHP que dura mientras la aplicación esté abierta.</p>
+      </div>
+    <?php endif; ?>
+  </section>
 
-// Barrios
-if ($route === 'barrios' && $method === 'GET') {
-    json_response(['ok' => true, 'data' => listar_barrios()]);
-}
+  <!-- FORMULARIO -->
+  <section class="panel" id="nuevo">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <h2>📢 Reportar un criadero</h2>
+    <p class="sub">Elegí el tipo de situación y el barrio. Tu reporte se suma al mapa de riesgo al instante.</p>
+    <form data-js-form>
+      <div class="grid-3">
+        <label>
+          Tipo de criadero <span class="req">*</span>
+          <select name="tipo_id" required></select>
+        </label>
+        <label>
+          Barrio <span class="req">*</span>
+          <select name="barrio_id" required></select>
+        </label>
+        <label>
+          Referencia
+          <input type="text" name="referencia" placeholder="Ej.: Pueyrredón y Cayo Novoa Gil">
+        </label>
+      </div>
+      <label>
+        Título <span class="req">*</span>
+        <input type="text" name="titulo" maxlength="120" required placeholder="Ej.: Baldes con agua en obra abandonada">
+      </label>
+      <label>
+        Descripción <span class="req">*</span>
+        <textarea name="descripcion" rows="4" required placeholder="Contanos qué viste y dónde… puede haber larvas o mosquitos."></textarea>
+      </label>
+      <button type="submit">Reportar criadero</button>
+      <p class="form-msg" data-js-form-msg aria-live="polite"></p>
+    </form>
+  </section>
 
-// Estadísticas + índice de riesgo
-if ($route === 'stats' && $method === 'GET') {
-    $total   = (int) db()->query('SELECT COUNT(*) FROM reportes')->fetchColumn();
+  <!-- PREVENCIÓN -->
+  <section class="panel" id="prevencion">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <div class="prev-hero">
+      <div class="prev-hero-texto">
+        <span class="prev-etiqueta">Guía de prevención</span>
+        <h2>Sin agua estancada, no hay mosquito 🦟</h2>
+        <p>El <strong>Aedes aegypti</strong>, que transmite dengue, zika y chikungunya, pone sus huevos en
+           <strong>agua limpia y quieta</strong> cerca de las casas. Cortar su ciclo depende de lo que hacemos en cada patio.</p>
+      </div>
+      <div class="prev-hero-dato">
+        <strong>7 a 10</strong>
+        <span>días tarda en pasar de huevo a mosquito con calor</span>
+      </div>
+    </div>
 
-    $porEstado = db()->query(
-        "SELECT estado, COUNT(*) AS total FROM reportes GROUP BY estado"
-    )->fetchAll();
+    <h3 class="prev-titulo">Las 3 acciones que más sirven</h3>
+    <div class="prev-claves">
+      <article class="prev-clave"><span class="prev-num">1</span><span class="prev-ico">🪣</span>
+        <h4>Tapá</h4><p>Tanques, aljibes y todo recipiente que guarde agua, con tapa bien ajustada.</p></article>
+      <article class="prev-clave"><span class="prev-num">2</span><span class="prev-ico">🔄</span>
+        <h4>Vaciá y dá vuelta</h4><p>Baldes, macetas, bebederos y juguetes: boca abajo o vacíos, una vez por semana.</p></article>
+      <article class="prev-clave"><span class="prev-num">3</span><span class="prev-ico">🗑️</span>
+        <h4>Tirá</h4><p>Latas, botellas, cubiertas y cacharros que no uses. Menos objetos, menos criaderos.</p></article>
+    </div>
 
-    $porTipo = db()->query(
-        "SELECT t.id, t.nombre AS tipo, t.color, t.icono, COUNT(r.id) AS total
-           FROM tipos_criadero t
-           LEFT JOIN reportes r ON r.tipo_id = t.id
-          GROUP BY t.id, t.nombre, t.color, t.icono
-          ORDER BY total DESC"
-    )->fetchAll();
+    <h3 class="prev-titulo">Así crece el mosquito (por eso la revisión es semanal)</h3>
+    <ol class="prev-ciclo">
+      <li><span>🥚</span><strong>Huevo</strong><small>pegado a la pared del recipiente; resiste meses en seco</small></li>
+      <li><span>🐛</span><strong>Larva</strong><small>nace cuando el recipiente se moja con la lluvia</small></li>
+      <li><span>⏳</span><strong>Pupa</strong><small>última etapa dentro del agua</small></li>
+      <li><span>🦟</span><strong>Mosquito</strong><small>pica de día, sobre todo al amanecer y al atardecer</small></li>
+    </ol>
 
-    // Índice de riesgo por barrio (semáforo)
-    //   activos = pendientes + verificados   |   controlados = controlado
-    //   riesgo = activos / (controlados + 1)   (fórmula simple, documentada en docs)
-    $riesgo = db()->query(
-        "SELECT b.id, b.nombre, b.localidad, b.x, b.y,
-                SUM(CASE WHEN r.estado IN ('pendiente','verificado') THEN 1 ELSE 0 END) AS activos,
-                SUM(CASE WHEN r.estado = 'controlado' THEN 1 ELSE 0 END) AS controlados
-           FROM barrios b
-           LEFT JOIN reportes r ON r.barrio_id = b.id
-          GROUP BY b.id, b.nombre, b.localidad, b.x, b.y
-          ORDER BY activos DESC"
-    )->fetchAll();
+    <h3 class="prev-titulo">Revisá tu casa</h3>
+    <div class="tips prev-tips">
+      <article class="tip" style="--c:#0ea5e9"><span class="tip-ico">🪣</span><h3>Descacharrá</h3><p>Tirá latas, botellas, baldes y cacharros que junten agua.</p></article>
+      <article class="tip" style="--c:#6366f1"><span class="tip-ico">🛢️</span><h3>Tapá los tanques</h3><p>Tanques y recipientes grandes siempre con tapa bien ajustada.</p></article>
+      <article class="tip" style="--c:#f59e0b"><span class="tip-ico">🛞</span><h3>Neumáticos</h3><p>Guardalos bajo techo o perforalos para que no junten agua.</p></article>
+      <article class="tip" style="--c:#14b8a6"><span class="tip-ico">💧</span><h3>Vaciá y limpiá</h3><p>Platitos de macetas, bebederos y piletas: semanal, sin agua estancada.</p></article>
+      <article class="tip" style="--c:#84cc16"><span class="tip-ico">🧹</span><h3>Limpiá canaletas</h3><p>Hojas y tierra en desagües dejan charcos ideales para larvas.</p></article>
+      <article class="tip" style="--c:#ec4899"><span class="tip-ico">🛡️</span><h3>Protegé tu casa</h3><p>Mosquiteros, espirales, repelente y ropa clara en horas de actividad.</p></article>
+    </div>
 
-    foreach ($riesgo as &$b) {
-        $activos     = (int) $b['activos'];
-        $controlados = (int) $b['controlados'];
-        // Índice de riesgo activo = criaderos sin controlar en el barrio
-        $b['indice'] = $activos;
-        $b['nivel']  = $activos >= 4 ? 'alto'
-                     : ($activos >= 2 ? 'medio' : 'bajo');
-        unset($b['activos'], $b['controlados']);
-    }
+    <div class="prev-alerta">
+      <div class="prev-alerta-ico">🚨</div>
+      <div class="prev-alerta-texto">
+        <h3>Síntomas de alarma del dengue</h3>
+        <ul>
+          <li>Fiebre alta</li><li>Dolor detrás de los ojos</li><li>Dolor muscular y articular</li><li>Sarpullido</li>
+        </ul>
+        <p><strong>No te automediques</strong> (la aspirina puede complicar el dengue): consultá al centro de salud más cercano.</p>
+      </div>
+      <a class="prev-alerta-btn" href="<?= e(BASE_URL) ?>/test-sintomas.php">Hacer el test de síntomas →</a>
+    </div>
+  </section>
 
-    json_response([
-        'ok' => true,
-        'data' => [
-            'total'           => $total,
-            'por_estado'      => $porEstado,
-            'por_tipo'        => $porTipo,
-            'riesgo_barrios'  => $riesgo,
-            'controlados_pct' => $total > 0
-                ? round(array_sum(array_map(
-                    fn ($s) => $s['estado'] === 'controlado' ? $s['total'] : 0,
-                    $porEstado
-                )) / $total * 100)
-                : 0,
-        ],
-    ]);
-}
+  <!-- CUESTIONARIO -->
+  <section class="panel" id="quiz">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <div class="cuestionario-encabezado">
+      <h2>🎯 Cuestionario: ¿cuánto sabés sobre prevención?</h2>
+      <p class="sub">Respondé el cuestionario y recibí tu resultado. Compartilo con tu barrio para frenar al mosquito. 🦟</p>
+    </div>
+    <div data-js-quiz>
+      <p class="loading">Cargando cuestionario…</p>
+    </div>
+  </section>
 
-// LISTA de reportes con filtros
-if (preg_match('#^reportes$#', $route) && $method === 'GET') {
-    exigir_acceso_reportes();
+</main>
 
-    $tipo   = val($_GET['tipo'] ?? '');
-    $barrio = val($_GET['barrio'] ?? '');
-    $estado = val($_GET['estado'] ?? '');
-    $q      = trim($_GET['q'] ?? '');
-    $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? $_GET['page'] ?? 1));
-    $porPagina = min(200, max(1, (int) ($_GET['por_pagina'] ?? $_GET['limit'] ?? 4)));
+<footer>
+  <div class="container">
+    <p>🦟 <strong>CaszaMosqui</strong> · Equipo FormosaHack 2026 · HTML + PHP + CSS + JS + MySQL ·
+       Desafío: prevenir enfermedades transmitidas por mosquitos</p>
+  </div>
+</footer>
 
-    // Se construye una sola condición para contar y luego traer la página actual.
-    $where = ' WHERE 1=1';
-    $pars  = [];
-
-    if ($tipo !== '')   { $where .= ' AND r.tipo_id = ?';   $pars[] = (int) $tipo; }
-    if ($barrio !== '') { $where .= ' AND r.barrio_id = ?'; $pars[] = (int) $barrio; }
-    if ($estado !== '' && validar_estado($estado)) {
-        $where .= ' AND r.estado = ?';
-        $pars[] = $estado;
-    }
-    if ($q !== '') {
-        // LOWER() hace la búsqueda insensible a mayúsculas también en PostgreSQL
-        $where .= ' AND (LOWER(r.titulo) LIKE LOWER(?) OR LOWER(r.descripcion) LIKE LOWER(?) OR LOWER(r.referencia) LIKE LOWER(?) OR LOWER(b.nombre) LIKE LOWER(?) OR LOWER(t.nombre) LIKE LOWER(?))';
-        $like = "%{$q}%";
-        array_push($pars, $like, $like, $like, $like, $like);
-    }
-
-    $countStmt = db()->prepare(
-        "SELECT COUNT(*)
-           FROM reportes r
-           JOIN tipos_criadero t ON t.id = r.tipo_id
-           JOIN barrios b        ON b.id = r.barrio_id"
-        . $where
-    );
-    $countStmt->execute($pars);
-    $total = (int) $countStmt->fetchColumn();
-
-    $totalPaginas = $total > 0 ? (int) ceil($total / $porPagina) : 0;
-    $pagina = $totalPaginas > 0
-        ? min($paginaSolicitada, $totalPaginas)
-        : 1;
-    $offset = ($pagina - 1) * $porPagina;
-
-    $sql = "SELECT r.id, r.titulo, r.descripcion, r.referencia, r.estado, r.votos,
-                   r.creado_en,
-                   t.nombre AS tipo, t.color, t.icono,
-                   b.nombre AS barrio, b.localidad
-              FROM reportes r
-              JOIN tipos_criadero t ON t.id = r.tipo_id
-              JOIN barrios b        ON b.id = r.barrio_id"
-        . $where
-        . ' ORDER BY r.creado_en DESC, r.id DESC LIMIT ' . $porPagina . ' OFFSET ' . $offset;
-
-    $stmt = db()->prepare($sql);
-    $stmt->execute($pars);
-
-    json_response([
-        'ok'   => true,
-        'data' => $stmt->fetchAll(),
-        'meta' => [
-            'pagina'          => $pagina,
-            'por_pagina'      => $porPagina,
-            'total'           => $total,
-            'total_paginas'   => $totalPaginas,
-            'tiene_anterior'  => $pagina > 1,
-            'tiene_siguiente' => $pagina < $totalPaginas,
-            'desde'           => $total > 0 ? $offset + 1 : 0,
-            'hasta'           => min($offset + $porPagina, $total),
-        ],
-    ]);
-}
-
-// UN reporte + operaciones por id
-if (preg_match('#^reportes/(\d+)$#', $route, $m)) {
-    exigir_acceso_reportes();
-    $id = (int) $m[1];
-
-    if ($method === 'GET') {
-        $stmt = db()->prepare(
-            "SELECT r.*, t.nombre AS tipo, t.color, t.icono, b.nombre AS barrio, b.localidad
-               FROM reportes r
-               JOIN tipos_criadero t ON t.id = r.tipo_id
-               JOIN barrios b        ON b.id = r.barrio_id
-              WHERE r.id = ?
-              LIMIT 1"
-        );
-        $stmt->execute([$id]);
-        $row = $stmt->fetch();
-        if (!$row) json_error('Reporte no encontrado', 404);
-        json_response(['ok' => true, 'data' => $row]);
-    }
-
-    if ($method === 'PATCH' || $method === 'PUT') {
-        $body = body_json();
-        // Si no viene estado, permitir sumar votos (participación comunitaria)
-        if (isset($body['votos'])) {
-            $stmt = db()->prepare('UPDATE reportes SET votos = votos + 1 WHERE id = ?');
-            $stmt->execute([$id]);
-            json_response(['ok' => true, 'message' => 'Voto registrado']);
-        }
-        $estado = $body['estado'] ?? '';
-        if (!validar_estado($estado)) {
-            json_error('Estado inválido. Use: pendiente, verificado o controlado.');
-        }
-        $stmt = db()->prepare('UPDATE reportes SET estado = ? WHERE id = ?');
-        $stmt->execute([$estado, $id]);
-        if ($stmt->rowCount() === 0) json_error('Reporte no encontrado', 404);
-        json_response(['ok' => true, 'message' => 'Estado actualizado a ' . $estado]);
-    }
-
-    if ($method === 'DELETE') {
-        $stmt = db()->prepare('DELETE FROM reportes WHERE id = ?');
-        $stmt->execute([$id]);
-        if ($stmt->rowCount() === 0) json_error('Reporte no encontrado', 404);
-        json_response(['ok' => true, 'message' => 'Reporte eliminado']);
-    }
-}
-
-// CREAR reporte
-if ($route === 'reportes' && $method === 'POST') {
-    $b = body_json();
-
-    $titulo      = trim($b['titulo'] ?? '');
-    $descripcion = trim($b['descripcion'] ?? '');
-    $referencia  = trim($b['referencia'] ?? '');
-    $tipo_id     = (int) ($b['tipo_id'] ?? 0);
-    $barrio_id   = (int) ($b['barrio_id'] ?? 0);
-
-    if ($titulo === '' || mb_strlen($titulo) > 120) {
-        json_error('El título es obligatorio (máx. 120 caracteres).');
-    }
-    if ($descripcion === '') {
-        json_error('La descripción es obligatoria.');
-    }
-    if ($tipo_id < 1)   json_error('Debe elegir un tipo de criadero.');
-    if ($barrio_id < 1) json_error('Debe elegir el barrio.');
-
-    $stmt = db()->prepare(
-        'INSERT INTO reportes (tipo_id, barrio_id, titulo, descripcion, referencia)
-         VALUES (?, ?, ?, ?, ?)'
-    );
-    $stmt->execute([$tipo_id, $barrio_id, $titulo, $descripcion, $referencia]);
-    $id = (int) db()->lastInsertId();
-
-    $stmt = db()->prepare('SELECT * FROM reportes WHERE id = ?');
-    $stmt->execute([$id]);
-
-    json_response(['ok' => true, 'message' => 'Criadero reportado', 'data' => $stmt->fetch()], 201);
-}
-
-// ========== COMENTARIOS ==========
-
-// LISTA de comentarios
-if (preg_match('#^comentarios$#', $route) && $method === 'GET') {
-    $barrio = val($_GET['barrio'] ?? '');
-    $limit  = min(1000, max(1, (int) ($_GET['limit'] ?? 1000)));   // se muestran todos los comentarios
-
-    $sql = "SELECT c.id, c.tipo, c.texto, c.creado_en, b.nombre AS barrio_nombre
-            FROM comentarios c
-            JOIN barrios b ON b.id = c.barrio_id
-            WHERE 1=1";
-    $pars = [];
-
-    if ($barrio !== '') {
-        $sql .= ' AND c.barrio_id = ?';
-        $pars[] = (int) $barrio;
-    }
-    $sql .= ' ORDER BY c.creado_en DESC, c.id DESC LIMIT ' . $limit;
-
-    $stmt = db()->prepare($sql);
-    $stmt->execute($pars);
-    json_response(['ok' => true, 'data' => $stmt->fetchAll()]);
-}
-
-// CREAR comentario
-if ($route === 'comentarios' && $method === 'POST') {
-    $b = body_json();
-
-    $barrio_id = (int) ($b['barrio_id'] ?? 0);
-    $tipo      = $b['tipo'] ?? 'sugerencia';
-    $texto     = trim($b['texto'] ?? '');
-
-    if ($barrio_id < 1) json_error('Debe elegir un barrio.');
-    if (!in_array($tipo, ['sugerencia','problema','felicitacion','otro'], true))
-        json_error('Tipo inválido.');
-    if ($texto === '' || mb_strlen($texto) > 2000)
-        json_error('El comentario es obligatorio (máx. 2000 caracteres).');
-
-    $stmt = db()->prepare(
-        'INSERT INTO comentarios (barrio_id, tipo, texto) VALUES (?, ?, ?)'
-    );
-    $stmt->execute([$barrio_id, $tipo, $texto]);
-    $id = (int) db()->lastInsertId();
-
-    $stmt = db()->prepare(
-        'SELECT c.*, b.nombre AS barrio_nombre FROM comentarios c JOIN barrios b ON b.id = c.barrio_id WHERE c.id = ?'
-    );
-    $stmt->execute([$id]);
-
-    json_response(['ok' => true, 'message' => 'Comentario enviado', 'data' => $stmt->fetch()], 201);
-}
-
-// Ruta desconocida
-json_error('Ruta no encontrada. Ver /api/?route=', 404);
+<script>
+  window.BASE_URL = <?= json_encode(BASE_URL) ?>;
+  window.REPORTES_ACCESS = <?= $reportes_logueado ? 'true' : 'false' ?>;
+</script>
+<script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260924-login"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@
    - window.CaszaClima  → { bonus, nivel, listo, datos }
    - window.riesgoConClima(activos) → { total, nivel }
    - evento 'clima:listo' en document (para redibujar el mapa)
+   Se actualiza solo cada 10 minutos (y al volver a la pestaña).
    ============================================================ */
 (function () {
   const cont = document.getElementById('clima');
@@ -18,6 +19,26 @@
   };
 
   const etiqueta = { alto: 'ALTO', medio: 'MEDIO', bajo: 'BAJO' };
+  const REFRESCO_MS = 10 * 60 * 1000;
+  let ultimaCarga = 0;
+
+  function bloqueActual(a) {
+    if (!a) return '';
+    return `
+      <div class="clima-ahora${a.lloviendo ? ' lloviendo' : ''}">
+        <span class="clima-ahora-ico" aria-hidden="true">${a.icono}</span>
+        <div class="clima-ahora-temp">
+          <strong>${a.temperatura} °C</strong>
+          <span>${a.descripcion}${a.lloviendo ? ` · ${a.lluvia} mm` : ''}</span>
+        </div>
+        <ul class="clima-ahora-extra">
+          <li>🌡️ Sensación <b>${a.sensacion} °C</b></li>
+          <li>💧 Humedad <b>${a.humedad}%</b></li>
+          <li>🍃 Viento <b>${a.viento} km/h</b></li>
+        </ul>
+        <span class="clima-vivo"><i></i>En vivo · ${a.hora} h</span>
+      </div>`;
+  }
 
   function render(c) {
     if (!cont) return;
@@ -31,6 +52,7 @@
         <h2>🌧️ Alerta climática</h2>
         <span class="clima-nivel ${c.nivel}">Riesgo climático ${etiqueta[c.nivel]}</span>
       </div>
+      ${bloqueActual(c.actual)}
       <p class="sub">${c.mensaje}</p>
       <div class="clima-datos">
         <div><strong>${c.lluvia_14d} mm</strong><span>lluvia últimos 14 días</span></div>
@@ -43,14 +65,25 @@
       <p class="mapa-nota">Fuente: ${c.fuente_texto} · ${c.ubicacion}</p>`;
   }
 
-  fetch((window.BASE_URL ?? '.') + '/api/clima.php')
-    .then(r => r.json())
-    .then(c => {
-      Object.assign(window.CaszaClima, { bonus: c.bonus, nivel: c.nivel, listo: true, datos: c });
-      render(c);
-      document.dispatchEvent(new CustomEvent('clima:listo', { detail: c }));
-    })
-    .catch(() => {
-      if (cont) cont.innerHTML = '<p class="placeholder">No se pudo cargar el clima.</p>';
-    });
+  function cargar() {
+    ultimaCarga = Date.now();
+    fetch((window.BASE_URL ?? '.') + '/api/clima.php?t=' + ultimaCarga, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(c => {
+        Object.assign(window.CaszaClima, { bonus: c.bonus, nivel: c.nivel, listo: true, datos: c });
+        render(c);
+        document.dispatchEvent(new CustomEvent('clima:listo', { detail: c }));
+      })
+      .catch(() => {
+        // Si falla una actualización se deja el último dato mostrado
+        if (cont && !window.CaszaClima.listo) cont.innerHTML = '<p class="placeholder">No se pudo cargar el clima.</p>';
+      });
+  }
+
+  cargar();
+  setInterval(() => { if (!document.hidden) cargar(); }, REFRESCO_MS);
+  // Al volver a la pestaña después de un rato, actualizar enseguida
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Date.now() - ultimaCarga > REFRESCO_MS) cargar();
+  });
 })();
