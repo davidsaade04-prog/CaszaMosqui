@@ -13,7 +13,7 @@ require_once __DIR__ . '/inc/helpers.php';
   <title>Test de Síntomas · <?= e(APP_NAME) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-pie">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
@@ -154,11 +154,7 @@ require_once __DIR__ . '/inc/helpers.php';
 
 </main>
 
-<footer>
-  <div class="container">
-    <p>🦟 <strong>CaszaMosqui</strong> · Equipo FormosaHack 2026 · Test de Síntomas</p>
-  </div>
-</footer>
+<?php require __DIR__ . '/inc/footer.php'; ?>
 
 <script>
   const form = document.getElementById('form-sintomas');

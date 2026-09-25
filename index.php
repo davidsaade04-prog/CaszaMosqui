@@ -24,7 +24,7 @@ header('Pragma: no-cache');
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260924-login">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-pie">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
@@ -314,12 +314,7 @@ header('Pragma: no-cache');
 
 </main>
 
-<footer>
-  <div class="container">
-    <p>🦟 <strong>CaszaMosqui</strong> · Equipo FormosaHack 2026 · HTML + PHP + CSS + JS + MySQL ·
-       Desafío: prevenir enfermedades transmitidas por mosquitos</p>
-  </div>
-</footer>
+<?php require __DIR__ . '/inc/footer.php'; ?>
 
 <script>
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;
