@@ -1,0 +1,9 @@
+# Protección básica del sitio (funciona con Apache en XAMPP)
+Options -Indexes
+AddDefaultCharset UTF-8
+
+# Bloquear acceso a carpetas internas desde el navegador
+RedirectMatch 403 /(inc|database|scripts|cache)(/|$)
+
+# Si no está Apache, PHP embebido también bloquea por su cuenta
+php_flag display_errors On

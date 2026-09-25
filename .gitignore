@@ -1,0 +1,15 @@
+# Archivos y carpetas que NO deben subirse a GitHub
+inc/config.php
+
+# Sistema / editor
+*.log
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Backups de BD
+database/*.sql.gz
+database/*.dump
+# Caché del clima (se genera sola)
+cache/
