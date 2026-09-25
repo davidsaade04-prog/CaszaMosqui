@@ -7,9 +7,9 @@
  *   GET    /api/?route=barrios
  *   GET    /api/?route=reportes            (requiere sesión; filtros: ?tipo=&barrio=&estado=&q=&pagina=&por_pagina=)
  *   GET    /api/?route=reportes/{id}       (requiere sesión)
- *   POST   /api/?route=reportes            (body JSON)
- *   PATCH  /api/?route=reportes/{id}       (estado: pendiente|verificado|controlado)
- *   DELETE /api/?route=reportes/{id}
+ *   POST   /api/?route=reportes            (body JSON · PÚBLICO: cualquier vecino puede reportar)
+ *   PATCH  /api/?route=reportes/{id}       (requiere sesión · estado: pendiente|verificado|controlado, o voto)
+ *   DELETE /api/?route=reportes/{id}       (requiere sesión)
  *   GET    /api/?route=stats               (KPIs + índice de riesgo por barrio)
  */
 
@@ -107,7 +107,7 @@ if ($route === 'stats' && $method === 'GET') {
 
     // Índice de riesgo por barrio (semáforo)
     //   activos = pendientes + verificados   |   controlados = controlado
-    //   0-2 bajo · 3-4 medio · 5 o más alto
+    //   riesgo = activos / (controlados + 1)   (fórmula simple, documentada en docs)
     $riesgo = db()->query(
         "SELECT b.id, b.nombre, b.localidad, b.x, b.y,
                 SUM(CASE WHEN r.estado IN ('pendiente','verificado') THEN 1 ELSE 0 END) AS activos,
@@ -121,10 +121,10 @@ if ($route === 'stats' && $method === 'GET') {
     foreach ($riesgo as &$b) {
         $activos     = (int) $b['activos'];
         $controlados = (int) $b['controlados'];
-        // El número y el color usan únicamente criaderos sin controlar.
+        // Índice de riesgo activo = criaderos sin controlar en el barrio
         $b['indice'] = $activos;
-        $b['nivel']  = $activos >= 5 ? 'alto'
-                     : ($activos >= 3 ? 'medio' : 'bajo');
+        $b['nivel']  = $activos >= 4 ? 'alto'
+                     : ($activos >= 2 ? 'medio' : 'bajo');
         unset($b['activos'], $b['controlados']);
     }
 
@@ -167,7 +167,8 @@ if (preg_match('#^reportes$#', $route) && $method === 'GET') {
         $pars[] = $estado;
     }
     if ($q !== '') {
-        $where .= ' AND (r.titulo LIKE ? OR r.descripcion LIKE ? OR r.referencia LIKE ? OR b.nombre LIKE ? OR t.nombre LIKE ?)';
+        // LOWER() hace la búsqueda insensible a mayúsculas también en PostgreSQL
+        $where .= ' AND (LOWER(r.titulo) LIKE LOWER(?) OR LOWER(r.descripcion) LIKE LOWER(?) OR LOWER(r.referencia) LIKE LOWER(?) OR LOWER(b.nombre) LIKE LOWER(?) OR LOWER(t.nombre) LIKE LOWER(?))';
         $like = "%{$q}%";
         array_push($pars, $like, $like, $like, $like, $like);
     }
@@ -205,14 +206,14 @@ if (preg_match('#^reportes$#', $route) && $method === 'GET') {
         'ok'   => true,
         'data' => $stmt->fetchAll(),
         'meta' => [
-            'pagina'        => $pagina,
-            'por_pagina'    => $porPagina,
-            'total'         => $total,
-            'total_paginas' => $totalPaginas,
-            'tiene_anterior' => $pagina > 1,
+            'pagina'          => $pagina,
+            'por_pagina'      => $porPagina,
+            'total'           => $total,
+            'total_paginas'   => $totalPaginas,
+            'tiene_anterior'  => $pagina > 1,
             'tiene_siguiente' => $pagina < $totalPaginas,
-            'desde'         => $total > 0 ? $offset + 1 : 0,
-            'hasta'         => min($offset + $porPagina, $total),
+            'desde'           => $total > 0 ? $offset + 1 : 0,
+            'hasta'           => min($offset + $porPagina, $total),
         ],
     ]);
 }
@@ -300,7 +301,7 @@ if ($route === 'reportes' && $method === 'POST') {
 // LISTA de comentarios
 if (preg_match('#^comentarios$#', $route) && $method === 'GET') {
     $barrio = val($_GET['barrio'] ?? '');
-    $limit  = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
+    $limit  = min(1000, max(1, (int) ($_GET['limit'] ?? 1000)));   // se muestran todos los comentarios
 
     $sql = "SELECT c.id, c.tipo, c.texto, c.creado_en, b.nombre AS barrio_nombre
             FROM comentarios c
@@ -312,7 +313,7 @@ if (preg_match('#^comentarios$#', $route) && $method === 'GET') {
         $sql .= ' AND c.barrio_id = ?';
         $pars[] = (int) $barrio;
     }
-    $sql .= ' ORDER BY c.creado_en DESC LIMIT ' . $limit;
+    $sql .= ' ORDER BY c.creado_en DESC, c.id DESC LIMIT ' . $limit;
 
     $stmt = db()->prepare($sql);
     $stmt->execute($pars);
