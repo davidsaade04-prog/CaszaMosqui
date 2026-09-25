@@ -24,7 +24,7 @@ header('Pragma: no-cache');
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-pie">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-admin">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
@@ -32,6 +32,7 @@ header('Pragma: no-cache');
 <body>
 
 <header class="topbar">
+  <?php require __DIR__ . '/inc/acceso-admin.php'; ?>
   <div class="container">
     <div class="brand">
       <div class="brand-text">
@@ -42,7 +43,6 @@ header('Pragma: no-cache');
     </div>
     <nav>
       <a href="#" data-nav="mapa" class="active">Mapa de riesgo</a>
-      <a href="#" data-nav="reportes">Reportes</a>
       <a href="#" data-nav="nuevo">+ Reportar</a>
       <a href="#" data-nav="prevencion">Prevención</a>
       <a href="#" data-nav="quiz">Cuestionario</a>
@@ -70,54 +70,9 @@ header('Pragma: no-cache');
     <p class="loading">Cargando datos climáticos…</p>
   </section>
 
-  <!-- MAPA DE RIESGO -->
-  <section class="panel" id="mapa">
-    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Volver Al Inicio
-    </a>
-    <div class="panel-head">
-      <h2>🗺️ Mapa de riesgo por barrio</h2>
-      <div class="mapa-filtros" role="group" aria-label="Filtrar barrios por nivel de riesgo">
-        <button type="button" data-nivel="todos" class="activo">Todos</button>
-        <button type="button" data-nivel="alto"><i class="dot alto"></i> Alto</button>
-        <button type="button" data-nivel="medio"><i class="dot medio"></i> Medio</button>
-        <button type="button" data-nivel="bajo"><i class="dot bajo"></i> Bajo</button>
-      </div>
-      <div class="mapa-controles" role="group" aria-label="Controles de zoom del mapa">
-        <button type="button" id="zoom-in" aria-label="Acercar">🔍+</button>
-        <button type="button" id="zoom-out" aria-label="Alejar">🔍−</button>
-        <button type="button" id="zoom-reset" aria-label="Restablecer vista">⌂</button>
-      </div>
-    </div>
-    <div class="mapa-contenedor">
-      <!-- Sidebar con lista de barrios -->
-      <aside class="mapa-sidebar" aria-label="Lista de barrios">
-        <h3>📍 Barrios</h3>
-        <ul data-js-barra-barrios>
-          <li><button type="button" data-barrio="todos" class="activo">Todos los barrios</button></li>
-        </ul>
-      </aside>
-      <!-- Mapa con zoom/pan -->
-      <div class="mapa-wrapper">
-        <!-- Lienzo con la proporción exacta del plano: imagen vectorial + nombres de barrios se mueven juntos -->
-        <div class="mapa-lienzo" data-js-mapa-lienzo>
-          <img class="mapa-imagen" data-js-mapa-imagen src="<?= e(BASE_URL) ?>/assets/img/mapa-el-colorado.svg"
-               alt="Plano de barrios de El Colorado" draggable="false" decoding="async">
-          <div class="mapa-burbujas" data-js-mapa-burbujas aria-label="Barrios y nivel de riesgo"></div>
-        </div>
-      </div>
-      <p class="mapa-nota">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
-    </div>
-  </section>
+  <?php require __DIR__ . '/inc/mapa.php'; ?>
 
-  <!-- KPIs -->
-  <section class="kpis" aria-label="Indicadores">
-    <article class="kpi" data-kpi="total"><strong>—</strong><span>🦟 Criaderos reportados</span></article>
-    <article class="kpi" data-kpi="pendiente"><strong>—</strong><span>⏳ Sin controlar</span></article>
-    <article class="kpi" data-kpi="verificado"><strong>—</strong><span>🔎 Verificados</span></article>
-    <article class="kpi" data-kpi="controlado"><strong>—</strong><span>✅ Controlados</span></article>
-  </section>
+  <?php require __DIR__ . '/inc/kpis.php'; ?>
 
   <!-- TIPOS MÁS COMUNES -->
   <section class="panel">
@@ -129,76 +84,6 @@ header('Pragma: no-cache');
     <div class="sectores" data-js-tipos>
       <p class="loading">Cargando…</p>
     </div>
-  </section>
-
-  <!-- REPORTES -->
-  <section class="panel" id="reportes">
-    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Volver Al Inicio
-    </a>
-
-    <?php if ($reportes_logueado): ?>
-      <div class="reportes-sesion">
-        <span>Sesión iniciada como <strong><?= e($reportes_usuario) ?></strong></span>
-        <form method="post" action="<?= e(BASE_URL) ?>/reportes-auth.php" class="reportes-logout-form">
-          <input type="hidden" name="accion" value="logout">
-          <input type="hidden" name="csrf" value="<?= e($reportes_csrf) ?>">
-          <button type="submit" class="btn-logout">Cerrar sesión</button>
-        </form>
-      </div>
-      <div class="panel-head">
-        <h2>📋 Criaderos reportados por la comunidad</h2>
-        <form class="filtros" data-js-filtros>
-          <select name="tipo" aria-label="Filtrar por tipo">
-            <option value="">Todos los tipos</option>
-          </select>
-          <select name="barrio" aria-label="Filtrar por barrio">
-            <option value="">Todos los barrios</option>
-          </select>
-          <select name="estado" aria-label="Filtrar por estado">
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Sin controlar</option>
-            <option value="verificado">Verificado</option>
-            <option value="controlado">Controlado</option>
-          </select>
-          <input type="search" name="q" placeholder="Buscar…" aria-label="Buscar">
-          <button type="button" data-js-reset class="btn-ghost">Limpiar</button>
-        </form>
-      </div>
-      <div data-js-reportes>
-        <p class="loading">Cargando reportes…</p>
-      </div>
-      <nav class="reportes-paginacion" data-js-paginacion aria-label="Paginación de reportes" hidden>
-        <button type="button" class="reportes-pagina" data-pagina-anterior disabled>← Anterior</button>
-        <div class="paginacion-numeros" data-js-paginacion-numeros></div>
-        <button type="button" class="reportes-pagina" data-pagina-siguiente disabled>Siguiente →</button>
-        <span class="paginacion-info" data-js-paginacion-info aria-live="polite"></span>
-      </nav>
-    <?php else: ?>
-      <div class="reportes-login">
-        <div class="reportes-login-icon" aria-hidden="true">🔒</div>
-        <h2>Acceso a Reportes</h2>
-        <p class="sub">Ingresá con tu usuario para consultar y gestionar los criaderos reportados por la comunidad.</p>
-        <form method="post" action="<?= e(BASE_URL) ?>/reportes-auth.php" class="reportes-login-form">
-          <input type="hidden" name="accion" value="login">
-          <input type="hidden" name="csrf" value="<?= e($reportes_csrf) ?>">
-          <label for="reportes-usuario">
-            Usuario
-            <input id="reportes-usuario" name="usuario" type="text" autocomplete="username" required>
-          </label>
-          <label for="reportes-contrasena">
-            Contraseña
-            <input id="reportes-contrasena" name="contrasena" type="password" autocomplete="current-password" required>
-          </label>
-          <?php if ($reportes_error): ?>
-            <p class="reportes-login-error" role="alert"><?= e($reportes_error) ?></p>
-          <?php endif; ?>
-          <button type="submit" class="btn-login">Ingresar</button>
-        </form>
-        <p class="reportes-login-note">Cualquier vecino puede <a href="#" data-nav="nuevo">reportar un criadero</a> sin usuario. El acceso es para consultar y gestionar los reportes; usa una sesión de PHP que dura mientras la aplicación esté abierta.</p>
-      </div>
-    <?php endif; ?>
   </section>
 
   <!-- FORMULARIO -->
@@ -322,7 +207,7 @@ header('Pragma: no-cache');
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260924-login"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260925-admin"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

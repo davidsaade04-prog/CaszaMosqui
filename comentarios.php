@@ -24,7 +24,7 @@ try {
   <title>Comentarios · <?= e(APP_NAME) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-pie">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-admin">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <style>
     .comentarios-container { max-width: 900px; margin: 0 auto; }
@@ -78,7 +78,6 @@ try {
     </div>
     <nav>
       <a href="<?= e(BASE_URL) ?>/#mapa">Mapa de riesgo</a>
-      <a href="<?= e(BASE_URL) ?>/#reportes">Reportes</a>
       <a href="<?= e(BASE_URL) ?>/#nuevo">+ Reportar</a>
       <a href="<?= e(BASE_URL) ?>/#prevencion">Prevención</a>
       <a href="<?= e(BASE_URL) ?>/#quiz">Cuestionario</a>
