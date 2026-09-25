@@ -940,3 +940,56 @@ button.btn-logout:hover { background: #475569; }
   #reportes .panel-head { padding-right: 0; }
   #reportes .filtros { width: 100%; }
 }
+
+/* ---------- Acceso administrador (botón arriba a la derecha + ventana) ---------- */
+.topbar { position: relative; }
+.btn-admin {
+  position: absolute; top: 14px; right: 16px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, .14); color: #fff;
+  border: 1px solid rgba(255, 255, 255, .45);
+  font: inherit; font-size: .85rem; font-weight: 600; text-decoration: none;
+  transition: background .15s, transform .15s;
+}
+.btn-admin:hover { background: rgba(255, 255, 255, .26); transform: translateY(-1px); }
+@media (max-width: 760px) {
+  .btn-admin { top: 10px; right: 10px; padding: 8px 10px; }
+  .btn-admin-txt { display: none; }
+}
+
+.login-modal {
+  width: min(430px, calc(100vw - 32px));
+  padding: 30px 26px 22px; border: 0; border-radius: 16px;
+  text-align: center; color: var(--texto, #0f172a); /* está dentro del encabezado (texto blanco) */
+  background: linear-gradient(180deg, #f0fdfa 0%, #fff 55%);
+  box-shadow: 0 30px 70px rgba(15, 23, 42, .35);
+}
+.login-modal::backdrop { background: rgba(15, 23, 42, .55); backdrop-filter: blur(2px); }
+.login-modal h2 { margin-bottom: 4px; color: #0f172a; }
+.login-modal .sub { color: var(--suave); }
+.login-modal label { color: #0f172a; text-align: left; }
+.login-modal .sub { margin-bottom: 18px; }
+.login-modal-cerrar-form { position: absolute; top: 10px; right: 10px; margin: 0; }
+button.login-modal-cerrar {
+  width: 34px; height: 34px; padding: 0; border-radius: 50%;
+  background: #e2e8f0; color: #334155; font-size: .95rem;
+}
+button.login-modal-cerrar:hover { background: #cbd5e1; }
+
+/* ---------- Panel de administración (admin.php) ---------- */
+.topbar-admin .admin-sesion {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px;
+  font-size: .9rem;
+}
+.topbar-admin .reportes-logout-form { margin: 0; }
+.btn-admin-sec {
+  color: #fff; text-decoration: none; font-weight: 600; font-size: .85rem;
+  padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .45);
+}
+.btn-admin-sec:hover { background: rgba(255, 255, 255, .16); }
+.admin-aviso {
+  margin: 20px 0 0; padding: 12px 16px; border-radius: 12px;
+  background: #ecfeff; border: 1px solid #a5f3fc; color: #155e75; font-size: .92rem;
+}
+.pagina-admin #mapa .btn-volver-inicio { display: none; }
