@@ -1,0 +1,5 @@
+.git
+inc/config.php
+cache/
+*.zip
+*.log
