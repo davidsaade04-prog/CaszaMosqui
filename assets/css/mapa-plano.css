@@ -1,0 +1,38 @@
+/* ---------- Mapa sobre el plano real de El Colorado (CaszaMosqui) ----------
+   Usar junto con <div class="mapa plano"> : el fondo es el plano municipal y
+   los .mapa-node se ubican con left/top en % (columnas x, y de la tabla barrios). */
+.mapa.plano {
+  height: auto;
+  aspect-ratio: 1600 / 1783;          /* proporción de plano-el-colorado.jpg */
+  max-width: 860px;
+  margin: 0 auto;
+  border: 1px solid var(--borde);
+  background: #fff url("../img/plano-el-colorado.jpg") center / 100% 100% no-repeat;
+}
+/* El plano ya tiene los nombres: burbujas más chicas para no taparlo */
+.mapa.plano .mapa-node .burbuja { width: 32px; height: 32px; font-size: .82rem; border-width: 2px; }
+.mapa.plano .mapa-node .nombre  { font-size: .68rem; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.mapa.plano .mapa-node:hover .nombre,
+.mapa.plano .mapa-node.activo .nombre { opacity: 1; }
+.mapa.plano .mapa-node.none .burbuja { opacity: .55; }   /* barrios sin reportes, discretos */
+
+/* Los nodos son <button>: anular el estilo global de botones de styles.css */
+.mapa .mapa-node, .mapa .mapa-node:hover { background: none; border: 0; padding: 0; border-radius: 0; }
+.mapa .mapa-node.oculto { display: none; }
+.mapa .mapa-node.activo .burbuja { outline: 3px solid var(--texto); outline-offset: 2px; transform: scale(1.2); }
+.mapa .mapa-node:focus-visible .burbuja { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+/* Filtros de nivel del mapa */
+.mapa-filtros { display: flex; gap: 6px; flex-wrap: wrap; }
+.mapa-filtros button {
+  background: #fff; color: var(--texto); border: 1px solid var(--borde);
+  padding: 6px 12px; font-size: .84rem; font-weight: 600; border-radius: 999px;
+}
+.mapa-filtros button:hover { background: #f8fafc; }
+.mapa-filtros button.activo { background: var(--texto); color: #fff; border-color: var(--texto); }
+.mapa-filtros .cuenta { margin-left: 6px; font-size: .75rem; opacity: .7; }
+
+@media (max-width: 760px) {
+  .mapa.plano { height: auto; }
+  .mapa.plano .mapa-node .burbuja { width: 22px; height: 22px; font-size: .66rem; }
+}

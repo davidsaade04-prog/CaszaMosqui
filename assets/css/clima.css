@@ -1,0 +1,18 @@
+/* ---------- Alerta climática (CaszaMosqui) ---------- */
+.clima-nivel { font-weight: 700; padding: 5px 12px; border-radius: 999px; color: #fff; font-size: .85rem; }
+.clima-nivel.alto  { background: var(--rojo); }
+.clima-nivel.medio { background: var(--ambar); }
+.clima-nivel.bajo  { background: var(--verde); }
+
+.clima-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.clima-datos div { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 14px; }
+.clima-datos strong { display: block; font-size: 1.5rem; color: var(--acento); line-height: 1.2; }
+.clima-datos span { font-size: .82rem; color: var(--suave); }
+
+.clima-barras {
+  display: flex; align-items: flex-end; gap: 4px; height: 70px;
+  margin: 16px 0 4px; border-bottom: 1px solid var(--borde);
+}
+.clima-barras i { flex: 1; background: #38bdf8; border-radius: 4px 4px 0 0; min-height: 2px; }
+.clima-eje { margin: 0; font-size: .76rem; color: var(--suave); }
+.clima-reco { font-weight: 600; margin: 12px 0 0; }
