@@ -24,9 +24,10 @@ header('Pragma: no-cache');
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-admin">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260926-mapa">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
 <body>
@@ -207,7 +208,9 @@ header('Pragma: no-cache');
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260925-admin"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20260926-mapa"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

@@ -24,7 +24,8 @@ header('Pragma: no-cache');
   <meta name="robots" content="noindex">
   <title>Panel de reportes · <?= e(APP_NAME) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260925-admin">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260926-mapa">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
 <body class="pagina-admin">
@@ -100,6 +101,8 @@ header('Pragma: no-cache');
   window.REPORTES_ACCESS = true;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260925-admin"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20260926-mapa"></script>
 </body>
 </html>
