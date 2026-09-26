@@ -7,6 +7,10 @@
     </a>
     <div class="panel-head">
       <h2>🗺️ Mapa de riesgo por barrio</h2>
+      <div class="mapa-vistas" role="group" aria-label="Tipo de mapa">
+        <button type="button" data-vista="plano" class="activo" aria-pressed="true">📐 Plano municipal</button>
+        <button type="button" data-vista="real" aria-pressed="false">🌎 Mapa real</button>
+      </div>
       <div class="mapa-filtros" role="group" aria-label="Filtrar barrios por nivel de riesgo">
         <button type="button" data-nivel="todos" class="activo">Todos</button>
         <button type="button" data-nivel="alto"><i class="dot alto"></i> Alto</button>
@@ -36,6 +40,10 @@
           <div class="mapa-burbujas" data-js-mapa-burbujas aria-label="Barrios y nivel de riesgo"></div>
         </div>
       </div>
-      <p class="mapa-nota">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
+      <!-- Mapa real (OpenStreetMap): se crea al abrir la pestaña -->
+      <div class="mapa-real" data-js-mapa-real hidden aria-label="Mapa real de El Colorado"></div>
+      <p class="mapa-nota mapa-nota-real" hidden>Mapa real de <strong>OpenStreetMap</strong>. La ubicación de cada barrio es aproximada (±50 m), calculada a partir del plano municipal.
+        Si falta el nombre de una calle, activá <strong>“Mostrar plano municipal encima”</strong> o volvé al <strong>Plano municipal</strong>.</p>
+      <p class="mapa-nota mapa-nota-plano">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
     </div>
   </section>
