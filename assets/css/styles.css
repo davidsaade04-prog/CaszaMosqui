@@ -993,3 +993,56 @@ button.login-modal-cerrar:hover { background: #cbd5e1; }
   background: #ecfeff; border: 1px solid #a5f3fc; color: #155e75; font-size: .92rem;
 }
 .pagina-admin #mapa .btn-volver-inicio { display: none; }
+
+/* ---------- Pestañas Plano municipal / Mapa real ---------- */
+.mapa-vistas { display: inline-flex; gap: 4px; padding: 4px; background: #f1f5f9; border: 1px solid var(--borde); border-radius: 999px; }
+.mapa-vistas button {
+  background: transparent; color: var(--texto); border: 0; border-radius: 999px;
+  padding: 6px 14px; font-size: .85rem; font-weight: 600;
+}
+.mapa-vistas button:hover { background: #e2e8f0; }
+.mapa-vistas button.activo { background: var(--acento); color: #fff; }
+.mapa-wrapper[hidden], .mapa-real[hidden], .mapa-controles[hidden] { display: none !important; }
+
+.mapa-real { height: 100%; min-height: 0; border-radius: 12px; border: 2px solid #cbd5e1; overflow: hidden; z-index: 0; }
+@media (max-width: 900px) { .mapa-real { height: 70vh; min-height: 420px; } }
+
+/* Barrios sobre el mapa real (mismos colores que el plano) */
+.mr-icono { background: none; border: 0; }
+.mr-pin {
+  display: inline-flex; align-items: center; gap: 5px; transform: translate(-50%, -50%);
+  white-space: nowrap; padding: 3px 8px; border-radius: 999px; cursor: pointer;
+  font: 700 .72rem/1.2 system-ui, sans-serif; color: #0f172a; background: #fff;
+  border: 2px solid #94a3b8; box-shadow: 0 2px 6px rgba(15, 23, 42, .3);
+}
+.mr-pin b { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; color: #fff; font-size: .7rem; }
+.mr-pin.alto  { border-color: var(--rojo); }  .mr-pin.alto b  { background: var(--rojo); }
+.mr-pin.medio { border-color: var(--ambar); } .mr-pin.medio b { background: var(--ambar); }
+.mr-pin.bajo  { border-color: var(--verde); } .mr-pin.bajo b  { background: var(--verde); }
+.mr-pin.none  { border-color: #94a3b8; color: #475569; }
+.mr-pin.activo { outline: 3px solid var(--acento); outline-offset: 1px; }
+.mr-pin:hover { transform: translate(-50%, -50%) scale(1.08); }
+
+.mapa-real-control {
+  background: #fff; padding: 8px 10px; border-radius: 10px; font-size: .8rem; color: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, .25); display: grid; gap: 6px;
+}
+.mapa-real-control label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; cursor: pointer; }
+.mapa-real-control input[type=checkbox] { width: auto; margin: 0; }
+.mapa-real-control input[type=range] { width: 110px; padding: 0; }
+.mapa-real-plano { mix-blend-mode: multiply; }
+.mr-corto { display: none; }
+.mr-lejos .mr-largo { display: none; }
+.mr-lejos .mr-corto { display: inline; }
+.mr-lejos .mr-pin { font-size: .66rem; padding: 2px 6px; }
+/* Barrios sin criaderos: de lejos, solo un punto (el nombre aparece al pasar el mouse o al acercarse) */
+.mr-lejos .mr-pin.none { width: 12px; height: 12px; padding: 0; gap: 0; border-width: 2px; background: #fff; }
+.mr-lejos .mr-pin.none .mr-corto { display: none; }
+.mapa-real-control [hidden] { display: none !important; }
+.mr-txt-corto { display: none; }
+@media (max-width: 520px) {
+  .mr-txt-largo { display: none; }
+  .mr-txt-corto { display: inline; }
+  .mapa-real-control { padding: 6px 8px; }
+  .mapa-real-control input[type=range] { width: 80px; }
+}
