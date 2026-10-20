@@ -9,6 +9,7 @@
  */
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/migraciones.php';
 
 function db_driver(): string
 {
@@ -38,6 +39,8 @@ function db(): PDO
                 $pdo->exec("SET TIME ZONE 'America/Argentina/Buenos_Aires'");
                 $pdo->exec("SET client_encoding TO 'UTF8'");
             }
+            // Columnas de GPS y tabla de fotos (una sola vez, sin borrar datos)
+            asegurar_esquema($pdo, db_driver());
         } catch (PDOException $e) {
             if (PHP_SAPI === 'cli') {
                 throw $e;

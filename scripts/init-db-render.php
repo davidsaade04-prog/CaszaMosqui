@@ -25,6 +25,7 @@ if (!$pdo) {
 }
 
 $pdo->exec((string) file_get_contents(__DIR__ . '/../database/schema.pgsql.sql'));
+migrar_esquema($pdo, 'pgsql');   // GPS + fotos (idempotente)
 echo "[init-db] Tablas verificadas.\n";
 
 $barrios = (int) $pdo->query('SELECT COUNT(*) FROM barrios')->fetchColumn();

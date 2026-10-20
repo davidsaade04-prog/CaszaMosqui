@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS reportes (
   votos       INTEGER      NOT NULL DEFAULT 0 CHECK (votos >= 0),
   creado_en   TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)
 );
+-- v2: ubicación GPS opcional (para bases creadas antes de esta versión)
+ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION NULL;
+ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION NULL;
 CREATE INDEX IF NOT EXISTS idx_reporte_tipo   ON reportes (tipo_id);
 CREATE INDEX IF NOT EXISTS idx_reporte_barrio ON reportes (barrio_id);
 CREATE INDEX IF NOT EXISTS idx_reporte_estado ON reportes (estado);
@@ -45,3 +48,14 @@ CREATE TABLE IF NOT EXISTS comentarios (
 );
 CREATE INDEX IF NOT EXISTS idx_comentario_barrio ON comentarios (barrio_id);
 CREATE INDEX IF NOT EXISTS idx_comentario_fecha  ON comentarios (creado_en);
+
+-- v2: una foto opcional por reporte (guardada en la base: el disco del servidor gratuito se borra)
+CREATE TABLE IF NOT EXISTS fotos_reporte (
+  reporte_id INTEGER PRIMARY KEY REFERENCES reportes (id) ON DELETE CASCADE,
+  mime       VARCHAR(20)  NOT NULL,
+  datos      BYTEA        NOT NULL,
+  ancho      INTEGER      NOT NULL DEFAULT 0,
+  alto       INTEGER      NOT NULL DEFAULT 0,
+  bytes      INTEGER      NOT NULL DEFAULT 0,
+  creado_en  TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)
+);

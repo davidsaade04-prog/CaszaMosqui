@@ -5,22 +5,15 @@
      municipal y de esquinas geolocalizadas con la API oficial Georef
      (apis.datos.gob.ar). Precisión aproximada: ±50 m.
    - Se carga solo cuando se abre la pestaña (no gasta datos si nadie la usa).
-   Depende de app.js (state, nivelBarrio, seleccionarBarrio, renderMapa…)
-   y de assets/vendor/leaflet/leaflet.js.
+   Depende de app.js (state, nivelBarrio, seleccionarBarrio, renderMapa…),
+   de assets/js/geo.js y de assets/js/leaflet.js.
    ============================================================ */
 (function () {
-  if (!document.querySelector('[data-js-mapa-real]')) return;
+  if (!document.querySelector('[data-js-mapa-real]') || !window.CaszaGeo) return;
 
-  // Plano recortado: 2400 × 2675 px (viewBox 30 240 576 642 a 300 dpi) → lat/lon
-  const PLANO_W = 2400, PLANO_H = 2675;
-  const AF_LAT = [-1.1498059675629435e-07, -1.337972814725863e-05, -26.296628714163564];
-  const AF_LON = [1.4575534747793875e-05, 1.9014188133714693e-07, -59.383492970162585];
-  function planoALatLng(xPct, yPct) {
-    const px = (Number(xPct) / 100) * PLANO_W, py = (Number(yPct) / 100) * PLANO_H;
-    return [AF_LAT[0] * px + AF_LAT[1] * py + AF_LAT[2], AF_LON[0] * px + AF_LON[1] * py + AF_LON[2]];
-  }
-  const ESQ_NO = planoALatLng(0, 0), ESQ_SE = planoALatLng(100, 100);
-  const LIMITES_PLANO = [[ESQ_SE[0], ESQ_NO[1]], [ESQ_NO[0], ESQ_SE[1]]];   // [[sur, oeste], [norte, este]]
+  // Conversión plano → coordenadas reales: assets/js/geo.js
+  const planoALatLng = window.CaszaGeo.planoALatLng;
+  const LIMITES_PLANO = window.CaszaGeo.LIMITES_PLANO;
 
   // `state` es una constante global de app.js (no cuelga de window)
   const S = () => (typeof state !== 'undefined' ? state : null);
@@ -61,7 +54,8 @@
         div.innerHTML = `
           <label><input type="checkbox" data-js-plano-encima> <span class="mr-txt-largo">Mostrar plano municipal encima</span><span class="mr-txt-corto">Plano encima</span></label>
           <label class="mapa-real-opacidad" hidden>Transparencia
-            <input type="range" min="20" max="90" value="60" data-js-plano-opacidad></label>`;
+            <input type="range" min="20" max="90" value="60" data-js-plano-opacidad></label>
+          ${ES_ADMIN ? '<label><input type="checkbox" data-js-ver-gps checked> 📍 Criaderos con GPS (<span data-js-cuenta-gps>…</span>)</label>' : ''}`;
         L.DomEvent.disableClickPropagation(div);
         L.DomEvent.disableScrollPropagation(div);
         const chk = div.querySelector('[data-js-plano-encima]');
@@ -72,16 +66,21 @@
           if (capaBarrios) capaBarrios.eachLayer((m) => m.setZIndexOffset(1000));
         });
         rango.addEventListener('input', () => capaPlano.setOpacity(rango.value / 100));
+        div.querySelector('[data-js-ver-gps]')?.addEventListener('change', (ev) => {
+          if (ev.target.checked) capaCriaderos.addTo(mapa); else capaCriaderos.remove();
+        });
         return div;
       },
     });
     new Control().addTo(mapa);
 
     capaBarrios = L.layerGroup().addTo(mapa);
+    if (ES_ADMIN) capaCriaderos = L.layerGroup().addTo(mapa);
     mapa.fitBounds(LIMITES_PLANO, { padding: [10, 10] });
     ajustarDetalle();
     dibujarBarrios();
     encuadrarBarrios();
+    cargarPuntos();
   }
 
   // Encuadre inicial: solo la zona con barrios (más cerca que el plano completo)
@@ -118,12 +117,122 @@
     });
   }
 
+
+  /* ---------- Solo administrador: criaderos con ubicación GPS ---------- */
+  // El público solo ve el semáforo por barrio; los pines exactos y las fotos son del panel.
+  const ES_ADMIN = window.REPORTES_ACCESS === true && !!document.querySelector('#reportes');
+  const COLOR_ESTADO = { pendiente: '#dc2626', verificado: '#d97706', controlado: '#16a34a' };
+  const TXT_ESTADO = { pendiente: 'Sin controlar', verificado: 'Verificado', controlado: 'Controlado' };
+  let capaCriaderos = null, pinesReporte = {}, verPendiente = null, recargaProgramada = null;
+
+  function urlFoto(id) { return (window.BASE_URL ?? '') + '/api/index.php?route=reportes/' + id + '/foto'; }
+
+  async function guardarUbicacion(id, ubicacion) {
+    await api(`reportes/${id}`, { method: 'PATCH', body: JSON.stringify({ ubicacion }) });
+  }
+
+  function popupReporte(p, marker) {
+    const div = document.createElement('div');
+    div.className = 'mr-popup';
+    div.innerHTML = `
+      <strong>${esc(p.icono)} ${esc(p.titulo)}</strong>
+      <span class="mr-popup-estado" style="--pin:${COLOR_ESTADO[p.estado] || '#64748b'}">${TXT_ESTADO[p.estado] || esc(p.estado)}</span>
+      <small>📍 ${esc(p.barrio)}${p.referencia ? ' · ' + esc(p.referencia) : ''}</small>
+      <small>🏷️ ${esc(p.tipo)} · 🕒 ${esc(String(p.creado_en).slice(0, 16))}</small>
+      ${Number(p.tiene_foto) === 1 ? `<img src="${urlFoto(p.id)}" alt="Foto del criadero" loading="lazy" data-ver-foto>` : ''}
+      <div class="mr-popup-acciones">
+        <button type="button" data-mover>✋ Mover pin</button>
+        <button type="button" data-quitar class="peligro">🗑️ Quitar ubicación</button>
+      </div>`;
+    div.querySelector('[data-ver-foto]')?.addEventListener('click', () => window.CaszaAdmin && window.CaszaAdmin.verFoto(p.id));
+    div.querySelector('[data-mover]').addEventListener('click', () => {
+      marker.closePopup();
+      marker.dragging.enable();
+      marker.getElement()?.classList.add('moviendo');
+      avisoMapa('✋ Arrastrá el pin hasta el lugar correcto y soltalo.');
+    });
+    div.querySelector('[data-quitar]').addEventListener('click', async () => {
+      if (!confirm('¿Quitar la ubicación de este reporte? El reporte se mantiene, solo se borra el pin.')) return;
+      try { await guardarUbicacion(p.id, null); avisoMapa('Ubicación quitada.'); await cargarPuntos(); if (typeof cargarReportes === 'function') cargarReportes(); }
+      catch (e) { alert(e.message); }
+    });
+    return div;
+  }
+
+  function dibujarPuntos(puntos) {
+    if (!capaCriaderos) return;
+    capaCriaderos.clearLayers();
+    pinesReporte = {};
+    puntos.forEach((p) => {
+      const m = L.marker([p.lat, p.lng], {
+        icon: window.CaszaGeo.iconoPin(COLOR_ESTADO[p.estado], p.icono),
+        title: `${p.titulo} (${TXT_ESTADO[p.estado] || p.estado})`,
+        zIndexOffset: 2000, riseOnHover: true,
+      }).addTo(capaCriaderos);
+      m.bindPopup(() => popupReporte(p, m), { minWidth: 220, maxWidth: 260 });
+      m.on('dragend', async () => {
+        m.dragging.disable();
+        m.getElement()?.classList.remove('moviendo');
+        const ll = m.getLatLng();
+        if (confirm('¿Guardar la nueva ubicación de este criadero?')) {
+          try { await guardarUbicacion(p.id, { lat: ll.lat, lng: ll.lng }); avisoMapa('✅ Ubicación actualizada.'); }
+          catch (e) { alert(e.message); }
+        }
+        // Se redibujan los pines (Leaflet ignora el primer toque tras arrastrar un pin)
+        await cargarPuntos();
+      });
+      pinesReporte[p.id] = m;
+    });
+    const cuenta = document.querySelector('[data-js-cuenta-gps]');
+    if (cuenta) cuenta.textContent = puntos.length;
+    if (verPendiente && pinesReporte[verPendiente]) { abrirPin(verPendiente); verPendiente = null; }
+  }
+
+  async function cargarPuntos() {
+    if (!ES_ADMIN || !mapa || typeof api !== 'function') return;
+    try { dibujarPuntos(await api('reportes-mapa')); } catch (e) { /* sin sesión o sin conexión: no se muestran pines */ }
+  }
+
+  function programarRecarga() {
+    if (!ES_ADMIN || !mapa) return;
+    clearTimeout(recargaProgramada);
+    recargaProgramada = setTimeout(cargarPuntos, 300);
+  }
+
+  function abrirPin(id) {
+    const m = pinesReporte[id];
+    if (!m) return false;
+    mapa.setView(m.getLatLng(), 18, { animate: false });
+    setTimeout(() => m.openPopup(), 50);   // el popup se acomoda solo dentro del mapa
+    return true;
+  }
+
+  let avisoTimer = null;
+  function avisoMapa(texto) {
+    const cont = document.querySelector('[data-js-mapa-real]');
+    let el = cont.querySelector('.mr-aviso');
+    if (!el) { el = document.createElement('div'); el.className = 'mr-aviso'; cont.appendChild(el); }
+    el.textContent = texto;
+    el.hidden = false;
+    clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(() => { el.hidden = true; }, 4000);
+  }
+
+  window.CaszaMapaReal = {
+    verReporte(id) {
+      mostrarVista('real');
+      document.querySelector('#mapa')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => { if (!abrirPin(id)) { verPendiente = id; cargarPuntos(); } }, 120);
+    },
+  };
+
   // Cada vez que el plano se redibuja (datos nuevos, clima, filtros, selección), se actualiza el mapa real
   if (typeof renderMapa === 'function') {
     const renderOriginal = renderMapa;
     renderMapa = function (riesgo) {   // eslint-disable-line no-global-assign
       renderOriginal(riesgo);
       dibujarBarrios();
+      programarRecarga();   // datos nuevos → pines del administrador al día
     };
   }
 

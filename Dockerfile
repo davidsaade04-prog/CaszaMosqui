@@ -10,7 +10,8 @@ RUN apt-get update \
 
 ENV TZ=America/Argentina/Buenos_Aires
 RUN echo "date.timezone=America/Argentina/Buenos_Aires" > /usr/local/etc/php/conf.d/tz.ini \
- && echo "display_errors=Off" > /usr/local/etc/php/conf.d/errores.ini
+ && echo "display_errors=Off" > /usr/local/etc/php/conf.d/errores.ini \
+ && printf "post_max_size=64M\nupload_max_filesize=64M\nmemory_limit=256M\n" > /usr/local/etc/php/conf.d/limites.ini
 
 COPY docker/apache-casza.conf /etc/apache2/conf-enabled/casza.conf
 COPY . /var/www/html/

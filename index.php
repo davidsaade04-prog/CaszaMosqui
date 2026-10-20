@@ -24,7 +24,7 @@ header('Pragma: no-cache');
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260926-mapa">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261019-gps">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
@@ -118,6 +118,36 @@ header('Pragma: no-cache');
         Descripción <span class="req">*</span>
         <textarea name="descripcion" rows="4" required placeholder="Contanos qué viste y dónde… puede haber larvas o mosquitos."></textarea>
       </label>
+
+      <!-- Opcionales: ubicación GPS y foto (solo las ve el administrador) -->
+      <div class="reporte-extras">
+        <fieldset class="reporte-extra">
+          <legend>📍 Ubicación exacta <span class="opcional">(opcional)</span></legend>
+          <p class="ayuda">Ayuda a encontrar el criadero. Solo la ve el administrador.</p>
+          <div class="extra-botones">
+            <button type="button" class="btn-ghost" data-js-gps>📍 Usar mi ubicación</button>
+            <button type="button" class="btn-ghost" data-js-marcar>🗺️ Marcar en el mapa</button>
+            <button type="button" class="btn-quitar" data-js-quitar-ubic hidden>✕ Quitar ubicación</button>
+          </div>
+          <p class="extra-estado" data-js-gps-estado aria-live="polite"></p>
+          <div class="mini-mapa" data-js-mini-mapa hidden></div>
+        </fieldset>
+        <fieldset class="reporte-extra">
+          <legend>📷 Foto <span class="opcional">(opcional)</span></legend>
+          <p class="ayuda">Sacá una foto del criadero o elegí una de tu galería. Solo la ve el administrador.</p>
+          <div class="extra-botones">
+            <button type="button" class="btn-ghost" data-js-foto-camara>📷 Sacar foto</button>
+            <button type="button" class="btn-ghost" data-js-foto-galeria>🖼️ Elegir de la galería</button>
+          </div>
+          <input type="file" accept="image/*" capture="environment" data-js-foto-input-camara hidden>
+          <input type="file" accept="image/*" data-js-foto-input-galeria hidden>
+          <p class="extra-estado" data-js-foto-estado aria-live="polite"></p>
+          <div class="foto-preview" data-js-foto-preview hidden>
+            <img alt="Vista previa de la foto del criadero" data-js-foto-img>
+            <button type="button" class="btn-quitar" data-js-quitar-foto>✕ Quitar foto</button>
+          </div>
+        </fieldset>
+      </div>
       <button type="submit">Reportar criadero</button>
       <p class="form-msg" data-js-form-msg aria-live="polite"></p>
     </form>
@@ -208,9 +238,11 @@ header('Pragma: no-cache');
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/reporte-extra.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

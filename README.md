@@ -46,6 +46,16 @@ La misma app corre en Render con **PostgreSQL**, sin tocar la versión de XAMPP:
 Cada `git push` a la rama `main` vuelve a publicar la web automáticamente.
 Plan gratuito: la web "se duerme" tras 15 min sin visitas (tarda ~1 min en despertar) y la base gratuita vence a los 30 días.
 
+## 📍 Ubicación GPS y 📷 foto en los reportes
+
+- Al reportar, el vecino puede (opcionalmente) usar el **GPS del celular** o **marcar el punto en un mapa** (pin arrastrable)
+  y **sacar o elegir una foto**. La foto se achica en el celular (~150 KB) y se le borran los metadatos.
+- La web sugiere el **barrio** según el punto marcado (`assets/js/geo.js`).
+- Solo el **administrador** ve los pines exactos (pestaña 🌎 Mapa real del panel) y las fotos; puede **mover o quitar el pin** y **eliminar la foto**.
+- Las fotos se guardan **en la base de datos** (tabla `fotos_reporte`): el disco del servidor gratuito de Render se borra al reiniciar.
+- Las columnas/tablas nuevas se crean solas (`inc/migraciones.php`), sin borrar datos, tanto en XAMPP como en Render.
+- **Respaldo y mudanza** de la base gratuita (vence cada 30 días): ver `docs/MUDANZA.md`.
+
 ## 🔐 Acceso a Reportes
 
 Cualquier vecino puede **crear un reporte** sin usuario. La sección **Reportes** (listado, verificar, controlar, votar y eliminar) requiere iniciar sesión (sesión PHP con token CSRF; la API también rechaza estas operaciones sin sesión). Credenciales iniciales, definidas en `inc/config.php`:

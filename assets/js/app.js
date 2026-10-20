@@ -543,6 +543,9 @@ function reporteCard(r) {
   } else if (r.estado === 'verificado') {
     acciones.push(`<button class="btn-mini btn-verde" data-estado data-id="${r.id}" data-sig="controlado">✅ Controlar</button>`);
   }
+  // GPS y foto (solo los ve el administrador: la lista de reportes requiere sesión)
+  if (Number(r.tiene_foto) === 1) acciones.push(`<button class="btn-mini" data-ver-foto data-id="${r.id}" title="Ver la foto que envió el vecino">📷 Foto</button>`);
+  if (r.lat != null && r.lng != null) acciones.push(`<button class="btn-mini" data-ver-mapa data-id="${r.id}" title="Ver el punto exacto en el mapa real">📍 Mapa</button>`);
   acciones.push(`<button class="btn-voto" data-voto data-id="${r.id}">👍 ${r.votos}</button>`);
   acciones.push(`<button class="btn-del" data-eliminar data-id="${r.id}" title="Eliminar">✕</button>`);
 
@@ -692,6 +695,10 @@ async function crearReporte(ev) {
   console.log('Form data:', data);
   const msg = $('[data-js-form-msg]');
   msg.className = 'form-msg';
+  // Opcionales: ubicación GPS y foto (assets/js/reporte-extra.js)
+  const extra = window.CaszaReporteExtra ? window.CaszaReporteExtra.datos() : {};
+  const btnEnviar = form.querySelector('button[type=submit]');
+  if (btnEnviar) { btnEnviar.disabled = true; btnEnviar.dataset.texto = btnEnviar.textContent; btnEnviar.textContent = extra.foto ? 'Enviando foto…' : 'Enviando…'; }
 
   try {
     await api('reportes', {
@@ -702,6 +709,7 @@ async function crearReporte(ev) {
         titulo: data.titulo.trim(),
         descripcion: data.descripcion.trim(),
         referencia: data.referencia.trim(),
+        ...extra,
       }),
     });
     incrementarLimite();
@@ -710,10 +718,16 @@ async function crearReporte(ev) {
     msg.textContent = '✅ ¡Criadero reportado! Ya aparece en el mapa de tu barrio.';
     msg.classList.add('ok');
     form.reset();
+    if (window.CaszaReporteExtra) window.CaszaReporteExtra.limpiar();
     await Promise.all([cargarStats(), cargarReportes()]);
   } catch (err) {
     msg.textContent = '❌ ' + err.message;
     msg.classList.add('err');
+  }
+  finally {
+    if (btnEnviar && btnEnviar.dataset.texto) btnEnviar.textContent = btnEnviar.dataset.texto;
+    actualizarEstadoLimite();   // vuelve a habilitar el botón (o lo deja bloqueado por el límite diario)
+    if (btnEnviar && puedeInteractuar()) btnEnviar.disabled = false;
   }
 }
 
@@ -839,6 +853,8 @@ function bind() {
     if (target.hasAttribute('data-estado')) cambiarEstado(target.dataset.id, target.dataset.sig);
     if (target.hasAttribute('data-voto')) votarReporte(target.dataset.id);
     if (target.hasAttribute('data-eliminar')) eliminarReporte(target.dataset.id);
+    if (target.hasAttribute('data-ver-foto') && window.CaszaAdmin) window.CaszaAdmin.verFoto(target.dataset.id);
+    if (target.hasAttribute('data-ver-mapa') && window.CaszaMapaReal) window.CaszaMapaReal.verReporte(target.dataset.id);
   });
 
   // Paginación del listado de reportes

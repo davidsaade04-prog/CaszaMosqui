@@ -9,6 +9,7 @@ CREATE DATABASE IF NOT EXISTS formosahack
 USE formosahack;
 
 -- Re-ejecutable (idempotente): elimina y recrea tablas
+DROP TABLE IF EXISTS fotos_reporte;
 DROP TABLE IF EXISTS comentarios;
 DROP TABLE IF EXISTS reportes;
 DROP TABLE IF EXISTS barrios;
@@ -43,6 +44,8 @@ CREATE TABLE reportes (
   estado      ENUM('pendiente','verificado','controlado') NOT NULL DEFAULT 'pendiente',
   votos       INT UNSIGNED NOT NULL DEFAULT 0,
   creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  lat         DOUBLE NULL,  -- ubicación GPS opcional
+  lng         DOUBLE NULL,
   CONSTRAINT fk_reporte_tipo   FOREIGN KEY (tipo_id)
     REFERENCES tipos_criadero (id) ON DELETE CASCADE,
   CONSTRAINT fk_reporte_barrio FOREIGN KEY (barrio_id)
@@ -63,4 +66,16 @@ CREATE TABLE comentarios (
     REFERENCES barrios (id) ON DELETE CASCADE,
   INDEX idx_comentario_barrio (barrio_id),
   INDEX idx_comentario_fecha (creado_en)
+) ENGINE = InnoDB;
+
+-- Una foto opcional por reporte (achicada en el celular antes de subirla)
+CREATE TABLE fotos_reporte (
+  reporte_id INT UNSIGNED NOT NULL PRIMARY KEY,
+  mime       VARCHAR(20)  NOT NULL,
+  datos      MEDIUMBLOB   NOT NULL,
+  ancho      INT UNSIGNED NOT NULL DEFAULT 0,
+  alto       INT UNSIGNED NOT NULL DEFAULT 0,
+  bytes      INT UNSIGNED NOT NULL DEFAULT 0,
+  creado_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_foto_reporte FOREIGN KEY (reporte_id) REFERENCES reportes (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;

@@ -24,7 +24,7 @@ header('Pragma: no-cache');
   <meta name="robots" content="noindex">
   <title>Panel de reportes · <?= e(APP_NAME) ?></title>
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20260926-mapa">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261019-gps">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -54,7 +54,8 @@ header('Pragma: no-cache');
 <main class="container">
 
   <p class="admin-aviso">ℹ️ Lo que cambies acá (verificar, controlar o eliminar un reporte) se refleja al instante en los
-     indicadores y en el <strong>semáforo del mapa</strong> que ve la comunidad. Tocá un barrio del mapa para ver solo sus criaderos.</p>
+     indicadores y en el <strong>semáforo del mapa</strong> que ve la comunidad. Tocá un barrio del mapa para ver solo sus criaderos.
+     En <strong>🌎 Mapa real</strong> ves el punto exacto de los reportes que llegaron con GPS (solo vos los ves).</p>
 
   <?php require __DIR__ . '/inc/kpis.php'; ?>
 
@@ -92,6 +93,19 @@ header('Pragma: no-cache');
     </nav>
   </section>
 
+  <!-- RESPALDO / MUDANZA DE LA BASE -->
+  <section class="panel respaldo" data-js-respaldo>
+    <h2>🗄️ Respaldo de datos</h2>
+    <p class="sub">Descargá una copia de todos los reportes, comentarios y fotos. Sirve para mudar la base de datos
+       (la base gratuita de Render vence cada 30 días) o como resguardo. Guía paso a paso: <code>docs/MUDANZA.md</code>.</p>
+    <div class="extra-botones">
+      <button type="button" data-js-respaldo-descargar>⬇️ Descargar respaldo</button>
+      <button type="button" class="btn-ghost" data-js-respaldo-restaurar>⬆️ Restaurar un respaldo…</button>
+    </div>
+    <input type="file" accept="application/json,.json" data-js-respaldo-archivo hidden>
+    <p class="extra-estado" data-js-respaldo-estado aria-live="polite"></p>
+  </section>
+
 </main>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
@@ -101,8 +115,10 @@ header('Pragma: no-cache');
   window.REPORTES_ACCESS = true;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20260926-mapa"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/admin-extra.js?v=20261019-gps"></script>
 </body>
 </html>
