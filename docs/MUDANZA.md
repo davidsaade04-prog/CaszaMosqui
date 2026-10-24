@@ -4,7 +4,8 @@ La base PostgreSQL **gratuita** de Render vence **30 días después de creada**.
 Después hay **14 días de gracia** y, si no se pasa a un plan pago, Render la borra con todos sus datos.
 Esta guía permite "mudarse" a una base gratuita nueva **sin perder nada** (reportes, comentarios, fotos y ubicaciones).
 
-> Base actual: `caszamosqui-db`, creada el 25/09/2026 → vence el **25/10/2026** (borrado: ~08/11/2026).
+> Base actual: `caszamosqui-db-2`, creada el 24/10/2026 → vence el **23/11/2026** a las 16:47 (hora de Argentina).
+> Historial: `caszamosqui-db` (25/09 → 24/10/2026, datos de prueba, borrada sin respaldo).
 >
 > ⚠️ **El respaldo hay que bajarlo ANTES del vencimiento**: una base gratuita vencida queda
 > **inaccesible** (la web deja de mostrar datos y no se puede descargar nada) salvo que se pague.
