@@ -55,6 +55,7 @@
           <label><input type="checkbox" data-js-plano-encima> <span class="mr-txt-largo">Mostrar plano municipal encima</span><span class="mr-txt-corto">Plano encima</span></label>
           <label class="mapa-real-opacidad" hidden>Transparencia
             <input type="range" min="20" max="90" value="60" data-js-plano-opacidad></label>
+          ${CENTROS.length ? '<label><input type="checkbox" data-js-ver-salud checked> 🏥 Centros de salud</label>' : ''}
           ${ES_ADMIN ? '<label><input type="checkbox" data-js-ver-gps checked> 📍 Criaderos con GPS (<span data-js-cuenta-gps>…</span>)</label>' : ''}
           ${ES_ADMIN && window.CaszaCalor ? `<label><input type="checkbox" data-js-ver-calor> 🔥 Mapa de calor</label>
             <div class="mapa-calor-leyenda" hidden><span class="mapa-calor-barra"></span>
@@ -70,6 +71,9 @@
           if (capaBarrios) capaBarrios.eachLayer((m) => m.setZIndexOffset(1000));
         });
         rango.addEventListener('input', () => capaPlano.setOpacity(rango.value / 100));
+        div.querySelector('[data-js-ver-salud]')?.addEventListener('change', (ev) => {
+          if (ev.target.checked) capaSalud.addTo(mapa); else capaSalud.remove();
+        });
         div.querySelector('[data-js-ver-gps]')?.addEventListener('change', (ev) => {
           if (ev.target.checked) capaCriaderos.addTo(mapa); else capaCriaderos.remove();
         });
@@ -84,6 +88,7 @@
     new Control().addTo(mapa);
 
     capaBarrios = L.layerGroup().addTo(mapa);
+    dibujarSalud();
     if (ES_ADMIN) capaCriaderos = L.layerGroup().addTo(mapa);
     mapa.fitBounds(LIMITES_PLANO, { padding: [10, 10] });
     ajustarDetalle();
@@ -126,6 +131,34 @@
     });
   }
 
+
+  /* ---------- Centros de salud (para todos; datos de inc/centros-salud.php) ---------- */
+  const CENTROS = (window.CENTROS_SALUD || []).filter((c) => c.lat != null);
+  let capaSalud = null;
+  function dibujarSalud() {
+    if (!CENTROS.length) return;
+    capaSalud = L.layerGroup().addTo(mapa);
+    CENTROS.forEach((c) => {
+      const m = L.marker([c.lat, c.lng], {
+        icon: window.CaszaGeo.iconoPin(c.guardia ? '#dc2626' : '#0284c7', c.guardia ? '🏥' : '🩺'),
+        title: c.nombre, zIndexOffset: 1500, riseOnHover: true,
+      }).addTo(capaSalud);
+      m.bindPopup(() => {
+        const div = document.createElement('div');
+        div.className = 'mr-popup';
+        const h = window.CaszaSalud ? window.CaszaSalud.estadoHorario(c.horario) : { estado: 'sin-dato', texto: c.horario_txt };
+        div.innerHTML = `<strong>${esc(c.nombre)}</strong>
+          <span class="salud-estado ${h.estado}">${esc(h.texto)}</span>
+          <small>📍 ${esc(c.direccion)}</small>
+          <div class="mr-popup-acciones">
+            ${c.telefonos[0] ? `<a class="salud-btn salud-llamar" href="tel:${esc(c.telefonos[0][2])}">📞 Llamar</a>` : ''}
+            ${window.CaszaSalud && window.CaszaSalud.comoLlegar ? '<button type="button" class="salud-btn salud-ir" data-ir>🧭 Cómo llegar</button>' : ''}
+          </div>`;
+        div.querySelector('[data-ir]')?.addEventListener('click', () => { m.closePopup(); window.CaszaSalud.comoLlegar(c.id); });
+        return div;
+      }, { minWidth: 210 });
+    });
+  }
 
   /* ---------- Solo administrador: criaderos con ubicación GPS ---------- */
   // El público solo ve el semáforo por barrio; los pines exactos y las fotos son del panel.

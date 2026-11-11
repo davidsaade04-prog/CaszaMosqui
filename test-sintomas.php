@@ -19,7 +19,7 @@ require_once __DIR__ . '/inc/helpers.php';
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261111-app">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261112-salud">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
@@ -147,14 +147,20 @@ require_once __DIR__ . '/inc/helpers.php';
 
   <section class="test-card" style="background: #f0fdfa; border-color: #99f6e4;">
     <h3>📍 Dónde atenderse en El Colorado</h3>
-    <ul style="margin: 0; padding-left: 20px; color: var(--texto);">
-      <li><strong>Hospital Distrital El Colorado</strong> — Guardia 24h</li>
-      <li><strong>Centro de Salud "Dr. Ramón Carrillo"</strong> — Av. San Martín</li>
-      <li><strong>CAPS Barrio San Martín</strong> — Calle 25 de Mayo</li>
-      <li><strong>CAPS Barrio 2 de Abril</strong> — Calle 25 de Mayo</li>
+    <ul class="salud-mini">
+      <?php foreach (require __DIR__ . '/inc/centros-salud.php' as $c): ?>
+      <li>
+        <strong><?= e($c['nombre']) ?></strong> — <?= e($c['direccion']) ?><br>
+        <small>🕒 <?= e($c['horario_txt']) ?></small>
+        <?php foreach ($c['telefonos'] as [$etq, $ver, $marcar]): ?>
+          <a class="salud-tel" href="tel:<?= e($marcar) ?>">📞 <?= e($ver) ?></a>
+        <?php endforeach; ?>
+      </li>
+      <?php endforeach; ?>
     </ul>
+    <p style="margin: 10px 0 0;"><a href="<?= e(BASE_URL) ?>/#salud">🧭 Ver el mapa y cómo llegar →</a></p>
     <p style="margin-top: 12px; font-size: .9rem; color: var(--suave);">
-      🚨 <strong>Si tenés síntomas de ALERTA (rojos), no esperes: andá ya a la guardia.</strong>
+      🚨 <strong>Si tenés síntomas de ALERTA (rojos), no esperes: andá ya a la guardia del hospital o llamá al <a href="tel:107">107</a>.</strong>
     </p>
   </section>
 

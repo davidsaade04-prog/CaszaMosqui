@@ -15,7 +15,7 @@
 
    Para publicar cambios en los archivos cacheados: subir VERSION.
    ============================================================ */
-const VERSION = 'casza-v1-20261111';
+const VERSION = 'casza-v2-20261112';
 const CACHE_APP = `${VERSION}-app`;
 const CACHE_DATOS = `${VERSION}-datos`;
 const CACHE_MAPA = 'casza-teselas-v1';   // independiente de VERSION: las teselas no cambian
@@ -40,6 +40,7 @@ const PRECARGA = [
   'assets/js/leaflet.js',
   'assets/js/geo.js',
   'assets/js/mapa-real.js',
+  'assets/js/centros-salud.js',
   'assets/js/reporte-extra.js',
   'assets/js/offline.js',
   'assets/js/chatbot.js',

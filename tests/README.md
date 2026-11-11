@@ -13,6 +13,7 @@
 ```bash
 php tests/unit.php
 node tests/riesgo.test.mjs
+node tests/salud.test.mjs
 php tests/api.php http://localhost/formosahack-2026 admin admin123   # ⚠️ crea y borra reportes de prueba
 ```
 

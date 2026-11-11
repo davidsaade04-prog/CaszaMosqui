@@ -30,7 +30,7 @@ header('Pragma: no-cache');
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261111-app">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261112-salud">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
@@ -52,6 +52,7 @@ header('Pragma: no-cache');
       <a href="#" data-nav="mapa" class="active">Mapa de riesgo</a>
       <a href="#" data-nav="nuevo">+ Reportar</a>
       <a href="#" data-nav="prevencion">Prevención</a>
+      <a href="#" data-nav="salud">Centros de salud</a>
       <a href="#" data-nav="quiz">Cuestionario</a>
       <a href="<?= e(BASE_URL) ?>/test-sintomas.php">Test de Síntomas</a>
       <a href="<?= e(BASE_URL) ?>/comentarios.php">Comentarios</a>
@@ -213,10 +214,34 @@ header('Pragma: no-cache');
         <ul>
           <li>Fiebre alta</li><li>Dolor detrás de los ojos</li><li>Dolor muscular y articular</li><li>Sarpullido</li>
         </ul>
-        <p><strong>No te automediques</strong> (la aspirina puede complicar el dengue): consultá al centro de salud más cercano.</p>
+        <p><strong>No te automediques</strong> (la aspirina puede complicar el dengue): consultá al <a href="#salud" data-nav="salud">centro de salud más cercano</a>.</p>
       </div>
       <a class="prev-alerta-btn" href="<?= e(BASE_URL) ?>/test-sintomas.php">Hacer el test de síntomas →</a>
     </div>
+  </section>
+
+  <!-- CENTROS DE SALUD -->
+  <section class="panel" id="salud">
+    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver Al Inicio
+    </a>
+    <h2>🏥 Centros de salud de El Colorado</h2>
+    <p class="sub">Si tenés fiebre o síntomas, <strong>no te automediques</strong>: consultá. Tocá <strong>📞</strong> para llamar o <strong>🧭 Cómo llegar</strong> para ver el camino desde donde estás.</p>
+    <div class="salud-barra">
+      <a class="salud-107" href="tel:107"><span>🚑</span><span><strong>Emergencias: 107</strong><small>Signos de alarma: llamá o andá a la guardia</small></span></a>
+      <button type="button" class="salud-btn salud-cerca" data-js-mas-cerca>📍 ¿Cuál me queda más cerca?</button>
+      <p class="salud-cerca-aviso" data-js-cerca-aviso aria-live="polite"></p>
+    </div>
+    <div class="salud-grid">
+      <div class="salud-lista" data-js-centros></div>
+      <div class="salud-lateral">
+        <div class="salud-mapa" data-js-salud-mapa aria-label="Mapa de los centros de salud"></div>
+        <div class="salud-ruta" data-js-ruta hidden aria-live="polite"></div>
+      </div>
+    </div>
+    <p class="salud-pie">Datos verificados por el equipo de CaszaMosqui (noviembre 2026). Las salas de primeros auxilios de los barrios se suman cuando confirmemos sus datos.
+      Antes de ir a un consultorio o clínica privada, llamá para confirmar el horario.</p>
   </section>
 
   <!-- CUESTIONARIO -->
@@ -241,13 +266,15 @@ header('Pragma: no-cache');
 <script>
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;
   window.REPORTES_ACCESS = <?= $reportes_logueado ? 'true' : 'false' ?>;
+  window.CENTROS_SALUD = <?= json_encode(require __DIR__ . '/inc/centros-salud.php', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261112-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261112-salud"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/centros-salud.js?v=20261112-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/reporte-extra.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>

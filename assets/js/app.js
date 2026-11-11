@@ -778,7 +778,7 @@ async function eliminarReporte(id) {
 function navegar(dest) {
   console.log('navegar() called with:', dest);
   $$('[data-nav]').forEach((x) => x.classList.remove('active'));
-  const target = dest === 'reportes' || dest === 'prevencion' || dest === 'quiz'
+  const target = dest === 'reportes' || dest === 'prevencion' || dest === 'quiz' || dest === 'salud'
     ? $('#' + dest)
     : dest === 'nuevo' ? $('#nuevo') : $('#mapa');
   console.log('Target element found:', !!target);

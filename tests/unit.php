@@ -59,4 +59,30 @@ prueba('genera un .xlsx válido (zip con las partes de Excel)', function () {
     unlink($tmp);
 });
 
+seccion('Centros de salud (inc/centros-salud.php)');
+$centros = require __DIR__ . '/../inc/centros-salud.php';
+prueba('cada centro tiene los datos que usa la página', function () use ($centros) {
+    $ids = [];
+    foreach ($centros as $c) {
+        foreach (['id', 'nombre', 'tipo', 'direccion', 'horario_txt', 'telefonos'] as $k) verdadero(!empty($c[$k]) || $k === 'telefonos', "{$c['nombre']}: falta $k");
+        verdadero(!isset($ids[$c['id']]), "id repetido {$c['id']}");
+        $ids[$c['id']] = true;
+    }
+});
+prueba('ubicaciones dentro de El Colorado', function () use ($centros) {
+    foreach ($centros as $c) {
+        if ($c['lat'] === null) { verdadero($c['lng'] === null, "{$c['nombre']}: lat sin lng"); continue; }
+        verdadero($c['lat'] > -26.37 && $c['lat'] < -26.26 && $c['lng'] > -59.43 && $c['lng'] < -59.30, "{$c['nombre']} fuera de la zona");
+    }
+});
+prueba('teléfonos marcables (+54…) y horarios bien escritos', function () use ($centros) {
+    foreach ($centros as $c) {
+        foreach ($c['telefonos'] as $t) verdadero(preg_match('/^\+54\d{10,11}$/', $t[2]) === 1, "{$c['nombre']}: número {$t[2]}");
+        if (is_array($c['horario'])) foreach ($c['horario'] as $f) {
+            verdadero(preg_match('/^\d\d:\d\d$/', $f['desde']) && preg_match('/^\d\d:\d\d$/', $f['hasta']) && $f['desde'] < $f['hasta'], "{$c['nombre']}: franja");
+            verdadero(!array_diff($f['dias'], range(1, 7)), "{$c['nombre']}: días 1–7");
+        } else verdadero($c['horario'] === '24h' || $c['horario'] === null, "{$c['nombre']}: horario");
+    }
+});
+
 exit(resumen_pruebas());

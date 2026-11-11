@@ -32,7 +32,20 @@ return [
   'que_hacer_sintomas' => [
     'claves' => ['que hago' => 2.5, 'que tengo que hacer' => 2.5, 'que hacer si' => 2.5, 'creo que tengo' => 3, 'me siento mal' => 2,
                  'tengo fiebre' => 3, 'a donde voy' => 2, 'donde me atiendo' => 3, 'consultar' => 1.5, 'medico' => 1],
-    'respuesta' => "Si tenés fiebre u otros síntomas:\n- **Consultá en el centro de salud u hospital** más cercano (en El Colorado, el hospital figura en el barrio San Martín según el plano municipal)\n- **Tomá mucho líquido** (agua, jugos, sales de rehidratación)\n- Hacé **reposo**\n- **No te automediques**: nada de aspirina ni ibuprofeno\n- Usá repelente y mosquitero para que ningún mosquito te pique y lleve el virus a otra persona\n\nSi aparecen **signos de alarma** (dolor de panza fuerte, vómitos que no paran, sangrados, mucho sueño), andá a la guardia o llamá al **107**.",
+    'respuesta' => "Si tenés fiebre u otros síntomas:\n- **Consultá en el centro de salud u hospital** más cercano (en El Colorado, el **Hospital** está en calle Santa Fe y tiene **guardia las 24 h**: (0370) 448-0024)\n- **Tomá mucho líquido** (agua, jugos, sales de rehidratación)\n- Hacé **reposo**\n- **No te automediques**: nada de aspirina ni ibuprofeno\n- Usá repelente y mosquitero para que ningún mosquito te pique y lleve el virus a otra persona\n\nSi aparecen **signos de alarma** (dolor de panza fuerte, vómitos que no paran, sangrados, mucho sueño), andá a la guardia o llamá al **107**.",
+  ],
+
+  'centros_salud' => [
+    'claves' => ['hospital' => 3, 'centro de salud' => 3, 'centros de salud' => 3, 'clinica' => 3, 'consultorio' => 3, 'guardia' => 1.5,
+                 'telefono' => 2, 'donde queda' => 2, 'direccion' => 2, 'horario' => 2, 'donde me atiendo' => 3.5, 'a donde voy' => 2.5, 'donde atenderme' => 3.5, 'sala' => 1],
+    'respuesta' => (function () {
+        $txt = "🏥 **Dónde atenderse en El Colorado:**\n";
+        foreach (require __DIR__ . '/../inc/centros-salud.php' as $c) {
+            $tel = $c['telefonos'] ? ' · 📞 ' . implode(' / ', array_map(fn ($t) => $t[1], $c['telefonos'])) : '';
+            $txt .= "- **{$c['nombre']}**: {$c['direccion']} · {$c['horario_txt']}{$tel}\n";
+        }
+        return $txt . "\nEn la sección **Centros de salud** de la página podés llamar con un toque y ver **cómo llegar** desde donde estás. Ante una emergencia, **107**.";
+    })(),
   ],
 
   'medicamentos' => [

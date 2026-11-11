@@ -61,6 +61,10 @@ Plan gratuito: la web "se duerme" tras 15 min sin visitas (tarda ~1 min en despe
 - **🔥 Mapa de calor** (pestaña Mapa real del panel): concentración de criaderos sin controlar y verificados
   (`assets/js/mapa-calor.js`).
 
+## 🏥 Centros de salud
+- Sección **Centros de salud** en el inicio (y pines 🏥 en el Mapa real): dirección, horario con **“abierto ahora”**, botón para **llamar** (y WhatsApp donde hay), **¿cuál me queda más cerca?** (GPS) y **Cómo llegar**: dibuja el recorrido a pie o en auto con las indicaciones paso a paso (OSRM de FOSSGIS sobre OpenStreetMap) y abre Google Maps para la navegación por voz.
+- Los datos están en un solo lugar: `inc/centros-salud.php` (los usan el inicio, el test de síntomas y el chatbot). Para sumar un centro, copiar un bloque; lo que no esté confirmado va en `null`.
+
 ## ✅ Pruebas automáticas
 
 `tests/` prueba el algoritmo de riesgo (`inc/riesgo.php`, igual en PHP y en el navegador), el Excel y la API completa.
