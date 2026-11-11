@@ -11,9 +11,15 @@ require_once __DIR__ . '/inc/helpers.php';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Test de Síntomas · <?= e(APP_NAME) ?></title>
-  <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
-  <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261019-gps">
+  <link rel="manifest" href="<?= e(BASE_URL) ?>/manifest.webmanifest">
+  <meta name="theme-color" content="#134e4a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CaszaMosqui">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
+  <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261111-app">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
@@ -220,6 +226,7 @@ require_once __DIR__ . '/inc/helpers.php';
     }
   });
 </script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
 </body>
 </html>

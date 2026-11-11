@@ -1,0 +1,28 @@
+{
+  "name": "CaszaMosqui · Vigilancia comunitaria contra los mosquitos",
+  "short_name": "CaszaMosqui",
+  "description": "Reportá criaderos de mosquitos, mirá el mapa de riesgo de tu barrio en El Colorado (Formosa) y aprendé a prevenir dengue, zika y chikungunya.",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "start_url": "./?origen=app",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1220",
+  "theme_color": "#134e4a",
+  "categories": ["health", "utilities"],
+  "icons": [
+    { "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/app/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/img/app/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Reportar un criadero", "short_name": "Reportar", "url": "./?origen=app#nuevo",
+      "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Mapa de riesgo", "short_name": "Mapa", "url": "./?origen=app#mapa",
+      "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Test de síntomas", "short_name": "Síntomas", "url": "./test-sintomas.php",
+      "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

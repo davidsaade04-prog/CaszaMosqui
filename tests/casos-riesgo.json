@@ -1,0 +1,26 @@
+{
+  "_nota": "Casos del algoritmo de riesgo. Los usan tests/unit.php (PHP) y tests/riesgo.test.mjs (navegador) para que las dos versiones den siempre lo mismo.",
+  "nivel_por_indice": [
+    [0, "bajo"], [1, "bajo"], [2, "medio"], [3, "medio"], [4, "alto"], [9, "alto"]
+  ],
+  "puntaje_clima": [
+    { "lluvia14": 0,   "temp": 15,  "prevista": 0,  "puntaje": 0, "nivel": "bajo",  "bonus": 0 },
+    { "lluvia14": 20,  "temp": 15,  "prevista": 0,  "puntaje": 1, "nivel": "bajo",  "bonus": 0 },
+    { "lluvia14": 19.9,"temp": 18,  "prevista": 0,  "puntaje": 1, "nivel": "bajo",  "bonus": 0 },
+    { "lluvia14": 20,  "temp": 18,  "prevista": 0,  "puntaje": 2, "nivel": "medio", "bonus": 1 },
+    { "lluvia14": 50,  "temp": 10,  "prevista": 0,  "puntaje": 2, "nivel": "medio", "bonus": 1 },
+    { "lluvia14": 0,   "temp": 25,  "prevista": 10, "puntaje": 3, "nivel": "medio", "bonus": 1 },
+    { "lluvia14": 50,  "temp": 22,  "prevista": 0,  "puntaje": 4, "nivel": "alto",  "bonus": 2 },
+    { "lluvia14": 80,  "temp": 32,  "prevista": 15, "puntaje": 5, "nivel": "alto",  "bonus": 2 },
+    { "lluvia14": 80,  "temp": 33,  "prevista": 0,  "puntaje": 3, "nivel": "medio", "bonus": 1 },
+    { "lluvia14": 80,  "temp": 35.1,"prevista": 0,  "puntaje": 2, "nivel": "medio", "bonus": 1 }
+  ],
+  "riesgo_con_clima": [
+    { "activos": 0, "bonus": 2, "total": 0, "nivel": "bajo" },
+    { "activos": 1, "bonus": 0, "total": 1, "nivel": "bajo" },
+    { "activos": 1, "bonus": 1, "total": 2, "nivel": "medio" },
+    { "activos": 2, "bonus": 2, "total": 4, "nivel": "alto" },
+    { "activos": 3, "bonus": 0, "total": 3, "nivel": "medio" },
+    { "activos": 4, "bonus": 0, "total": 4, "nivel": "alto" }
+  ]
+}

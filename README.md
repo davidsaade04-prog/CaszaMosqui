@@ -46,6 +46,26 @@ La misma app corre en Render con **PostgreSQL**, sin tocar la versión de XAMPP:
 Cada `git push` a la rama `main` vuelve a publicar la web automáticamente.
 Plan gratuito: la web "se duerme" tras 15 min sin visitas (tarda ~1 min en despertar) y la base gratuita vence a los 30 días.
 
+## 📲 App instalable y modo sin internet
+
+- Se puede **instalar** en el celular o la PC (botón **📲 Instalar app**; en iPhone: Compartir → *Agregar a inicio*).
+- `sw.js` (service worker) guarda la app en el dispositivo: abre **sin señal** con los últimos datos del mapa.
+- Un reporte hecho sin señal queda en una **cola** en el celular (`assets/js/offline.js`, IndexedDB) y se envía
+  solo al volver la conexión. Cada reporte lleva un `cliente_id`: si llega dos veces, el servidor lo guarda una sola vez.
+- Al cambiar archivos que la app guarda, subir `VERSION` en `sw.js`.
+
+## 📊 Panel: Excel y mapa de calor
+
+- **📊 Excel**: descarga los reportes con los filtros elegidos (hoja de reportes con link al mapa, resumen por barrio
+  e información). Generado sin librerías (`inc/xlsx.php`).
+- **🔥 Mapa de calor** (pestaña Mapa real del panel): concentración de criaderos sin controlar y verificados
+  (`assets/js/mapa-calor.js`).
+
+## ✅ Pruebas automáticas
+
+`tests/` prueba el algoritmo de riesgo (`inc/riesgo.php`, igual en PHP y en el navegador), el Excel y la API completa.
+Se corren solas en GitHub en cada cambio (`.github/workflows/pruebas.yml`). Ver `tests/README.md`.
+
 ## 📍 Ubicación GPS y 📷 foto en los reportes
 
 - Al reportar, el vecino puede (opcionalmente) usar el **GPS del celular** o **marcar el punto en un mapa** (pin arrastrable)

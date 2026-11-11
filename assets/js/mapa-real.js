@@ -55,7 +55,11 @@
           <label><input type="checkbox" data-js-plano-encima> <span class="mr-txt-largo">Mostrar plano municipal encima</span><span class="mr-txt-corto">Plano encima</span></label>
           <label class="mapa-real-opacidad" hidden>Transparencia
             <input type="range" min="20" max="90" value="60" data-js-plano-opacidad></label>
-          ${ES_ADMIN ? '<label><input type="checkbox" data-js-ver-gps checked> 📍 Criaderos con GPS (<span data-js-cuenta-gps>…</span>)</label>' : ''}`;
+          ${ES_ADMIN ? '<label><input type="checkbox" data-js-ver-gps checked> 📍 Criaderos con GPS (<span data-js-cuenta-gps>…</span>)</label>' : ''}
+          ${ES_ADMIN && window.CaszaCalor ? `<label><input type="checkbox" data-js-ver-calor> 🔥 Mapa de calor</label>
+            <div class="mapa-calor-leyenda" hidden><span class="mapa-calor-barra"></span>
+              <span class="mapa-calor-txt"><span>Pocos</span><span>Muchos criaderos</span></span>
+              <small>Criaderos sin controlar y verificados. Los que no tienen GPS se ubican en el centro de su barrio.</small></div>` : ''}`;
         L.DomEvent.disableClickPropagation(div);
         L.DomEvent.disableScrollPropagation(div);
         const chk = div.querySelector('[data-js-plano-encima]');
@@ -68,6 +72,11 @@
         rango.addEventListener('input', () => capaPlano.setOpacity(rango.value / 100));
         div.querySelector('[data-js-ver-gps]')?.addEventListener('change', (ev) => {
           if (ev.target.checked) capaCriaderos.addTo(mapa); else capaCriaderos.remove();
+        });
+        div.querySelector('[data-js-ver-calor]')?.addEventListener('change', (ev) => {
+          div.querySelector('.mapa-calor-leyenda').hidden = !ev.target.checked;
+          if (ev.target.checked) { capaCalor.addTo(mapa); cargarCalor(); } else capaCalor.remove();
+          document.querySelector('[data-js-mapa-real]').classList.toggle('con-calor', ev.target.checked);
         });
         return div;
       },
@@ -124,6 +133,15 @@
   const COLOR_ESTADO = { pendiente: '#dc2626', verificado: '#d97706', controlado: '#16a34a' };
   const TXT_ESTADO = { pendiente: 'Sin controlar', verificado: 'Verificado', controlado: 'Controlado' };
   let capaCriaderos = null, pinesReporte = {}, verPendiente = null, recargaProgramada = null;
+  const capaCalor = ES_ADMIN && window.CaszaCalor ? window.CaszaCalor.crear() : null;
+
+  async function cargarCalor() {
+    if (!capaCalor || !mapa || !mapa.hasLayer(capaCalor)) return;
+    try {
+      const reportes = await api('reportes-calor');
+      capaCalor.setPuntos(window.CaszaCalor.prepararPuntos(reportes, (typeof state !== 'undefined' && state.barrios) || []));
+    } catch (e) { /* sin sesión o sin conexión */ }
+  }
 
   function urlFoto(id) { return (window.BASE_URL ?? '') + '/api/index.php?route=reportes/' + id + '/foto'; }
 
@@ -196,7 +214,7 @@
   function programarRecarga() {
     if (!ES_ADMIN || !mapa) return;
     clearTimeout(recargaProgramada);
-    recargaProgramada = setTimeout(cargarPuntos, 300);
+    recargaProgramada = setTimeout(() => { cargarPuntos(); cargarCalor(); }, 300);
   }
 
   function abrirPin(id) {

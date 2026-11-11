@@ -22,6 +22,7 @@
 
 require_once __DIR__ . '/../inc/helpers.php';
 require_once __DIR__ . '/../inc/auth.php';
+require_once __DIR__ . '/../inc/riesgo.php';
 
 /* ---------- Resolución de la ruta ---------- */
 $route = $_GET['route'] ?? '';
@@ -130,6 +131,33 @@ function blob_a_texto($v): string
     return is_resource($v) ? (string) stream_get_contents($v) : (string) $v;
 }
 
+/**
+ * Filtros de la lista de reportes (los mismos del panel): tipo, barrio, estado y búsqueda.
+ * Devuelve [where, parámetros]. Lo usan la lista paginada y la exportación a Excel.
+ */
+function filtros_reportes(array $get): array
+{
+    $tipo   = val($get['tipo'] ?? '');
+    $barrio = val($get['barrio'] ?? '');
+    $estado = val($get['estado'] ?? '');
+    $q      = trim((string) ($get['q'] ?? ''));
+    $where  = ' WHERE 1=1';
+    $pars   = [];
+    if ($tipo !== '')   { $where .= ' AND r.tipo_id = ?';   $pars[] = (int) $tipo; }
+    if ($barrio !== '') { $where .= ' AND r.barrio_id = ?'; $pars[] = (int) $barrio; }
+    if ($estado !== '' && validar_estado($estado)) {
+        $where .= ' AND r.estado = ?';
+        $pars[] = $estado;
+    }
+    if ($q !== '') {
+        // LOWER() hace la búsqueda insensible a mayúsculas también en PostgreSQL
+        $where .= ' AND (LOWER(r.titulo) LIKE LOWER(?) OR LOWER(r.descripcion) LIKE LOWER(?) OR LOWER(r.referencia) LIKE LOWER(?) OR LOWER(b.nombre) LIKE LOWER(?) OR LOWER(t.nombre) LIKE LOWER(?))';
+        $like = "%{$q}%";
+        array_push($pars, $like, $like, $like, $like, $like);
+    }
+    return [$where, $pars];
+}
+
 /** La consulta y la gestión de reportes requieren la sesión de Reportes. */
 function exigir_acceso_reportes(): void
 {
@@ -199,10 +227,9 @@ if ($route === 'stats' && $method === 'GET') {
     foreach ($riesgo as &$b) {
         $activos     = (int) $b['activos'];
         $controlados = (int) $b['controlados'];
-        // Índice de riesgo activo = criaderos sin controlar en el barrio
+        // Índice de riesgo activo = criaderos sin controlar en el barrio (reglas en inc/riesgo.php)
         $b['indice'] = $activos;
-        $b['nivel']  = $activos >= 4 ? 'alto'
-                     : ($activos >= 2 ? 'medio' : 'bajo');
+        $b['nivel']  = nivel_por_indice($activos);
         unset($b['activos'], $b['controlados']);
     }
 
@@ -227,29 +254,9 @@ if ($route === 'stats' && $method === 'GET') {
 if (preg_match('#^reportes$#', $route) && $method === 'GET') {
     exigir_acceso_reportes();
 
-    $tipo   = val($_GET['tipo'] ?? '');
-    $barrio = val($_GET['barrio'] ?? '');
-    $estado = val($_GET['estado'] ?? '');
-    $q      = trim($_GET['q'] ?? '');
+    [$where, $pars] = filtros_reportes($_GET);
     $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? $_GET['page'] ?? 1));
     $porPagina = min(200, max(1, (int) ($_GET['por_pagina'] ?? $_GET['limit'] ?? 4)));
-
-    // Se construye una sola condición para contar y luego traer la página actual.
-    $where = ' WHERE 1=1';
-    $pars  = [];
-
-    if ($tipo !== '')   { $where .= ' AND r.tipo_id = ?';   $pars[] = (int) $tipo; }
-    if ($barrio !== '') { $where .= ' AND r.barrio_id = ?'; $pars[] = (int) $barrio; }
-    if ($estado !== '' && validar_estado($estado)) {
-        $where .= ' AND r.estado = ?';
-        $pars[] = $estado;
-    }
-    if ($q !== '') {
-        // LOWER() hace la búsqueda insensible a mayúsculas también en PostgreSQL
-        $where .= ' AND (LOWER(r.titulo) LIKE LOWER(?) OR LOWER(r.descripcion) LIKE LOWER(?) OR LOWER(r.referencia) LIKE LOWER(?) OR LOWER(b.nombre) LIKE LOWER(?) OR LOWER(t.nombre) LIKE LOWER(?))';
-        $like = "%{$q}%";
-        array_push($pars, $like, $like, $like, $like, $like);
-    }
 
     $countStmt = db()->prepare(
         "SELECT COUNT(*)
@@ -395,11 +402,30 @@ if ($route === 'reportes-mapa' && $method === 'GET') {
     json_response(['ok' => true, 'data' => $stmt->fetchAll()]);
 }
 
+// MAPA DE CALOR: criaderos activos (sin controlar + verificados) para el administrador.
+// Los que tienen GPS van con su punto exacto; los demás, al centro de su barrio (lo ubica el navegador).
+if ($route === 'reportes-calor' && $method === 'GET') {
+    exigir_acceso_reportes();
+    $stmt = db()->query(
+        "SELECT r.id, r.estado, r.lat, r.lng, r.barrio_id
+           FROM reportes r
+          WHERE r.estado IN ('pendiente', 'verificado')"
+    );
+    $puntos = array_map(fn ($r) => [
+        'id'        => (int) $r['id'],
+        'estado'    => $r['estado'],
+        'lat'       => $r['lat'] !== null ? (float) $r['lat'] : null,
+        'lng'       => $r['lng'] !== null ? (float) $r['lng'] : null,
+        'barrio_id' => (int) $r['barrio_id'],
+    ], $stmt->fetchAll());
+    json_response(['ok' => true, 'data' => $puntos]);
+}
+
 // RESPALDO completo (para mudar la base gratuita de Render a una nueva)
 const RESPALDO_TABLAS = [
     'tipos_criadero' => ['id', 'nombre', 'color', 'icono'],
     'barrios'        => ['id', 'nombre', 'localidad', 'x', 'y', 'poblacion'],
-    'reportes'       => ['id', 'tipo_id', 'barrio_id', 'titulo', 'descripcion', 'referencia', 'estado', 'votos', 'creado_en', 'lat', 'lng'],
+    'reportes'       => ['id', 'tipo_id', 'barrio_id', 'titulo', 'descripcion', 'referencia', 'estado', 'votos', 'creado_en', 'lat', 'lng', 'cliente_id'],
     'comentarios'    => ['id', 'barrio_id', 'tipo', 'texto', 'creado_en'],
     'fotos_reporte'  => ['reporte_id', 'mime', 'datos', 'ancho', 'alto', 'bytes', 'creado_en'],
 ];
@@ -494,6 +520,90 @@ if ($route === 'respaldo' && $method === 'POST') {
     json_response(['ok' => true, 'message' => 'Respaldo restaurado', 'totales' => $totales]);
 }
 
+// EXPORTAR reportes a Excel (solo administrador). Usa los mismos filtros que la lista.
+if ($route === 'reportes-excel' && $method === 'GET') {
+    exigir_acceso_reportes();
+    require_once __DIR__ . '/../inc/xlsx.php';
+
+    [$where, $pars] = filtros_reportes($_GET);
+    $stmt = db()->prepare(
+        "SELECT r.id, r.creado_en, r.estado, t.nombre AS tipo, b.nombre AS barrio, r.titulo, r.descripcion,
+                r.referencia, r.votos, r.lat, r.lng,
+                CASE WHEN EXISTS (SELECT 1 FROM fotos_reporte f WHERE f.reporte_id = r.id) THEN 1 ELSE 0 END AS tiene_foto
+           FROM reportes r
+           JOIN tipos_criadero t ON t.id = r.tipo_id
+           JOIN barrios b        ON b.id = r.barrio_id
+         $where
+          ORDER BY r.creado_en DESC, r.id DESC"
+    );
+    $stmt->execute($pars);
+    $nombresEstado = ['pendiente' => 'Sin controlar', 'verificado' => 'Verificado', 'controlado' => 'Controlado'];
+
+    $filas = [];
+    foreach ($stmt->fetchAll() as $r) {
+        $conGps = $r['lat'] !== null && $r['lng'] !== null;
+        $filas[] = [
+            (int) $r['id'],
+            substr((string) $r['creado_en'], 0, 16),
+            $nombresEstado[$r['estado']] ?? $r['estado'],
+            $r['tipo'],
+            $r['barrio'],
+            $r['titulo'],
+            $r['descripcion'],
+            $r['referencia'],
+            (int) $r['votos'],
+            (int) $r['tiene_foto'] === 1 ? 'Sí' : 'No',
+            $conGps ? round((float) $r['lat'], 6) : null,
+            $conGps ? round((float) $r['lng'], 6) : null,
+            $conGps ? 'https://www.google.com/maps?q=' . round((float) $r['lat'], 6) . ',' . round((float) $r['lng'], 6) : null,
+        ];
+    }
+
+    // Resumen por barrio (todos los reportes, sin filtros, para ver el panorama completo)
+    $resumen = db()->query(
+        "SELECT b.nombre,
+                SUM(CASE WHEN r.estado = 'pendiente'  THEN 1 ELSE 0 END) AS pendientes,
+                SUM(CASE WHEN r.estado = 'verificado' THEN 1 ELSE 0 END) AS verificados,
+                SUM(CASE WHEN r.estado = 'controlado' THEN 1 ELSE 0 END) AS controlados,
+                COUNT(r.id) AS total
+           FROM barrios b
+           LEFT JOIN reportes r ON r.barrio_id = b.id
+          GROUP BY b.id, b.nombre
+          ORDER BY (SUM(CASE WHEN r.estado IN ('pendiente','verificado') THEN 1 ELSE 0 END)) DESC, b.nombre"
+    )->fetchAll();
+    $filasResumen = [];
+    $niveles = ['alto' => '🔴 Alto', 'medio' => '🟠 Medio', 'bajo' => '🟢 Bajo'];
+    foreach ($resumen as $b) {
+        $activos = (int) $b['pendientes'] + (int) $b['verificados'];
+        $filasResumen[] = [$b['nombre'], (int) $b['pendientes'], (int) $b['verificados'], (int) $b['controlados'],
+                           (int) $b['total'], $activos, $niveles[nivel_por_indice($activos)]];
+    }
+
+    $filtros = [];
+    foreach (['estado' => 'Estado', 'tipo' => 'Tipo (id)', 'barrio' => 'Barrio (id)', 'q' => 'Búsqueda'] as $k => $txt) {
+        if (trim((string) ($_GET[$k] ?? '')) !== '') $filtros[] = [$txt, (string) $_GET[$k]];
+    }
+
+    $x = new XlsxSimple();
+    $x->hoja('Reportes', ['ID', 'Fecha', 'Estado', 'Tipo de criadero', 'Barrio', 'Título', 'Descripción', 'Referencia',
+                          'Votos', 'Foto', 'Latitud', 'Longitud', 'Ubicación'], $filas, [
+        'anchos'  => [7, 17, 14, 22, 20, 30, 50, 28, 7, 7, 11, 11, 16],
+        'ajustar' => [5 => true, 6 => true, 7 => true],
+        'links'   => [12 => true],
+    ]);
+    $x->hoja('Resumen por barrio', ['Barrio', 'Sin controlar', 'Verificados', 'Controlados', 'Total', 'Activos', 'Semáforo'],
+             $filasResumen, ['anchos' => [26, 14, 12, 12, 9, 9, 12]]);
+    $x->hoja('Información', ['Dato', 'Valor'], array_merge([
+        ['Generado', date('d/m/Y H:i')],
+        ['Reportes en la hoja "Reportes"', count($filas)],
+        ['Filtros aplicados', $filtros ? 'Sí' : 'Ninguno (todos los reportes)'],
+    ], $filtros, [
+        ['Semáforo', 'Activos = sin controlar + verificados. 0-1 bajo · 2-3 medio · 4 o más alto (sin contar el clima).'],
+        ['Fuente', 'CaszaMosqui · El Colorado, Formosa'],
+    ]), ['anchos' => [30, 90], 'ajustar' => [1 => true]]);
+    $x->descargar('caszamosqui-reportes-' . date('Y-m-d') . '.xlsx');
+}
+
 // CREAR reporte
 if ($route === 'reportes' && $method === 'POST') {
     $b = body_json();
@@ -517,14 +627,36 @@ if ($route === 'reportes' && $method === 'POST') {
     $ubic = leer_ubicacion($b['lat'] ?? null, $b['lng'] ?? null);
     $foto = leer_foto($b['foto'] ?? null);
 
+    // Identificador del celular: si el mismo reporte llega dos veces (reenvío sin señal), se guarda una sola
+    $clienteId = trim((string) ($b['cliente_id'] ?? ''));
+    if ($clienteId !== '' && !preg_match('/^[A-Za-z0-9-]{8,40}$/', $clienteId)) {
+        json_error('Identificador de envío inválido.');
+    }
+    $buscarDuplicado = function () use ($clienteId): ?int {
+        if ($clienteId === '') return null;
+        $st = db()->prepare('SELECT id FROM reportes WHERE cliente_id = ?');
+        $st->execute([$clienteId]);
+        $v = $st->fetchColumn();
+        return $v === false ? null : (int) $v;
+    };
+    $responderDuplicado = function (int $id): void {
+        $st = db()->prepare('SELECT id, estado, creado_en FROM reportes WHERE id = ?');
+        $st->execute([$id]);
+        json_response(['ok' => true, 'duplicado' => true, 'message' => 'Este reporte ya se había recibido', 'data' => $st->fetch()]);
+    };
+    if (($ya = $buscarDuplicado()) !== null) {
+        $responderDuplicado($ya);
+    }
+
     $pdo = db();
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare(
-            'INSERT INTO reportes (tipo_id, barrio_id, titulo, descripcion, referencia, lat, lng)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO reportes (tipo_id, barrio_id, titulo, descripcion, referencia, lat, lng, cliente_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$tipo_id, $barrio_id, $titulo, $descripcion, $referencia, $ubic[0] ?? null, $ubic[1] ?? null]);
+        $stmt->execute([$tipo_id, $barrio_id, $titulo, $descripcion, $referencia,
+                        $ubic[0] ?? null, $ubic[1] ?? null, $clienteId !== '' ? $clienteId : null]);
         $id = (int) $pdo->lastInsertId();
         if ($foto) {
             guardar_foto($id, $foto);
@@ -532,11 +664,15 @@ if ($route === 'reportes' && $method === 'POST') {
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
+        // Dos envíos simultáneos del mismo reporte: el segundo choca con el índice único
+        if (($ya = $buscarDuplicado()) !== null) {
+            $responderDuplicado($ya);
+        }
         error_log('[CaszaMosqui] Error al guardar reporte: ' . $e->getMessage());
         json_error('No se pudo guardar el reporte. Probá de nuevo.', 500);
     }
 
-    $stmt = db()->prepare('SELECT * FROM reportes WHERE id = ?');
+    $stmt = db()->prepare('SELECT id, tipo_id, barrio_id, titulo, estado, votos, creado_en FROM reportes WHERE id = ?');
     $stmt->execute([$id]);
 
     json_response(['ok' => true, 'message' => 'Criadero reportado', 'data' => $stmt->fetch()], 201);

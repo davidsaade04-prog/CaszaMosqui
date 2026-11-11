@@ -45,6 +45,14 @@
 
   window.CaszaAdmin = { verFoto };
 
+  /* ---------------- Exportar a Excel (con los filtros elegidos) ---------------- */
+  document.querySelector('[data-js-exportar]')?.addEventListener('click', () => {
+    const f = (typeof state !== 'undefined' && state.filtros) || {};
+    const params = new URLSearchParams();
+    ['tipo', 'barrio', 'estado', 'q'].forEach((k) => { if (f[k]) params.set(k, f[k]); });
+    window.location.href = `${BASE}/api/index.php?route=reportes-excel${params.toString() ? '&' + params : ''}`;
+  });
+
   /* ---------------- Respaldo / mudanza ---------------- */
   const sec = document.querySelector('[data-js-respaldo]');
   if (!sec) return;

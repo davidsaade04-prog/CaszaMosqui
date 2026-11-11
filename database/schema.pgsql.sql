@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS reportes (
 -- v2: ubicación GPS opcional (para bases creadas antes de esta versión)
 ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION NULL;
 ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION NULL;
+-- v3: identificador del celular (evita duplicados al reenviar reportes hechos sin señal)
+ALTER TABLE reportes ADD COLUMN IF NOT EXISTS cliente_id VARCHAR(40) NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_reportes_cliente ON reportes (cliente_id);
 CREATE INDEX IF NOT EXISTS idx_reporte_tipo   ON reportes (tipo_id);
 CREATE INDEX IF NOT EXISTS idx_reporte_barrio ON reportes (barrio_id);
 CREATE INDEX IF NOT EXISTS idx_reporte_estado ON reportes (estado);

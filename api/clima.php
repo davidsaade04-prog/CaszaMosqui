@@ -15,6 +15,7 @@ declare(strict_types=1);
 date_default_timezone_set('America/Argentina/Cordoba');
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
+require_once __DIR__ . '/../inc/riesgo.php';
 
 const LAT        = -26.308;   // El Colorado, Formosa (verificar coordenadas)
 const LON        = -59.372;
@@ -97,16 +98,10 @@ function evaluar(array $d, string $fuente): array
     $tmedia7   = $medias7 ? array_sum($medias7) / count($medias7) : 0.0;
     $prevista3 = suma(array_slice($lluvia, $hoy, 4));
 
-    // Puntaje climático 0-5
-    $p = 0;
-    if ($lluvia14 >= 50)      $p += 2;
-    elseif ($lluvia14 >= 20)  $p += 1;
-    if ($tmedia7 >= 22 && $tmedia7 <= 32)                              $p += 2;
-    elseif (($tmedia7 >= 18 && $tmedia7 < 22) || ($tmedia7 > 32 && $tmedia7 <= 35)) $p += 1;
-    if ($prevista3 >= 10)     $p += 1;
-
-    $nivel = $p >= 4 ? 'alto' : ($p >= 2 ? 'medio' : 'bajo');
-    $bonus = ['alto' => 2, 'medio' => 1, 'bajo' => 0][$nivel];
+    // Puntaje climático 0-5 (reglas en inc/riesgo.php)
+    $p     = puntaje_clima((float) $lluvia14, (float) $tmedia7, (float) $prevista3);
+    $nivel = nivel_clima($p);
+    $bonus = bonus_clima($nivel);
 
     $mensajes = [
         'alto'  => 'La lluvia y la temperatura de los últimos días favorecen la eclosión de huevos y el desarrollo de larvas del Aedes aegypti. Esta semana cada criadero reportado es más peligroso.',

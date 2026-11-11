@@ -46,6 +46,8 @@ CREATE TABLE reportes (
   creado_en   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   lat         DOUBLE NULL,  -- ubicación GPS opcional
   lng         DOUBLE NULL,
+  cliente_id  VARCHAR(40) NULL,  -- generado por el celular (evita duplicados en reportes sin señal)
+  UNIQUE KEY ux_reportes_cliente (cliente_id),
   CONSTRAINT fk_reporte_tipo   FOREIGN KEY (tipo_id)
     REFERENCES tipos_criadero (id) ON DELETE CASCADE,
   CONSTRAINT fk_reporte_barrio FOREIGN KEY (barrio_id)

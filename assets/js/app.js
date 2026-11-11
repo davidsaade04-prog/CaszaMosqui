@@ -700,18 +700,33 @@ async function crearReporte(ev) {
   const btnEnviar = form.querySelector('button[type=submit]');
   if (btnEnviar) { btnEnviar.disabled = true; btnEnviar.dataset.texto = btnEnviar.textContent; btnEnviar.textContent = extra.foto ? 'Enviando foto…' : 'Enviando…'; }
 
+  const datos = {
+    tipo_id: Number(data.tipo_id),
+    barrio_id: Number(data.barrio_id),
+    titulo: data.titulo.trim(),
+    descripcion: data.descripcion.trim(),
+    referencia: data.referencia.trim(),
+    ...extra,
+    // Identificador del envío: si se reenvía (sin señal), el servidor no lo duplica
+    cliente_id: window.CaszaOffline ? window.CaszaOffline.nuevoId() : undefined,
+  };
+  const sinSenal = (err) => !navigator.onLine || err instanceof TypeError || (err && err.status === 503);
+
   try {
-    await api('reportes', {
-      method: 'POST',
-      body: JSON.stringify({
-        tipo_id: Number(data.tipo_id),
-        barrio_id: Number(data.barrio_id),
-        titulo: data.titulo.trim(),
-        descripcion: data.descripcion.trim(),
-        referencia: data.referencia.trim(),
-        ...extra,
-      }),
-    });
+    try {
+      await api('reportes', { method: 'POST', body: JSON.stringify(datos) });
+    } catch (err) {
+      // Sin señal: el reporte queda guardado en el celular y se envía solo al volver la conexión
+      if (!window.CaszaOffline || !sinSenal(err)) throw err;
+      await window.CaszaOffline.encolar(datos);
+      incrementarLimite();
+      actualizarEstadoLimite();
+      msg.textContent = '📵 Sin señal: guardamos el reporte en tu celular. Se va a enviar solo cuando vuelva la conexión.';
+      msg.classList.add('ok');
+      form.reset();
+      if (window.CaszaReporteExtra) window.CaszaReporteExtra.limpiar();
+      return;
+    }
     incrementarLimite();
     actualizarEstadoLimite();
     state.paginaReportes = 1;

@@ -23,8 +23,15 @@ header('Pragma: no-cache');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>Panel de reportes · <?= e(APP_NAME) ?></title>
-  <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" type="image/jpeg">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261019-gps">
+  <link rel="manifest" href="<?= e(BASE_URL) ?>/manifest.webmanifest">
+  <meta name="theme-color" content="#134e4a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="CaszaMosqui">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
+  <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261111-app">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -80,6 +87,7 @@ header('Pragma: no-cache');
         </select>
         <input type="search" name="q" placeholder="Buscar…" aria-label="Buscar">
         <button type="button" data-js-reset class="btn-ghost">Limpiar</button>
+        <button type="button" data-js-exportar class="btn-excel" title="Descarga los reportes con los filtros elegidos">📊 Excel</button>
       </form>
     </div>
     <div data-js-reportes>
@@ -115,10 +123,12 @@ header('Pragma: no-cache');
   window.REPORTES_ACCESS = true;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261111-app"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261019-gps"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/admin-extra.js?v=20261019-gps"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-calor.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/admin-extra.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
 </body>
 </html>

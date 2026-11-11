@@ -7,17 +7,32 @@
  *   - fotos_reporte                → una foto (opcional) por reporte, guardada en la base
  *     (el disco del servidor gratuito de Render se borra al reiniciar, la base no)
  *
+ * v3 · App sin internet:
+ *   - reportes.cliente_id → identificador que genera el celular para cada reporte.
+ *     Si un reporte hecho sin señal se reenvía dos veces, el servidor lo guarda una sola vez.
+ *
  * Funciona con MySQL/MariaDB (XAMPP) y PostgreSQL (Render).
  * db() la ejecuta una vez y deja una marca en cache/ para no repetirla en cada pedido.
  */
 
-const ESQUEMA_VERSION = 2;
+const ESQUEMA_VERSION = 3;
+
+/** true si la tabla reportes ya existe (en una base recién creada todavía no hay tablas). */
+function existe_tabla_reportes(PDO $pdo, string $driver): bool
+{
+    $sql = $driver === 'pgsql'
+        ? "SELECT to_regclass('public.reportes') IS NOT NULL"
+        : "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reportes'";
+    return (bool) $pdo->query($sql)->fetchColumn();
+}
 
 function migrar_esquema(PDO $pdo, string $driver): void
 {
     if ($driver === 'pgsql') {
         $pdo->exec('ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION NULL');
         $pdo->exec('ALTER TABLE reportes ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION NULL');
+        $pdo->exec('ALTER TABLE reportes ADD COLUMN IF NOT EXISTS cliente_id VARCHAR(40) NULL');
+        $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS ux_reportes_cliente ON reportes (cliente_id)');
         $pdo->exec(
             'CREATE TABLE IF NOT EXISTS fotos_reporte (
                reporte_id INTEGER PRIMARY KEY REFERENCES reportes (id) ON DELETE CASCADE,
@@ -37,11 +52,19 @@ function migrar_esquema(PDO $pdo, string $driver): void
         "SELECT COUNT(*) FROM information_schema.COLUMNS
           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reportes' AND COLUMN_NAME = ?"
     );
-    foreach (['lat', 'lng'] as $col) {
+    $columnas = ['lat' => 'DOUBLE NULL', 'lng' => 'DOUBLE NULL', 'cliente_id' => 'VARCHAR(40) NULL'];
+    foreach ($columnas as $col => $tipo) {
         $existe->execute([$col]);
         if ((int) $existe->fetchColumn() === 0) {
-            $pdo->exec("ALTER TABLE reportes ADD COLUMN $col DOUBLE NULL");
+            $pdo->exec("ALTER TABLE reportes ADD COLUMN $col $tipo");
         }
+    }
+    $indice = $pdo->query(
+        "SELECT COUNT(*) FROM information_schema.STATISTICS
+          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reportes' AND INDEX_NAME = 'ux_reportes_cliente'"
+    )->fetchColumn();
+    if ((int) $indice === 0) {
+        $pdo->exec('CREATE UNIQUE INDEX ux_reportes_cliente ON reportes (cliente_id)');
     }
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS fotos_reporte (
@@ -66,6 +89,9 @@ function asegurar_esquema(PDO $pdo, string $driver): void
         return;
     }
     try {
+        if (!existe_tabla_reportes($pdo, $driver)) {
+            return;   // base vacía: la crea scripts/setup.php o init-db-render.php
+        }
         migrar_esquema($pdo, $driver);
         if (!is_dir($dir)) {
             @mkdir($dir, 0775, true);

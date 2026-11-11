@@ -1,0 +1,63 @@
+# Pruebas automáticas de CaszaMosqui: se ejecutan solas en cada cambio que se sube a GitHub.
+# Levantan una base PostgreSQL de prueba (vacía), el sitio con PHP y corren tests/.
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: casza
+          POSTGRES_PASSWORD: casza
+          POSTGRES_DB: caszamosqui_pruebas
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U casza"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://casza:casza@127.0.0.1:5432/caszamosqui_pruebas
+      DB_SSLMODE: disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, pdo_mysql, zip, gd
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sintaxis de PHP y JavaScript
+        run: |
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l > /dev/null
+          for f in assets/js/*.js sw.js; do node --check "$f"; done
+
+      - name: Pruebas unitarias (algoritmo de riesgo, Excel)
+        run: php tests/unit.php
+
+      - name: Pruebas del riesgo en el navegador
+        run: node tests/riesgo.test.mjs
+
+      - name: Preparar base y servidor de prueba
+        run: |
+          cp inc/config.render.php inc/config.php
+          php scripts/init-db-render.php
+          php -S 127.0.0.1:8000 > /tmp/servidor.log 2>&1 &
+          sleep 2
+
+      - name: Pruebas de la API
+        run: php tests/api.php http://127.0.0.1:8000
+
+      - name: Registro del servidor (si algo falló)
+        if: failure()
+        run: cat /tmp/servidor.log
