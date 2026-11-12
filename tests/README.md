@@ -23,3 +23,4 @@ php tests/api.php http://localhost/formosahack-2026 admin admin123   # ⚠️ cr
 
 `.github/workflows/pruebas.yml` las corre solas en cada cambio que se sube, con una base PostgreSQL
 vacía. El resultado se ve en la pestaña **Actions** del repositorio (✓ verde o ✗ roja).
+node tests/capturas-ayuda.js   # regenera capturas y videos de la Ayuda (opcional)

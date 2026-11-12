@@ -32,7 +32,7 @@ if (!function_exists('nav_clase')) {
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-portada">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-ayuda">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
@@ -43,6 +43,11 @@ if (!function_exists('nav_clase')) {
 <header class="topbar">
   <?php require __DIR__ . '/acceso-admin.php'; ?>
   <div class="container">
+    <nav class="topbar-util" aria-label="Información">
+      <a href="<?= e(BASE_URL) ?>/ayuda.php"<?= nav_clase('ayuda', $active_page) ?>>Ayuda</a>
+      <a href="<?= e(BASE_URL) ?>/acerca.php"<?= nav_clase('acerca', $active_page) ?>>Acerca de nosotros</a>
+      <a href="<?= e(BASE_URL) ?>/contacto.php"<?= nav_clase('contacto', $active_page) ?>>Contacto</a>
+    </nav>
     <a class="brand" href="<?= e(BASE_URL) ?>/" aria-label="<?= e(APP_NAME) ?> · inicio">
       <img src="<?= e(BASE_URL) ?>/assets/img/logo-emblema.png" alt="" class="logo-img" width="52" height="59">
       <span class="brand-text">
