@@ -62,9 +62,20 @@ require __DIR__ . '/inc/cabecera.php';
             <?php foreach ($m['titulos'] as $t): ?><li>🎓 <?= e($t) ?></li><?php endforeach; ?>
           </ul>
         <?php endif; ?>
-        <?php if (!empty($m['linkedin'])): ?>
-          <a class="equipo-link" href="<?= e($m['linkedin']) ?>" target="_blank" rel="noopener">LinkedIn ↗</a>
-        <?php endif; ?>
+        <div class="equipo-contacto">
+          <?php if (!empty($m['whatsapp'])): ?>
+            <a href="https://wa.me/<?= e(preg_replace('/\D/', '', $m['whatsapp'])) ?>" target="_blank" rel="noopener" title="WhatsApp">💬 <?= e($m['whatsapp_txt'] ?: $m['whatsapp']) ?></a>
+          <?php endif; ?>
+          <?php if (!empty($m['email'])): ?>
+            <a href="mailto:<?= e($m['email']) ?>" title="Correo">✉️ <?= e($m['email']) ?></a>
+          <?php endif; ?>
+          <?php if (!empty($m['instagram'])): ?>
+            <a href="https://instagram.com/<?= e($m['instagram']) ?>" target="_blank" rel="noopener" title="Instagram">📸 @<?= e($m['instagram']) ?></a>
+          <?php endif; ?>
+          <?php if (!empty($m['linkedin'])): ?>
+            <a href="<?= e($m['linkedin']) ?>" target="_blank" rel="noopener">💼 LinkedIn</a>
+          <?php endif; ?>
+        </div>
       </article>
       <?php endforeach; ?>
     </div>

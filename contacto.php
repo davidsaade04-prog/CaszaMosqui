@@ -68,6 +68,18 @@ require __DIR__ . '/inc/cabecera.php';
       </div>
     </div>
 
+    <h3 class="contacto-sub">El equipo</h3>
+    <div class="contacto-equipo">
+      <?php foreach ($datos['equipo'] as $m): if (empty($m['email']) && empty($m['whatsapp'])) continue; ?>
+      <article>
+        <strong><?= e($m['nombre']) ?></strong>
+        <?php if (!empty($m['whatsapp'])): ?><a href="https://wa.me/<?= e(preg_replace('/\D/', '', $m['whatsapp'])) ?>" target="_blank" rel="noopener">💬 <?= e($m['whatsapp_txt'] ?: $m['whatsapp']) ?></a><?php endif; ?>
+        <?php if (!empty($m['email'])): ?><a href="mailto:<?= e($m['email']) ?>">✉️ <?= e($m['email']) ?></a><?php endif; ?>
+        <?php if (!empty($m['instagram'])): ?><a href="https://instagram.com/<?= e($m['instagram']) ?>" target="_blank" rel="noopener">📸 @<?= e($m['instagram']) ?></a><?php endif; ?>
+      </article>
+      <?php endforeach; ?>
+    </div>
+
     <p class="contacto-pie">Si sos vecino de El Colorado y querés avisar algo sobre la página, usá <a href="<?= e(BASE_URL) ?>/comentarios.php">Comentarios</a>; para reportar un criadero, <a href="<?= e(BASE_URL) ?>/reportar.php">Reportar</a>.</p>
   </section>
 

@@ -11,13 +11,21 @@ return [
         [
             'nombre'   => 'Guillermo Ocampo',
             'rol'      => '',            // qué hizo en CaszaMosqui, ej.: 'Desarrollo y datos'
-            'titulos'  => [],            // títulos / formación, ej.: ['Técnico en Informática', 'Auxiliar en IA']
-            'foto'     => '',                               // ej.: assets/img/equipo/guillermo.jpg (opcional)
+            'titulos'  => ['Técnico Superior en Desarrollo de Software', 'Técnico Inicial en Inteligencia Artificial', 'Técnico en Informática'],
+            'foto'     => 'assets/img/equipo/guillermo-ocampo.jpg',
+            'email'    => 'guilllermo.oc@gmail.com',
+            'whatsapp' => '+5493705067582',
+            'whatsapp_txt' => '3705 06-7582',
+            'instagram' => 'guilllermo_oc',
             'linkedin' => '',
         ],
         [
             'nombre'   => 'Lucas Ramírez',
             'rol'      => '',
+            'email'    => '',
+            'whatsapp' => '',
+            'whatsapp_txt' => '',
+            'instagram' => '',
             'titulos'  => [],
             'foto'     => '',
             'linkedin' => '',
@@ -25,6 +33,10 @@ return [
         [
             'nombre'   => 'David Oscar Saade',
             'rol'      => '',
+            'email'    => 'davidsaade04@gmail.com',
+            'whatsapp' => '+5493704837277',
+            'whatsapp_txt' => '3704 83-7277',
+            'instagram' => '',
             'titulos'  => ['Técnico en Administración de Empresas', 'Técnico Profesional Inicial Auxiliar en Inteligencia Artificial'],
             'foto'     => 'assets/img/equipo/david-saade.jpg',
             'linkedin' => '',
