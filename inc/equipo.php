@@ -23,18 +23,18 @@ return [
             'linkedin' => '',
         ],
         [
-            'nombre'   => 'David Saade',
+            'nombre'   => 'David Oscar Saade',
             'rol'      => '',
-            'titulos'  => [],
-            'foto'     => '',
+            'titulos'  => ['Técnico en Administración de Empresas', 'Técnico Profesional Inicial Auxiliar en Inteligencia Artificial'],
+            'foto'     => 'assets/img/equipo/david-saade.jpg',
             'linkedin' => '',
         ],
     ],
 
     'contacto' => [
-        'email'     => '',           // ej.: caszamosqui@gmail.com
-        'whatsapp'  => '',           // número para marcar, ej.: +5493704000000
-        'whatsapp_txt' => '',        // cómo mostrarlo, ej.: 3704 00-0000
+        'email'     => 'davidsaade04@gmail.com',
+        'whatsapp'  => '+5493704837277',
+        'whatsapp_txt' => '3704 83-7277',
         'ciudad'    => 'El Colorado, Formosa, Argentina',
         'redes'     => [
             // 'Instagram' => 'https://instagram.com/…',
