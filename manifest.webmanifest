@@ -18,11 +18,11 @@
     { "src": "assets/img/app/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Reportar un criadero", "short_name": "Reportar", "url": "./?origen=app#nuevo",
+    { "name": "Reportar un criadero", "short_name": "Reportar", "url": "./reportar.php?origen=app",
       "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] },
     { "name": "Mapa de riesgo", "short_name": "Mapa", "url": "./?origen=app#mapa",
       "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] },
-    { "name": "Centros de salud y cómo llegar", "short_name": "Salud", "url": "./?origen=app#salud",
+    { "name": "Centros de salud y cómo llegar", "short_name": "Salud", "url": "./centros-salud.php?origen=app",
       "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] },
     { "name": "Test de síntomas", "short_name": "Síntomas", "url": "./test-sintomas.php",
       "icons": [{ "src": "assets/img/app/icono-192.png", "sizes": "192x192", "type": "image/png" }] }

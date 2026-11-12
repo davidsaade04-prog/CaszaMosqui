@@ -299,10 +299,14 @@ async function cargarStats() {
   const stats = await api('stats');
   const porEstado = Object.fromEntries(stats.por_estado.map((s) => [s.estado, s.total]));
 
-  $('[data-kpi=total] strong').textContent = stats.total;
-  $('[data-kpi=pendiente] strong').textContent = porEstado.pendiente || 0;
-  $('[data-kpi=verificado] strong').textContent = porEstado.verificado || 0;
-  $('[data-kpi=controlado] strong').textContent = porEstado.controlado || 0;
+  // Los KPIs solo existen en la página del mapa y en el panel de administración.
+  const kpiTotal = $('[data-kpi=total] strong');
+  if (kpiTotal) {
+    kpiTotal.textContent = stats.total;
+    $('[data-kpi=pendiente] strong').textContent = porEstado.pendiente || 0;
+    $('[data-kpi=verificado] strong').textContent = porEstado.verificado || 0;
+    $('[data-kpi=controlado] strong').textContent = porEstado.controlado || 0;
+  }
 
   // Hero KPIs
   const hero = $('[data-js-hero-kpis]');
@@ -759,29 +763,9 @@ async function eliminarReporte(id) {
   } catch (err) { alert(err.message); }
 }
 
-/* ---------- Navegación ---------- */
-function navegar(dest) {
-  console.log('navegar() called with:', dest);
-  $$('[data-nav]').forEach((x) => x.classList.remove('active'));
-  const target = dest === 'reportes' || dest === 'prevencion' || dest === 'quiz' || dest === 'salud'
-    ? $('#' + dest)
-    : dest === 'nuevo' ? $('#nuevo') : $('#mapa');
-  console.log('Target element found:', !!target);
-  if (target) {
-    window.scrollTo({ top: target.offsetTop - 16, behavior: 'smooth' });
-    const nav = $(`.topbar a[data-nav="${dest}"]`);
-    if (nav) nav.classList.add('active');
-  }
-}
-
 /* ---------- Eventos ---------- */
 function bind() {
-  // Nav
-  $$('[data-nav]').forEach((a) => a.addEventListener('click', (ev) => {
-    console.log('Nav click:', a.dataset.nav);
-    ev.preventDefault();
-    navegar(a.dataset.nav);
-  }));
+  // El menú superior son enlaces reales a cada página: no requiere JavaScript.
 
   // Mapa: clic en barrio filtra reportes
   $('[data-js-mapa]')?.addEventListener('click', (ev) => {

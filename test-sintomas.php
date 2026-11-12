@@ -158,7 +158,7 @@ require_once __DIR__ . '/inc/helpers.php';
       </li>
       <?php endforeach; ?>
     </ul>
-    <p style="margin: 10px 0 0;"><a href="<?= e(BASE_URL) ?>/#salud">🧭 Ver el mapa y cómo llegar →</a></p>
+    <p style="margin: 10px 0 0;"><a href="<?= e(BASE_URL) ?>/centros-salud.php">🧭 Ver el mapa y cómo llegar →</a></p>
     <p style="margin-top: 12px; font-size: .9rem; color: var(--suave);">
       🚨 <strong>Si tenés síntomas de ALERTA (rojos), no esperes: andá ya a la guardia del hospital o llamá al <a href="tel:107">107</a>.</strong>
     </p>

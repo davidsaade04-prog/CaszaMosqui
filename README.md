@@ -108,6 +108,9 @@ El listado muestra 4 criaderos por página (Anterior / Siguiente / números de p
 | GET | `/api/?route=stats` | KPIs + índice de riesgo por barrio |
 | GET | `/api/clima.php` | Lluvia, temperatura y nivel de riesgo climático |
 
+## 🧭 Páginas
+Cada sección es una página propia (el menú superior son enlaces reales, sin JavaScript): `index.php` (mapa de riesgo), `reportar.php`, `prevencion.php`, `centros-salud.php`, `cuestionario.php`, `test-sintomas.php` y `comentarios.php`. La cabecera y los scripts comunes están en `inc/cabecera.php` e `inc/scripts.php`.
+
 ## 📁 Estructura
 
 ```

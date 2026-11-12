@@ -83,10 +83,11 @@ try {
       </div>
     </div>
     <nav>
-      <a href="<?= e(BASE_URL) ?>/#mapa">Mapa de riesgo</a>
-      <a href="<?= e(BASE_URL) ?>/#nuevo">+ Reportar</a>
-      <a href="<?= e(BASE_URL) ?>/#prevencion">Prevención</a>
-      <a href="<?= e(BASE_URL) ?>/#quiz">Cuestionario</a>
+      <a href="<?= e(BASE_URL) ?>/">Mapa de riesgo</a>
+      <a href="<?= e(BASE_URL) ?>/reportar.php">+ Reportar</a>
+      <a href="<?= e(BASE_URL) ?>/prevencion.php">Prevención</a>
+      <a href="<?= e(BASE_URL) ?>/centros-salud.php">Centros de salud</a>
+      <a href="<?= e(BASE_URL) ?>/cuestionario.php">Cuestionario</a>
       <a href="<?= e(BASE_URL) ?>/test-sintomas.php">Test de Síntomas</a>
       <a href="<?= e(BASE_URL) ?>/comentarios.php" class="active">Comentarios</a>
     </nav>
