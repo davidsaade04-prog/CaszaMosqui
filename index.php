@@ -23,14 +23,14 @@ header('Pragma: no-cache');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= e(APP_NAME) ?> · <?= e(APP_TAGLINE) ?></title>
   <link rel="manifest" href="<?= e(BASE_URL) ?>/manifest.webmanifest">
-  <meta name="theme-color" content="#134e4a">
+  <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="CaszaMosqui">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261112-salud">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-portada">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
@@ -41,13 +41,13 @@ header('Pragma: no-cache');
 <header class="topbar">
   <?php require __DIR__ . '/inc/acceso-admin.php'; ?>
   <div class="container">
-    <div class="brand">
-      <div class="brand-text">
-        <h1><?= e(APP_NAME) ?></h1>
-        <p><?= e(APP_TAGLINE) ?></p>
-      </div>
-      <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" alt="<?= e(APP_NAME) ?>" class="logo-img">
-    </div>
+    <a class="brand" href="<?= e(BASE_URL) ?>/" aria-label="<?= e(APP_NAME) ?> · inicio">
+      <img src="<?= e(BASE_URL) ?>/assets/img/logo-emblema.png" alt="" class="logo-img" width="52" height="59">
+      <span class="brand-text">
+        <strong><?= e(APP_NAME) ?></strong>
+        <span><?= e(APP_TAGLINE) ?></span>
+      </span>
+    </a>
     <nav>
       <a href="#" data-nav="mapa" class="active">Mapa de riesgo</a>
       <a href="#" data-nav="nuevo">+ Reportar</a>
@@ -62,15 +62,22 @@ header('Pragma: no-cache');
 
 <main class="container">
 
-  <!-- HERO -->
-  <section class="hero">
-    <div>
-      <h2>¿Dónde se crían los mosquitos?</h2>
+  <!-- PORTADA -->
+  <section class="hero" aria-labelledby="hero-titulo">
+    <div class="hero-texto">
+      <h2 id="hero-titulo">¿Dónde se crían los mosquitos?</h2>
       <p>Detectá y reportá los criaderos de tu barrio. Entre todos evitamos el
-         <strong>dengue, zika y chikungunya</strong>. 📍 Un reporte = un criadero menos.</p>
-      <a href="#" data-nav="nuevo" class="btn-hero">Reportar un criadero →</a>
+         <strong>dengue, zika y chikungunya</strong>. Un reporte = un criadero menos.</p>
+      <div class="hero-acciones">
+        <a href="#" data-nav="nuevo" class="btn-hero">Reportar un criadero
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#" data-nav="mapa" class="btn-hero-sec">Ver el mapa de riesgo</a>
+      </div>
+      <p class="hero-kpis" data-js-hero-kpis aria-live="polite"></p>
     </div>
-    <div class="hero-kpis" data-js-hero-kpis></div>
+    <div class="hero-logo" aria-hidden="true">
+      <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza-hero.webp" alt="" width="1172" height="896" fetchpriority="high">
+    </div>
   </section>
 
   <!-- ALERTA CLIMÁTICA -->
@@ -81,18 +88,6 @@ header('Pragma: no-cache');
   <?php require __DIR__ . '/inc/mapa.php'; ?>
 
   <?php require __DIR__ . '/inc/kpis.php'; ?>
-
-  <!-- TIPOS MÁS COMUNES -->
-  <section class="panel">
-    <a href="<?= e(BASE_URL) ?>/" class="btn-volver-inicio">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Volver Al Inicio
-    </a>
-    <h2>🐞 Criaderos más reportados</h2>
-    <div class="sectores" data-js-tipos>
-      <p class="loading">Cargando…</p>
-    </div>
-  </section>
 
   <!-- FORMULARIO -->
   <section class="panel" id="nuevo">
@@ -270,7 +265,7 @@ header('Pragma: no-cache');
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261112-salud"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261113-portada"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261112-salud"></script>

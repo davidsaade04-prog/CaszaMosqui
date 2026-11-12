@@ -307,22 +307,7 @@ async function cargarStats() {
   // Hero KPIs
   const hero = $('[data-js-hero-kpis]');
   if (hero) {
-    hero.innerHTML = `
-      <div class="hero-kpi"><strong>${stats.total}</strong><span>criaderos<br>reportados</span></div>
-      <div class="hero-kpi"><strong>${stats.controlados_pct}%</strong><span>de reportes<br>controlados</span></div>`;
-  }
-
-  // Tipos más comunes
-  const tipos = $('[data-js-tipos]');
-  if (tipos) {
-    tipos.innerHTML = stats.por_tipo
-      .map((t) => `
-        <div class="sector" style="--color:${ESCAPAR(t.color)}">
-          <span class="icono">${t.icono}</span>
-          <strong>${t.total}</strong>
-          <span>${ESCAPAR(t.nombre || t.tipo)}</span>
-        </div>`).join('')
-      || '<p class="placeholder">Aún no hay reportes.</p>';
+    hero.innerHTML = `<span><b>${stats.total}</b> criaderos reportados</span><span><b>${stats.controlados_pct}%</b> ya controlados</span>`;
   }
 
   state.ultimaRiesgo = stats.riesgo_barrios;

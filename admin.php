@@ -24,14 +24,14 @@ header('Pragma: no-cache');
   <meta name="robots" content="noindex">
   <title>Panel de reportes · <?= e(APP_NAME) ?></title>
   <link rel="manifest" href="<?= e(BASE_URL) ?>/manifest.webmanifest">
-  <meta name="theme-color" content="#134e4a">
+  <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="CaszaMosqui">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261112-salud">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-portada">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -40,11 +40,11 @@ header('Pragma: no-cache');
 <header class="topbar topbar-admin">
   <div class="container">
     <div class="brand">
+      <img src="<?= e(BASE_URL) ?>/assets/img/logo-emblema.png" alt="" class="logo-img" width="52" height="59">
       <div class="brand-text">
         <h1><?= e(APP_NAME) ?> · Panel de reportes</h1>
         <p>Gestión de criaderos reportados por la comunidad</p>
       </div>
-      <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" alt="<?= e(APP_NAME) ?>" class="logo-img">
     </div>
     <div class="admin-sesion">
       <span>👤 Sesión iniciada como <strong><?= e($reportes_usuario) ?></strong></span>
@@ -123,7 +123,7 @@ header('Pragma: no-cache');
   window.REPORTES_ACCESS = true;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261112-salud"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261113-portada"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-calor.js?v=20261111-app"></script>

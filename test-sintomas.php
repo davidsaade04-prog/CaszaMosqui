@@ -12,14 +12,14 @@ require_once __DIR__ . '/inc/helpers.php';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Test de Síntomas · <?= e(APP_NAME) ?></title>
   <link rel="manifest" href="<?= e(BASE_URL) ?>/manifest.webmanifest">
-  <meta name="theme-color" content="#134e4a">
+  <meta name="theme-color" content="#0b1220">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="CaszaMosqui">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261112-salud">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-portada">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
@@ -52,8 +52,8 @@ require_once __DIR__ . '/inc/helpers.php';
 <header class="topbar">
   <div class="container">
     <div class="brand">
-      <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza.jpeg" alt="<?= e(APP_NAME) ?>" class="logo-img">
-      <div>
+      <img src="<?= e(BASE_URL) ?>/assets/img/logo-emblema.png" alt="" class="logo-img" width="52" height="59">
+      <div class="brand-text">
         <h1><?= e(APP_NAME) ?></h1>
         <p>Test de Síntomas — Detección temprana</p>
       </div>
