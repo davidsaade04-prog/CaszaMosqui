@@ -15,7 +15,7 @@
 
    Para publicar cambios en los archivos cacheados: subir VERSION.
    ============================================================ */
-const VERSION = 'casza-v5-20261113';
+const VERSION = 'casza-v6-20261116';
 const CACHE_APP = `${VERSION}-app`;
 const CACHE_DATOS = `${VERSION}-datos`;
 const CACHE_MAPA = 'casza-teselas-v1';   // independiente de VERSION: las teselas no cambian
@@ -31,6 +31,7 @@ const PRECARGA = [
   'centros-salud.php',
   'cuestionario.php',
   'ayuda.php',
+  'inmersivo.php',
   'acerca.php',
   'contacto.php',
   'comentarios.php',
@@ -48,6 +49,8 @@ const PRECARGA = [
   'assets/js/geo.js',
   'assets/js/mapa-real.js',
   'assets/js/centros-salud.js',
+  'assets/js/inmersivo.js',
+  'assets/css/inmersivo.css',
   'assets/fonts/inter-display-bold.woff',
   'assets/fonts/inter-display-extrabold.woff',
   'assets/img/logo-emblema.png',
@@ -224,7 +227,7 @@ self.addEventListener('fetch', (ev) => {
   if (req.mode === 'navigate') {
     if (ruta === '' || ruta === 'index.php' || ruta === 'reportar.php' || ruta === 'prevencion.php'
         || ruta === 'centros-salud.php' || ruta === 'cuestionario.php'
-        || ruta === 'ayuda.php' || ruta === 'acerca.php' || ruta === 'contacto.php'
+        || ruta === 'ayuda.php' || ruta === 'acerca.php' || ruta === 'contacto.php' || ruta === 'inmersivo.php'
         || ruta === 'comentarios.php' || ruta === 'test-sintomas.php') {
       // La página guardada no depende de la query (?origen=app, ?demo=1…)
       const clave = new Request(new URL(ruta === 'index.php' ? './' : ruta || './', self.location).href);

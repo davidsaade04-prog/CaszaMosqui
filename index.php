@@ -9,6 +9,7 @@ require_once __DIR__ . '/inc/auth.php';
 
 $page_title  = 'Mapa de riesgo';
 $active_page = 'mapa';
+$bienvenida  = true;   // pantalla para elegir modo normal o inmersivo (inc/bienvenida.php)
 
 $reportes_logueado = reportes_logueado();
 $reportes_error     = consumir_error_reportes();

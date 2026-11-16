@@ -19,7 +19,7 @@ require_once __DIR__ . '/inc/helpers.php';
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-equipo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-bienvenida">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
@@ -47,8 +47,10 @@ require_once __DIR__ . '/inc/helpers.php';
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   </style>
 </head>
-<body>
+<?php $embebido = isset($_GET['embed']); ?>
+<body<?= $embebido ? ' class="embebido"' : '' ?>>
 
+<?php if (!$embebido): ?>
 <header class="topbar">
   <div class="container">
     <div class="brand">
@@ -60,6 +62,7 @@ require_once __DIR__ . '/inc/helpers.php';
     </div>
   </div>
 </header>
+<?php endif; ?>
 
 <main class="container test-container">
 
@@ -166,7 +169,7 @@ require_once __DIR__ . '/inc/helpers.php';
 
 </main>
 
-<?php require __DIR__ . '/inc/footer.php'; ?>
+<?php if (!$embebido) require __DIR__ . '/inc/footer.php'; ?>
 
 <script>
   const form = document.getElementById('form-sintomas');

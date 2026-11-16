@@ -72,6 +72,22 @@ prueba('semáforo de /stats coincide con el algoritmo (inc/riesgo.php)', functio
     }
 });
 
+prueba('modo inmersivo y bienvenida', function () {
+    [$st, , $html] = pedir('GET', 'inmersivo.php');
+    igual(200, $st); verdadero(str_contains($html, 'data-js-escena'), 'falta la escena 3D');
+    [, , $inicio] = pedir('GET', '');
+    verdadero(str_contains($inicio, 'data-js-bienvenida'), 'el inicio no ofrece elegir modo');
+    [, , $normal] = pedir('GET', '?modo=normal');
+    verdadero(!str_contains($normal, 'data-js-bienvenida'), '?modo=normal no debería preguntar');
+});
+prueba('secciones dentro del modo inmersivo (?embed=1) sin cabecera ni pie', function () {
+    foreach (['reportar.php', 'centros-salud.php', 'comentarios.php', 'test-sintomas.php'] as $p) {
+        [$st, , $html] = pedir('GET', $p . '?embed=1');
+        igual(200, $st, $p);
+        verdadero(!str_contains($html, 'class="topbar"') && str_contains($html, 'class="embebido"'), "$p embebido");
+    }
+});
+
 seccion('Reportar (público)');
 prueba('crear un reporte válido → 201', function () use (&$creados) {
     [$st, , , $j] = api('POST', 'reportes', reporte_base());

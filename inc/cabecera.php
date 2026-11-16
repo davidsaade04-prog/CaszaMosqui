@@ -9,6 +9,8 @@
  */
 $page_title  = isset($page_title) ? $page_title : APP_NAME;
 $active_page = isset($active_page) ? $active_page : '';
+// ?embed=1: la página se muestra dentro del modo inmersivo (sin cabecera ni pie)
+$embebido = isset($_GET['embed']);
 
 if (!function_exists('nav_clase')) {
     /** Devuelve las clases del ítem de menú según la página activa. */
@@ -32,14 +34,16 @@ if (!function_exists('nav_clase')) {
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-equipo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-bienvenida">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
-<body>
+<body<?= $embebido ? ' class="embebido"' : '' ?>>
+<?php if (!empty($bienvenida) && !$embebido) require __DIR__ . '/bienvenida.php'; ?>
 
+<?php if (!$embebido): ?>
 <header class="topbar">
   <?php require __DIR__ . '/acceso-admin.php'; ?>
   <div class="container">
@@ -66,5 +70,6 @@ if (!function_exists('nav_clase')) {
     </nav>
   </div>
 </header>
+<?php endif; ?>
 
 <main class="container">

@@ -30,7 +30,7 @@ try {
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261113-equipo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-bienvenida">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
   <style>
     .comentarios-container { max-width: 900px; margin: 0 auto; }
@@ -71,8 +71,10 @@ try {
     .btn-volver-inicio svg { width: 16px; height: 16px; }
   </style>
 </head>
-<body>
+<?php $embebido = isset($_GET['embed']); ?>
+<body<?= $embebido ? ' class="embebido"' : '' ?>>
 
+<?php if (!$embebido): ?>
 <header class="topbar">
   <div class="container">
     <div class="brand">
@@ -93,6 +95,7 @@ try {
     </nav>
   </div>
 </header>
+<?php endif; ?>
 
 <main class="container comentarios-container">
 
@@ -142,7 +145,7 @@ try {
 
 </main>
 
-<?php require __DIR__ . '/inc/footer.php'; ?>
+<?php if (!$embebido) require __DIR__ . '/inc/footer.php'; ?>
 
 <script>
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;

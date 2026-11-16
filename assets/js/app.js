@@ -259,6 +259,12 @@ async function cargarCatalogos() {
   if (filtroBarrio) filtroBarrio.innerHTML = '<option value="">Todos los barrios</option>' + optsBarrio;
   if (formTipo) formTipo.innerHTML = '<option value="">— Elegir tipo —</option>' + optsTipo;
   if (formBarrio) formBarrio.innerHTML = '<option value="">— Elegir barrio —</option>' + optsBarrio;
+  // reportar.php?barrio=ID deja el barrio elegido (lo usa el modo inmersivo al tocar un barrio)
+  const barrioUrl = new URLSearchParams(location.search).get('barrio');
+  if (formBarrio && barrioUrl && barrios.some((b) => String(b.id) === barrioUrl)) {
+    formBarrio.value = barrioUrl;
+    formBarrio.dispatchEvent(new Event('change', { bubbles: true }));
+  }
 
   // Sidebar de barrios en el mapa (se actualizará con datos de riesgo en cargarStats)
   renderBarriosSidebar(barrios, state.ultimaRiesgo || []);
@@ -721,6 +727,8 @@ async function crearReporte(ev) {
     state.paginaReportes = 1;
     msg.textContent = '✅ ¡Criadero reportado! Ya aparece en el mapa de tu barrio.';
     msg.classList.add('ok');
+    // Dentro del modo inmersivo: avisar a la pantalla 3D para que actualice el barrio
+    if (window.parent !== window) window.parent.postMessage({ tipo: 'casza-actualizar' }, location.origin);
     form.reset();
     if (window.CaszaReporteExtra) window.CaszaReporteExtra.limpiar();
     await Promise.all([cargarStats(), cargarReportes()]);

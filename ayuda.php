@@ -43,6 +43,7 @@ function video(string $nombre, string $pie): string
     <p class="sub">Guía paso a paso de cada parte de la página, con capturas y videos. Si algo no te queda claro, el asistente <strong>Mosqui</strong> (abajo a la derecha) también responde preguntas sobre cómo usarla.</p>
 
     <nav class="ayuda-indice" aria-label="Temas de ayuda">
+      <a href="#ay-modos">🌌 Modo normal e inmersivo</a>
       <a href="#ay-instalar">📲 Instalar la app</a>
       <a href="#ay-reportar">📢 Reportar un criadero</a>
       <a href="#ay-sin-senal">📵 Sin señal</a>
@@ -53,6 +54,22 @@ function video(string $nombre, string $pie): string
       <a href="#ay-mosqui">💬 Mosqui y comentarios</a>
       <a href="#ay-admin">🔐 Administrador</a>
     </nav>
+
+    <article class="ayuda-tema" id="ay-modos">
+      <h3>🌌 Modo normal y modo inmersivo</h3>
+      <div class="ayuda-cuerpo">
+        <ol>
+          <li>Cada vez que entrás a CaszaMosqui aparece la pantalla de bienvenida: elegí <strong>Modo normal</strong> (la página de siempre) o <strong>Modo inmersivo</strong>.</li>
+          <li>En el modo inmersivo, El Colorado aparece en <strong>3D</strong>: cada barrio es una <strong>torre de luz</strong>. Cuanto más alta, más criaderos activos tiene; el color es su nivel de riesgo (🔴 alto, 🟡 medio, 🟢 bajo). Las balizas con <strong>cruz</strong> son los centros de salud.</li>
+          <li><strong>Arrastrá</strong> para girar el pueblo y <strong>acercá</strong> con la rueda del mouse o pellizcando la pantalla.</li>
+          <li><strong>Tocá una torre</strong> para ver su barrio y reportar ahí mismo: el formulario se abre con el barrio ya elegido.</li>
+          <li>Las <strong>opciones flotantes</strong> (Reportar, Centros de salud, Comentarios, Test de síntomas…) se abren en un panel sin salir del mapa. En el celular están abajo: deslizalas para ver todas.</li>
+          <li>Para volver a la página de siempre, tocá <strong>Modo normal</strong> arriba a la derecha.</li>
+        </ol>
+        <p class="ayuda-tip">💡 Si tu celular es viejo y el 3D anda lento, usá el modo normal: tiene exactamente la misma información.</p>
+      </div>
+      <?= captura('inmersivo', 'El modo inmersivo: El Colorado en 3D con las opciones abajo.') ?>
+    </article>
 
     <article class="ayuda-tema" id="ay-instalar">
       <h3>📲 Instalar la app en el celular</h3>
