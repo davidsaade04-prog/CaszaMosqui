@@ -82,6 +82,10 @@ function renderComentarios(comentarios, idNuevo = null) {
         <span class="comentario-fecha">${formatearFecha(c.creado_en)}</span>
       </div>
       <p class="comentario-texto">${ESCAPAR(c.texto)}</p>
+      <div class="comentario-acciones">
+        <a class="comentario-reclamar" href="${window.BASE_URL}/privacidad.php?reclamo=comentario&ref=${encodeURIComponent('Comentario #' + c.id)}#reclamo">⚑ Reclamar por este comentario</a>
+        ${window.REPORTES_ACCESS ? `<button type="button" class="comentario-borrar" data-borrar="${Number(c.id)}">🗑️ Borrar (moderación)</button>` : ''}
+      </div>
     </article>
   `).join('');
   if (idNuevo) {
@@ -126,9 +130,26 @@ async function enviarComentario(ev) {
   }
 }
 
+/* ---------- Moderación (solo el equipo con sesión iniciada) ---------- */
+async function borrarComentario(id) {
+  const motivo = prompt('Motivo del borrado (queda en el registro de cambios):', 'Expone datos de otra persona');
+  if (motivo === null) return;
+  try {
+    await api('comentarios/' + id + '&motivo=' + encodeURIComponent(motivo), { method: 'DELETE' });
+    mostrarAviso('🗑️ Comentario borrado. Quedó registrado en el historial.', 'ok');
+    await cargarComentarios();
+  } catch (err) {
+    mostrarAviso('❌ ' + err.message, 'bloqueado');
+  }
+}
+
 /* ---------- Init ---------- */
 function bind() {
   $('#form-comentario')?.addEventListener('submit', enviarComentario);
+  $('#lista-comentarios')?.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-borrar]');
+    if (b) borrarComentario(b.dataset.borrar);
+  });
 }
 
 async function init() {

@@ -9,7 +9,7 @@
 require_once __DIR__ . '/inc/helpers.php';
 
 $centros = require __DIR__ . '/inc/centros-salud.php';
-$v = '20261116-casas';
+$v = '20261116-privacidad';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -27,7 +27,7 @@ $v = '20261116-casas';
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
   <link rel="preload" href="<?= e(BASE_URL) ?>/assets/vendor/three/three.module.min.js" as="script" crossorigin>
   <link rel="preload" href="<?= e(BASE_URL) ?>/assets/img/plano-holo.webp" as="image" crossorigin="anonymous">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-privacidad">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/inmersivo.css?v=<?= $v ?>">
   <script type="importmap">
     { "imports": { "three": "<?= e(BASE_URL) ?>/assets/vendor/three/three.module.min.js" } }
@@ -94,6 +94,8 @@ $v = '20261116-casas';
     <span><i class="alto"></i>Alto</span><span><i class="medio"></i>Medio</span><span><i class="bajo"></i>Bajo</span>
     <span><i class="salud"></i>Salud</span>
     <p class="inm-gesto" data-js-gesto>Arrastrá para girar · acercá con la rueda o pellizcando · tocá una torre</p>
+    <p class="inm-limite">Refleja reportes de vecinos (incluye sin verificar). Las casas son ilustrativas.
+      <a href="<?= e(BASE_URL) ?>/privacidad.php#limites" target="_blank" rel="noopener">Límites y privacidad</a></p>
   </aside>
 
   <!-- Centros de salud: lista flotante del modo "enfocar salud" -->
@@ -135,6 +137,6 @@ $v = '20261116-casas';
   </script>
   <script type="module" src="<?= e(BASE_URL) ?>/assets/js/inmersivo.js?v=<?= $v ?>"></script>
   <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
-  <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
+  <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

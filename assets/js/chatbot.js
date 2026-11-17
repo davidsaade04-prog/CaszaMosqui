@@ -143,6 +143,13 @@
     if (on) {
       if (!lista.children.length) {
         agregar('bot', '¡Hola! Soy **Mosqui** 🦟. Preguntame lo que quieras sobre **dengue, zika y chikungunya**: síntomas, prevención, criaderos, repelentes o cómo usar esta página.');
+        // Transparencia (UNESCO 2021 / Ley 25.326): de dónde salen las respuestas y qué no escribir
+        const aviso = document.createElement('p');
+        aviso.className = 'mosqui-transparencia';
+        aviso.innerHTML = 'ℹ️ Respondo con información verificada por el equipo. Si no la encuentro, consulto a una IA (Claude, de Anthropic) y lo marco con ✨. '
+          + 'Puedo equivocarme y no reemplazo la consulta médica. <strong>No escribas datos personales.</strong> '
+          + '<a href="' + ((window.BASE_URL ?? '.') + '/privacidad.php#pv-ia') + '" target="_blank" rel="noopener">Privacidad</a>';
+        lista.appendChild(aviso);
         mostrarSugerencias(SUGERENCIAS_INICIALES);
       }
       setTimeout(() => input.focus(), 50);

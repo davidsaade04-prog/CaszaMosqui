@@ -87,3 +87,7 @@
   .mosqui.abierto { left: 0; right: 0; bottom: 0; }
   .mosqui-panel { width: 100%; height: 85vh; border-radius: 18px 18px 0 0; }
 }
+
+/* Aviso de transparencia al abrir el chat */
+.mosqui-transparencia { margin: 4px 6px 8px; padding: 8px 10px; border-radius: 10px; background: #f0f9ff; color: #0c4a6e; font-size: .74rem; line-height: 1.4; }
+.mosqui-transparencia a { color: #0e7490; font-weight: 600; }

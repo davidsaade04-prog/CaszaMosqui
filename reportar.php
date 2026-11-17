@@ -64,6 +64,7 @@ require __DIR__ . '/inc/cabecera.php';
         <fieldset class="reporte-extra">
           <legend>📷 Foto <span class="opcional">(opcional)</span></legend>
           <p class="ayuda">Sacá una foto del criadero o elegí una de tu galería. Solo la ve el administrador.</p>
+          <p class="ayuda ayuda-cuidado">📸 Fotografiá <strong>el recipiente con agua</strong>: que no aparezcan personas, caras, patentes ni el frente de una casa. No hace falta señalar a ningún vecino.</p>
           <div class="extra-botones">
             <button type="button" class="btn-ghost" data-js-foto-camara>📷 Sacar foto</button>
             <button type="button" class="btn-ghost" data-js-foto-galeria>🖼️ Elegir de la galería</button>
@@ -77,6 +78,12 @@ require __DIR__ . '/inc/cabecera.php';
           </div>
         </fieldset>
       </div>
+      <label class="consentimiento">
+        <input type="checkbox" name="acepta" required>
+        <span>Leí y acepto el <a href="<?= e(BASE_URL) ?>/privacidad.php" target="_blank" rel="noopener">aviso de privacidad</a>.
+          Usamos estos datos solo para el mapa de riesgo y los operativos contra el mosquito. La foto y la ubicación exacta
+          solo las ve el equipo y se borran a los 90 días de controlado el criadero. No escribas teléfonos ni nombres de otras personas.</span>
+      </label>
       <button type="submit">Reportar criadero</button>
       <p class="form-msg" data-js-form-msg aria-live="polite"></p>
     </form>

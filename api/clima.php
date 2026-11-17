@@ -75,6 +75,28 @@ function describirTiempo(int $codigo, bool $dia): array
     return $tabla[$codigo] ?? ['Sin datos', '🌡️'];
 }
 
+/**
+ * Sin datos reales del clima: no se suma riesgo con datos inventados (Jonas: anticipar el daño;
+ * UNESCO 2021: decisiones con datos de calidad). Se muestra el aviso y bonus = 0.
+ */
+function sinDatosClima(array $r): array
+{
+    return array_merge($r, [
+        'datos_reales'       => false,
+        'actual'             => null,
+        'nivel'              => 'sin-datos',
+        'puntaje'            => 0,
+        'bonus'              => 0,
+        'lluvia_14d'         => null,
+        'temp_media_7d'      => null,
+        'lluvia_prevista_3d' => null,
+        'serie'              => [],
+        'mensaje'            => 'No pudimos obtener el clima real en este momento. El semáforo de los barrios se calcula solo con los reportes de los vecinos.',
+        'recomendacion'      => 'Revisá tu patio una vez por semana: tapá, vaciá y dá vuelta todo lo que junte agua.',
+        'fuente_texto'       => 'sin conexión con el servicio del clima',
+    ]);
+}
+
 function evaluar(array $d, string $fuente): array
 {
     $fechas = $d['daily']['time'];
@@ -148,6 +170,7 @@ function evaluar(array $d, string $fuente): array
 
     return [
         'ok'                 => true,
+        'datos_reales'       => $fuente !== 'offline',
         'actual'             => $actual,
         'consultado'         => date('H:i'),
         'fuente'             => $fuente,
@@ -212,12 +235,13 @@ if (isset($d['daily']['time'])) {
     exit;
 }
 
-// 3) Sin internet: última caché aunque esté vieja, o datos de ejemplo
-if (is_file($cacheFile)) {
+// 3) Sin internet: última caché si tiene menos de 48 h. Si no, NO se inventa el clima:
+//    se avisa que no hay datos y el semáforo se calcula solo con los reportes (bonus 0).
+if (is_file($cacheFile) && filemtime($cacheFile) > time() - 48 * 3600) {
     $d = json_decode((string)file_get_contents($cacheFile), true);
     if (isset($d['daily']['time'])) {
         echo json_encode(evaluar($d, 'cache'), JSON_UNESCAPED_UNICODE);
         exit;
     }
 }
-echo json_encode(evaluar(datosEjemplo(), 'offline'), JSON_UNESCAPED_UNICODE);
+echo json_encode(sinDatosClima(evaluar(datosEjemplo(), 'offline')), JSON_UNESCAPED_UNICODE);

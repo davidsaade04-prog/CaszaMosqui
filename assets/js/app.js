@@ -21,13 +21,11 @@ const ESCAPAR = (txt = '') =>
   }[c]));
 
 async function apiRespuesta(route, options = {}) {
-  console.log('API call:', route);
   const res = await fetch(API() + '?route=' + route, {
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
-  console.log('API response:', res.status, route);
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.ok === false) {
     const err = new Error(json.error || 'Error en la API');
@@ -679,7 +677,6 @@ async function cargarReportes() {
 
 /* ---------- Acciones ---------- */
 async function crearReporte(ev) {
-  console.log('crearReporte() called');
   ev.preventDefault();
   if (!puedeInteractuar()) {
     alert('Ya realizaste tu aporte de hoy (reporte o voto). Volvé mañana. Los comentarios no tienen límite.');
@@ -687,7 +684,6 @@ async function crearReporte(ev) {
   }
   const form = ev.currentTarget;
   const data = Object.fromEntries(new FormData(form).entries());
-  console.log('Form data:', data);
   const msg = $('[data-js-form-msg]');
   msg.className = 'form-msg';
   // Opcionales: ubicación GPS y foto (assets/js/reporte-extra.js)
@@ -701,6 +697,7 @@ async function crearReporte(ev) {
     titulo: data.titulo.trim(),
     descripcion: data.descripcion.trim(),
     referencia: data.referencia.trim(),
+    acepta: data.acepta === 'on',     // consentimiento informado (Ley 25.326)
     ...extra,
     // Identificador del envío: si se reenvía (sin señal), el servidor no lo duplica
     cliente_id: window.CaszaOffline ? window.CaszaOffline.nuevoId() : undefined,
@@ -709,7 +706,7 @@ async function crearReporte(ev) {
 
   try {
     try {
-      await api('reportes', { method: 'POST', body: JSON.stringify(datos) });
+      var creado = await api('reportes', { method: 'POST', body: JSON.stringify(datos) });
     } catch (err) {
       // Sin señal: el reporte queda guardado en el celular y se envía solo al volver la conexión
       if (!window.CaszaOffline || !sinSenal(err)) throw err;
@@ -725,7 +722,8 @@ async function crearReporte(ev) {
     incrementarLimite();
     actualizarEstadoLimite();
     state.paginaReportes = 1;
-    msg.textContent = '✅ ¡Criadero reportado! Ya aparece en el mapa de tu barrio.';
+    msg.innerHTML = '✅ ¡Criadero reportado! Ya aparece en el mapa de tu barrio.'
+      + (creado && creado.id ? `<br><small>Tu número de reporte es <strong>#${Number(creado.id)}</strong>. Anotalo si después querés pedir que lo corrijan o lo borren (<a href="${window.BASE_URL || '.'}/privacidad.php#reclamo">cómo</a>).</small>` : '');
     msg.classList.add('ok');
     // Dentro del modo inmersivo: avisar a la pantalla 3D para que actualice el barrio
     if (window.parent !== window) window.parent.postMessage({ tipo: 'casza-actualizar' }, location.origin);
@@ -764,9 +762,11 @@ async function votarReporte(id) {
 }
 
 async function eliminarReporte(id) {
-  if (!confirm('¿Eliminar este reporte?')) return;
+  // El motivo queda en el registro de cambios (rendición de cuentas)
+  const motivo = prompt('¿Por qué se elimina este reporte? (queda en el registro de cambios)', 'Duplicado');
+  if (motivo === null) return;
   try {
-    await api(`reportes/${id}`, { method: 'DELETE' });
+    await api(`reportes/${id}&motivo=${encodeURIComponent(motivo)}`, { method: 'DELETE' });
     await Promise.all([cargarStats(), cargarReportes()]);
   } catch (err) { alert(err.message); }
 }

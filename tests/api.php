@@ -49,7 +49,7 @@ function reporte_base(array $extra = []): array
 {
     global $MARCA;
     return array_merge(['tipo_id' => 1, 'barrio_id' => 1, 'titulo' => "$MARCA reporte",
-                        'descripcion' => 'Creado por las pruebas automáticas', 'referencia' => 'Esquina de prueba'], $extra);
+                        'descripcion' => 'Creado por las pruebas automáticas', 'referencia' => 'Esquina de prueba', 'acepta' => true], $extra);
 }
 
 echo "Servidor: $BASE\n";
@@ -88,7 +88,43 @@ prueba('secciones dentro del modo inmersivo (?embed=1) sin cabecera ni pie', fun
     }
 });
 
+seccion('Privacidad y límites (Ley 25.326 / UNESCO 2021)');
+prueba('página de privacidad con derechos, límites y formulario de reclamo', function () {
+    [$st, , $html] = pedir('GET', 'privacidad.php');
+    igual(200, $st);
+    foreach (['25.326', 'art. 14', 'art. 16', 'art. 20', 'id="limites"', 'id="reclamo"', 'Anthropic', '90 días'] as $t) {
+        verdadero(str_contains($html, $t), "falta \"$t\"");
+    }
+});
+prueba('el formulario de reporte pide consentimiento', function () {
+    [, , $html] = pedir('GET', 'reportar.php');
+    verdadero(str_contains($html, 'name="acepta" required') && str_contains($html, 'privacidad.php'), 'sin casilla de consentimiento');
+});
+prueba('el mapa avisa que refleja reportes (incluye sin verificar)', function () {
+    [, , $html] = pedir('GET', '?modo=normal');
+    verdadero(str_contains($html, 'mapa-limite'), 'falta el aviso de límites del mapa');
+});
+prueba('sin clima real no se suma riesgo con datos de ejemplo', function () {
+    [$st, , , $j] = pedir('GET', 'api/clima.php');
+    igual(200, $st);
+    if (($j['fuente'] ?? '') === 'offline') {
+        igual(0, $j['bonus'], 'bonus');
+        igual('sin-datos', $j['nivel'], 'nivel');
+        igual(false, $j['datos_reales'], 'datos_reales');
+    } else {
+        verdadero($j['datos_reales'] === true, 'con datos reales debe decirlo');
+    }
+});
+
 seccion('Reportar (público)');
+prueba('sin aceptar el aviso de privacidad → 400', function () {
+    [$st, , , $j] = api('POST', 'reportes', reporte_base(['acepta' => false]));
+    igual(400, $st); verdadero(str_contains($j['error'] ?? '', 'privacidad'), 'mensaje');
+});
+prueba('con un teléfono en la descripción → 400', function () {
+    [$st] = api('POST', 'reportes', reporte_base(['descripcion' => 'Llamen al 3704 123-456 del vecino']));
+    igual(400, $st);
+});
 prueba('crear un reporte válido → 201', function () use (&$creados) {
     [$st, , , $j] = api('POST', 'reportes', reporte_base());
     igual(201, $st); verdadero(!empty($j['data']['id']), 'sin id');
@@ -131,12 +167,33 @@ prueba('cliente_id con caracteres raros → 400', function () {
     igual(400, $st);
 });
 
+seccion('Comentarios y reclamos (públicos)');
+$GLOBALS['comentario_prueba'] = null;
+prueba('comentario con datos personales → 400', function () {
+    [$st, , , $j] = api('POST', 'comentarios', ['barrio_id' => 1, 'tipo' => 'problema', 'texto' => 'El vecino de al lado, mail vecino@correo.com']);
+    igual(400, $st); verdadero(str_contains($j['error'] ?? '', 'públicos'), 'mensaje');
+});
+prueba('comentario válido → 201', function () {
+    [$st, , , $j] = api('POST', 'comentarios', ['barrio_id' => 1, 'tipo' => 'sugerencia', 'texto' => $GLOBALS['MARCA'] . ' comentario de prueba']);
+    igual(201, $st); $GLOBALS['comentario_prueba'] = (int) $j['data']['id'];
+});
+prueba('pedido sin aceptar el aviso → 400', function () {
+    igual(400, api('POST', 'reclamos', ['tipo' => 'supresion', 'detalle' => 'x'])[0]);
+});
+prueba('pedido de supresión → 201 con número', function () {
+    [$st, , , $j] = api('POST', 'reclamos', ['tipo' => 'supresion', 'referencia' => '#1', 'detalle' => $GLOBALS['MARCA'] . ' borrar mi foto', 'acepta' => true]);
+    igual(201, $st); verdadero(($j['data']['id'] ?? 0) > 0, 'sin número de pedido');
+    $GLOBALS['reclamo_prueba'] = (int) $j['data']['id'];
+});
+
 seccion('Protegido sin sesión → 401');
-foreach (['reportes', 'reportes-mapa', 'reportes-calor', 'reportes-excel', 'respaldo', 'reportes/1', 'reportes/1/foto'] as $r) {
+foreach (['reportes', 'reportes-mapa', 'reportes-calor', 'reportes-excel', 'respaldo', 'reportes/1', 'reportes/1/foto', 'reclamos', 'historial'] as $r) {
     prueba("GET $r", fn () => igual(401, api('GET', $r)[0]));
 }
 prueba('PATCH estado sin sesión', fn () => igual(401, api('PATCH', 'reportes/1', ['estado' => 'controlado'])[0]));
 prueba('DELETE sin sesión', fn () => igual(401, api('DELETE', 'reportes/1')[0]));
+prueba('borrar comentario sin sesión', fn () => igual(401, api('DELETE', 'comentarios/' . (int) $GLOBALS['comentario_prueba'])[0]));
+prueba('responder pedido sin sesión', fn () => igual(401, api('PATCH', 'reclamos/1', ['estado' => 'resuelto'])[0]));
 
 seccion('Administrador');
 prueba('contraseña incorrecta no da acceso', function () use ($USUARIO) {
@@ -193,9 +250,35 @@ prueba('cambiar estado actualiza el semáforo', function () use (&$creados) {
 });
 prueba('estado inválido → 400', fn () => igual(400, api('PATCH', 'reportes/' . $creados[0], ['estado' => 'inventado'])[0]));
 
+seccion('Rendición de cuentas');
+prueba('el cambio de estado queda en el registro con el usuario', function () use (&$creados, $USUARIO) {
+    [$st, , , $j] = api('GET', 'historial&entidad=reporte&id=' . $creados[0]);
+    igual(200, $st);
+    $acciones = array_column($j['data'], 'accion');
+    verdadero(in_array('estado', $acciones, true) && in_array('creado', $acciones, true), 'faltan entradas');
+    $cambio = array_values(array_filter($j['data'], fn ($h) => $h['accion'] === 'estado'))[0];
+    igual($USUARIO, $cambio['usuario'], 'usuario');
+    verdadero(str_contains($cambio['detalle'], '→ controlado'), 'detalle del cambio');
+});
+prueba('pedidos: el equipo los ve y los responde', function () {
+    [$st, , , $j] = api('GET', 'reclamos');
+    igual(200, $st);
+    verdadero(in_array($GLOBALS['reclamo_prueba'], array_map('intval', array_column($j['data'], 'id')), true), 'no aparece el pedido');
+    igual(200, api('PATCH', 'reclamos/' . $GLOBALS['reclamo_prueba'], ['estado' => 'resuelto', 'respuesta' => 'Prueba automática'])[0]);
+});
+prueba('moderación: borrar un comentario y dejar constancia sin el texto', function () {
+    $id = (int) $GLOBALS['comentario_prueba'];
+    igual(200, api('DELETE', 'comentarios/' . $id . '&motivo=' . urlencode('Prueba automática'))[0]);
+    [, , , $j] = api('GET', 'historial&entidad=comentario&id=' . $id);
+    igual('borrado', $j['data'][0]['accion'] ?? '', 'registro');
+    verdadero(!str_contains($j['data'][0]['detalle'], 'comentario de prueba'), 'el registro no debe guardar el texto borrado');
+});
+
 seccion('Limpieza');
-prueba('borrar los reportes de prueba', function () use (&$creados) {
-    foreach (array_unique($creados) as $id) igual(200, api('DELETE', "reportes/$id")[0], "borrar $id");
+prueba('borrar los reportes de prueba (con motivo en el registro)', function () use (&$creados) {
+    foreach (array_unique($creados) as $id) igual(200, api('DELETE', "reportes/$id&motivo=" . urlencode('Limpieza de pruebas'))[0], "borrar $id");
+    [, , , $h] = api('GET', 'historial&entidad=reporte&id=' . $creados[0]);
+    verdadero(str_contains($h['data'][0]['detalle'] ?? '', 'Limpieza de pruebas'), 'el borrado no quedó registrado con su motivo');
     [, , , $j] = api('GET', 'reportes&por_pagina=50&q=' . urlencode($GLOBALS['MARCA']));
     igual(0, count($j['data']), 'quedaron reportes de prueba');
 });

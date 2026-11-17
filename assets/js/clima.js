@@ -18,7 +18,7 @@
     return { total, nivel };
   };
 
-  const etiqueta = { alto: 'ALTO', medio: 'MEDIO', bajo: 'BAJO' };
+  const etiqueta = { alto: 'ALTO', medio: 'MEDIO', bajo: 'BAJO', 'sin-datos': 'SIN DATOS' };
   const REFRESCO_MS = 10 * 60 * 1000;
   let ultimaCarga = 0;
 
@@ -42,6 +42,18 @@
 
   function render(c) {
     if (!cont) return;
+    if (c.datos_reales === false) {
+      // Sin clima real: no se muestran números de ejemplo ni se suma riesgo
+      cont.innerHTML = `
+        <div class="panel-head">
+          <h2>🌧️ Alerta climática</h2>
+          <span class="clima-nivel sin-datos">Clima: sin datos</span>
+        </div>
+        <p class="sub">${c.mensaje}</p>
+        <p class="clima-reco">👉 ${c.recomendacion}</p>
+        <p class="mapa-nota">Fuente: ${c.fuente_texto} · ${c.ubicacion}</p>`;
+      return;
+    }
     const max = Math.max(10, ...c.serie.map(d => d.lluvia));
     const barras = c.serie
       .map(d => `<i title="${d.fecha}: ${d.lluvia} mm" style="height:${Math.round((d.lluvia / max) * 100)}%"></i>`)

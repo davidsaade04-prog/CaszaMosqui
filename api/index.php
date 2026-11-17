@@ -16,6 +16,12 @@
  *   GET    /api/?route=reportes-mapa       (requiere sesión · reportes con ubicación GPS)
  *   GET    /api/?route=respaldo            (requiere sesión · descarga todo en JSON)
  *   POST   /api/?route=respaldo            (requiere sesión · restaura un respaldo)
+ *   DELETE /api/?route=comentarios/{id}    (requiere sesión · moderación)
+ *   POST   /api/?route=reclamos            (PÚBLICO · pedidos de acceso, rectificación o supresión; reclamos)
+ *   GET    /api/?route=reclamos            (requiere sesión)
+ *   PATCH  /api/?route=reclamos/{id}       (requiere sesión · estado y respuesta)
+ *   GET    /api/?route=historial           (requiere sesión · registro de cambios)
+ *   POST reportes exige "acepta": true (consentimiento informado, Ley 25.326)
  *   POST reportes acepta además (opcionales): lat, lng y foto (data URL JPEG/PNG/WebP, máx. ~600 KB)
  *   PATCH reportes/{id} acepta además: {"ubicacion": {"lat":..,"lng":..}} o {"ubicacion": null}
  */
@@ -166,6 +172,56 @@ function exigir_acceso_reportes(): void
     }
 }
 
+/* ---------- Rendición de cuentas y datos personales ---------- */
+
+/** Deja constancia de quién hizo qué y cuándo (tabla historial). Nunca corta la operación si falla. */
+function registrar(string $entidad, ?int $entidadId, string $accion, string $detalle = '', ?string $usuario = null): void
+{
+    try {
+        $usuario = $usuario ?? (reportes_logueado() ? usuario_reportes() : 'público');
+        db()->prepare('INSERT INTO historial (entidad, entidad_id, accion, detalle, usuario) VALUES (?, ?, ?, ?, ?)')
+            ->execute([$entidad, $entidadId, $accion, mb_substr($detalle, 0, 255), mb_substr($usuario, 0, 60)]);
+    } catch (Throwable $e) {
+        error_log('[CaszaMosqui] No se pudo registrar en el historial: ' . $e->getMessage());
+    }
+}
+
+const DIAS_CONSERVAR_FOTO_GPS = 90;   // días después de "controlado" (ver privacidad.php)
+
+/**
+ * Minimización de datos: a los 90 días de controlado un criadero, se borran su foto y su
+ * ubicación exacta (queda el barrio, que alcanza para las estadísticas). Corre una vez por día.
+ */
+function limpiar_datos_vencidos(): void
+{
+    $marca = __DIR__ . '/../cache/limpieza-' . date('Y-m-d') . '.ok';
+    if (is_file($marca)) return;
+    try {
+        $corte = date('Y-m-d H:i:s', strtotime('-' . DIAS_CONSERVAR_FOTO_GPS . ' days'));
+        $cond  = "estado = 'controlado' AND COALESCE(actualizado_en, creado_en) < ?";
+        $f = db()->prepare("DELETE FROM fotos_reporte WHERE reporte_id IN (SELECT id FROM reportes WHERE $cond)");
+        $f->execute([$corte]);
+        $g = db()->prepare("UPDATE reportes SET lat = NULL, lng = NULL WHERE lat IS NOT NULL AND $cond");
+        $g->execute([$corte]);
+        if ($f->rowCount() + $g->rowCount() > 0) {
+            registrar('sistema', null, 'limpieza', $f->rowCount() . ' foto(s) y ' . $g->rowCount() . ' ubicación(es) borradas a los '
+                . DIAS_CONSERVAR_FOTO_GPS . ' días de controlado', 'sistema (automático)');
+        }
+        if (!is_dir(dirname($marca))) @mkdir(dirname($marca), 0775, true);
+        @file_put_contents($marca, date('c'));
+    } catch (Throwable $e) {
+        error_log('[CaszaMosqui] Limpieza de datos: ' . $e->getMessage());
+    }
+}
+
+/** Texto público con datos personales de terceros (teléfonos o correos): no se publica. */
+function tiene_datos_personales(string $texto): bool
+{
+    if (preg_match('/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i', $texto)) return true;          // correo
+    $soloNumeros = preg_replace('/(?<=\d)[\s.\-()]+(?=\d)/', '', $texto);
+    return (bool) preg_match('/\d{7,}/', $soloNumeros);                                       // teléfono, DNI
+}
+
 /* ---------- Rutas ---------- */
 
 if ($route === '' && $method === 'GET') {
@@ -253,6 +309,7 @@ if ($route === 'stats' && $method === 'GET') {
 // LISTA de reportes con filtros
 if (preg_match('#^reportes$#', $route) && $method === 'GET') {
     exigir_acceso_reportes();
+    limpiar_datos_vencidos();
 
     [$where, $pars] = filtros_reportes($_GET);
     $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? $_GET['page'] ?? 1));
@@ -333,6 +390,7 @@ if (preg_match('#^reportes/(\d+)$#', $route, $m)) {
             $stmt = db()->prepare('UPDATE reportes SET lat = ?, lng = ? WHERE id = ?');
             $stmt->execute([$ubic[0] ?? null, $ubic[1] ?? null, $id]);
             if ($stmt->rowCount() === 0) json_error('Reporte no encontrado', 404);
+            registrar('reporte', $id, 'ubicacion', $ubic ? 'Pin movido' : 'Pin quitado');
             json_response(['ok' => true, 'message' => $ubic ? 'Ubicación actualizada' : 'Ubicación quitada']);
         }
         // Si no viene estado, permitir sumar votos (participación comunitaria)
@@ -345,16 +403,25 @@ if (preg_match('#^reportes/(\d+)$#', $route, $m)) {
         if (!validar_estado($estado)) {
             json_error('Estado inválido. Use: pendiente, verificado o controlado.');
         }
-        $stmt = db()->prepare('UPDATE reportes SET estado = ? WHERE id = ?');
-        $stmt->execute([$estado, $id]);
-        if ($stmt->rowCount() === 0) json_error('Reporte no encontrado', 404);
+        $antes = db()->prepare('SELECT estado FROM reportes WHERE id = ?');
+        $antes->execute([$id]);
+        $anterior = $antes->fetchColumn();
+        if ($anterior === false) json_error('Reporte no encontrado', 404);
+        $stmt = db()->prepare('UPDATE reportes SET estado = ?, actualizado_en = ? WHERE id = ?');
+        $stmt->execute([$estado, date('Y-m-d H:i:s'), $id]);
+        if ($anterior !== $estado) registrar('reporte', $id, 'estado', "$anterior → $estado");
         json_response(['ok' => true, 'message' => 'Estado actualizado a ' . $estado]);
     }
 
     if ($method === 'DELETE') {
+        $antes = db()->prepare('SELECT titulo FROM reportes WHERE id = ?');
+        $antes->execute([$id]);
+        $titulo = $antes->fetchColumn();
         $stmt = db()->prepare('DELETE FROM reportes WHERE id = ?');
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) json_error('Reporte no encontrado', 404);
+        $motivo = trim((string) ($_GET['motivo'] ?? ''));
+        registrar('reporte', $id, 'borrado', '"' . mb_substr((string) $titulo, 0, 60) . '"' . ($motivo !== '' ? ' · motivo: ' . mb_substr($motivo, 0, 120) : ''));
         json_response(['ok' => true, 'message' => 'Reporte eliminado']);
     }
 }
@@ -382,6 +449,7 @@ if (preg_match('#^reportes/(\d+)/foto$#', $route, $m)) {
         $stmt = db()->prepare('DELETE FROM fotos_reporte WHERE reporte_id = ?');
         $stmt->execute([$id]);
         if ($stmt->rowCount() === 0) json_error('Este reporte no tenía foto.', 404);
+        registrar('reporte', $id, 'foto_borrada', 'Foto borrada por el administrador');
         json_response(['ok' => true, 'message' => 'Foto eliminada']);
     }
 }
@@ -425,9 +493,11 @@ if ($route === 'reportes-calor' && $method === 'GET') {
 const RESPALDO_TABLAS = [
     'tipos_criadero' => ['id', 'nombre', 'color', 'icono'],
     'barrios'        => ['id', 'nombre', 'localidad', 'x', 'y', 'poblacion'],
-    'reportes'       => ['id', 'tipo_id', 'barrio_id', 'titulo', 'descripcion', 'referencia', 'estado', 'votos', 'creado_en', 'lat', 'lng', 'cliente_id'],
+    'reportes'       => ['id', 'tipo_id', 'barrio_id', 'titulo', 'descripcion', 'referencia', 'estado', 'votos', 'creado_en', 'lat', 'lng', 'cliente_id', 'actualizado_en'],
     'comentarios'    => ['id', 'barrio_id', 'tipo', 'texto', 'creado_en'],
     'fotos_reporte'  => ['reporte_id', 'mime', 'datos', 'ancho', 'alto', 'bytes', 'creado_en'],
+    'reclamos'       => ['id', 'tipo', 'referencia', 'detalle', 'contacto', 'estado', 'respuesta', 'creado_en', 'actualizado_en'],
+    'historial'      => ['id', 'entidad', 'entidad_id', 'accion', 'detalle', 'usuario', 'creado_en'],
 ];
 
 if ($route === 'respaldo' && $method === 'GET') {
@@ -445,6 +515,7 @@ if ($route === 'respaldo' && $method === 'GET') {
         $tablas[$tabla] = $filas;
     }
     $nombre = 'caszamosqui-respaldo-' . date('Y-m-d-Hi') . '.json';
+    registrar('sistema', null, 'respaldo_descargado', 'Descarga completa de la base (incluye fotos y ubicaciones)');
     header('Content-Disposition: attachment; filename="' . $nombre . '"');
     header('Cache-Control: no-store');
     json_response([
@@ -479,11 +550,13 @@ if ($route === 'respaldo' && $method === 'POST') {
     $pdo = db();
     $pdo->beginTransaction();
     try {
+        // El historial no se pisa al restaurar: es el registro de lo que pasó (solo se agrega)
         foreach (array_reverse(array_keys(RESPALDO_TABLAS)) as $tabla) {
-            $pdo->exec("DELETE FROM $tabla");
+            if ($tabla !== 'historial') $pdo->exec("DELETE FROM $tabla");
         }
         $totales = [];
         foreach (RESPALDO_TABLAS as $tabla => $cols) {
+            if ($tabla === 'historial') continue;
             $filas = is_array($r['tablas'][$tabla] ?? null) ? $r['tablas'][$tabla] : [];
             $stmt = $pdo->prepare(
                 "INSERT INTO $tabla (" . implode(', ', $cols) . ') VALUES (' . implode(', ', array_fill(0, count($cols), '?')) . ')'
@@ -507,7 +580,7 @@ if ($route === 'respaldo' && $method === 'POST') {
             $totales[$tabla] = count($filas);
         }
         if (db_driver() === 'pgsql') {
-            foreach (['tipos_criadero', 'barrios', 'reportes', 'comentarios'] as $tabla) {
+            foreach (['tipos_criadero', 'barrios', 'reportes', 'comentarios', 'reclamos'] as $tabla) {
                 $pdo->query("SELECT setval(pg_get_serial_sequence('$tabla', 'id'), COALESCE((SELECT MAX(id) FROM $tabla), 1), (SELECT COUNT(*) FROM $tabla) > 0)");
             }
         }
@@ -517,6 +590,7 @@ if ($route === 'respaldo' && $method === 'POST') {
         error_log('[CaszaMosqui] Error al restaurar respaldo: ' . $e->getMessage());
         json_error('No se pudo restaurar: ' . $e->getMessage() . ' (no se cambió nada).', 400);
     }
+    registrar('sistema', null, 'respaldo_restaurado', 'Se restauró un respaldo completo');
     json_response(['ok' => true, 'message' => 'Respaldo restaurado', 'totales' => $totales]);
 }
 
@@ -622,6 +696,13 @@ if ($route === 'reportes' && $method === 'POST') {
     }
     if ($tipo_id < 1)   json_error('Debe elegir un tipo de criadero.');
     if ($barrio_id < 1) json_error('Debe elegir el barrio.');
+    // Consentimiento informado (Ley 25.326, art. 5): la persona aceptó el aviso de privacidad
+    if (($b['acepta'] ?? false) !== true) {
+        json_error('Para enviar el reporte tenés que aceptar el aviso de privacidad.');
+    }
+    if (tiene_datos_personales($titulo . ' ' . $descripcion . ' ' . $referencia)) {
+        json_error('No incluyas teléfonos, correos ni documentos en el reporte: no hacen falta para encontrar el criadero.');
+    }
 
     // Opcionales: ubicación GPS y foto (el reporte funciona igual sin ellas)
     $ubic = leer_ubicacion($b['lat'] ?? null, $b['lng'] ?? null);
@@ -662,6 +743,7 @@ if ($route === 'reportes' && $method === 'POST') {
             guardar_foto($id, $foto);
         }
         $pdo->commit();
+        registrar('reporte', $id, 'creado', 'Reporte de un vecino' . ($ubic ? ' · con ubicación' : '') . ($foto ? ' · con foto' : ''));
     } catch (Throwable $e) {
         $pdo->rollBack();
         // Dos envíos simultáneos del mismo reporte: el segundo choca con el índice único
@@ -715,6 +797,9 @@ if ($route === 'comentarios' && $method === 'POST') {
         json_error('Tipo inválido.');
     if ($texto === '' || mb_strlen($texto) > 2000)
         json_error('El comentario es obligatorio (máx. 2000 caracteres).');
+    // Los comentarios son públicos: no se publican teléfonos, correos ni documentos
+    if (tiene_datos_personales($texto))
+        json_error('Los comentarios son públicos: no escribas teléfonos, correos ni números de documento (tuyos ni de otras personas).');
 
     $stmt = db()->prepare(
         'INSERT INTO comentarios (barrio_id, tipo, texto) VALUES (?, ?, ?)'
@@ -728,6 +813,81 @@ if ($route === 'comentarios' && $method === 'POST') {
     $stmt->execute([$id]);
 
     json_response(['ok' => true, 'message' => 'Comentario enviado', 'data' => $stmt->fetch()], 201);
+}
+
+// BORRAR comentario (moderación, solo administrador)
+if (preg_match('#^comentarios/(\d+)$#', $route, $m) && $method === 'DELETE') {
+    exigir_acceso_reportes();
+    $id = (int) $m[1];
+    $antes = db()->prepare('SELECT b.nombre FROM comentarios c JOIN barrios b ON b.id = c.barrio_id WHERE c.id = ?');
+    $antes->execute([$id]);
+    $barrio = $antes->fetchColumn();
+    if ($barrio === false) json_error('Comentario no encontrado', 404);
+    db()->prepare('DELETE FROM comentarios WHERE id = ?')->execute([$id]);
+    $motivo = trim((string) ($_GET['motivo'] ?? ''));
+    // No se guarda el texto borrado: si tenía datos personales, no deben quedar en el historial
+    registrar('comentario', $id, 'borrado', 'Barrio ' . $barrio . ($motivo !== '' ? ' · motivo: ' . mb_substr($motivo, 0, 120) : ''));
+    json_response(['ok' => true, 'message' => 'Comentario borrado']);
+}
+
+// ========== RECLAMOS (vía de reclamo · Ley 25.326 arts. 14 y 16) ==========
+const TIPOS_RECLAMO = ['acceso', 'rectificacion', 'supresion', 'error', 'comentario', 'otro'];
+
+if ($route === 'reclamos' && $method === 'POST') {
+    $b = body_json();
+    $tipo       = (string) ($b['tipo'] ?? '');
+    $referencia = trim((string) ($b['referencia'] ?? ''));
+    $detalle    = trim((string) ($b['detalle'] ?? ''));
+    $contacto   = trim((string) ($b['contacto'] ?? ''));
+    if (!in_array($tipo, TIPOS_RECLAMO, true)) json_error('Elegí qué querés pedir.');
+    if ($detalle === '' || mb_strlen($detalle) > 2000) json_error('Contanos tu pedido (máx. 2000 caracteres).');
+    if (mb_strlen($referencia) > 60 || mb_strlen($contacto) > 120) json_error('La referencia o el contacto son demasiado largos.');
+    if (($b['acepta'] ?? false) !== true) json_error('Tenés que aceptar el aviso de privacidad para enviar el pedido.');
+    $st = db()->prepare('INSERT INTO reclamos (tipo, referencia, detalle, contacto) VALUES (?, ?, ?, ?)');
+    $st->execute([$tipo, $referencia, $detalle, $contacto]);
+    $id = (int) db()->lastInsertId();
+    registrar('reclamo', $id, 'creado', 'Tipo: ' . $tipo . ($referencia !== '' ? ' · ref. ' . $referencia : ''));
+    json_response(['ok' => true, 'message' => 'Pedido recibido', 'data' => ['id' => $id]], 201);
+}
+
+if ($route === 'reclamos' && $method === 'GET') {
+    exigir_acceso_reportes();
+    $estado = (string) ($_GET['estado'] ?? '');
+    $sql = 'SELECT id, tipo, referencia, detalle, contacto, estado, respuesta, creado_en, actualizado_en FROM reclamos';
+    $pars = [];
+    if (in_array($estado, ['nuevo', 'en_curso', 'resuelto'], true)) { $sql .= ' WHERE estado = ?'; $pars[] = $estado; }
+    $st = db()->prepare($sql . ' ORDER BY id DESC LIMIT 300');
+    $st->execute($pars);
+    json_response(['ok' => true, 'data' => $st->fetchAll()]);
+}
+
+if (preg_match('#^reclamos/(\d+)$#', $route, $m) && ($method === 'PATCH' || $method === 'PUT')) {
+    exigir_acceso_reportes();
+    $id = (int) $m[1];
+    $b = body_json();
+    $estado = (string) ($b['estado'] ?? '');
+    if (!in_array($estado, ['nuevo', 'en_curso', 'resuelto'], true)) json_error('Estado inválido.');
+    $respuesta = trim((string) ($b['respuesta'] ?? ''));
+    $st = db()->prepare('UPDATE reclamos SET estado = ?, respuesta = ?, actualizado_en = ? WHERE id = ?');
+    $st->execute([$estado, $respuesta !== '' ? mb_substr($respuesta, 0, 2000) : null, date('Y-m-d H:i:s'), $id]);
+    if ($st->rowCount() === 0) json_error('Pedido no encontrado', 404);
+    registrar('reclamo', $id, 'estado', $estado . ($respuesta !== '' ? ' · con respuesta' : ''));
+    json_response(['ok' => true, 'message' => 'Pedido actualizado']);
+}
+
+// HISTORIAL de cambios (solo administrador)
+if ($route === 'historial' && $method === 'GET') {
+    exigir_acceso_reportes();
+    $entidad = (string) ($_GET['entidad'] ?? '');
+    $sql = 'SELECT id, entidad, entidad_id, accion, detalle, usuario, creado_en FROM historial';
+    $pars = [];
+    if (in_array($entidad, ['reporte', 'comentario', 'reclamo', 'sistema'], true)) { $sql .= ' WHERE entidad = ?'; $pars[] = $entidad; }
+    if (isset($_GET['id']) && ctype_digit((string) $_GET['id'])) {
+        $sql .= ($pars ? ' AND' : ' WHERE') . ' entidad_id = ?'; $pars[] = (int) $_GET['id'];
+    }
+    $st = db()->prepare($sql . ' ORDER BY id DESC LIMIT 300');
+    $st->execute($pars);
+    json_response(['ok' => true, 'data' => $st->fetchAll()]);
 }
 
 // Ruta desconocida

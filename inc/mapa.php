@@ -45,5 +45,8 @@
       <p class="mapa-nota mapa-nota-real" hidden>Mapa real de <strong>OpenStreetMap</strong>. La ubicación de cada barrio es aproximada (±50 m), calculada a partir del plano municipal.
         Si falta el nombre de una calle, activá <strong>“Mostrar plano municipal encima”</strong> o volvé al <strong>Plano municipal</strong>.</p>
       <p class="mapa-nota mapa-nota-plano">Plano oficial de barrios de El Colorado. Usá <strong>🔍+ / 🔍−</strong> o la ruedita del mouse para zoom, arrastrá para moverte y <strong>⌂</strong> para volver. <strong>Clic en un barrio</strong> (lista o nombre en el mapa) para acercarte y ver sus criaderos.</p>
+      <p class="mapa-limite">ℹ️ <strong>El semáforo refleja los reportes de los vecinos</strong>, incluidos los que el equipo todavía no verificó.
+        Pocos reportes no significa que no haya criaderos, y el nivel de un barrio no habla de quienes viven ahí: indica dónde conviene revisar.
+        <a href="<?= e(BASE_URL) ?>/privacidad.php#limites">Cómo se calcula y sus límites</a></p>
     </div>
   </section>

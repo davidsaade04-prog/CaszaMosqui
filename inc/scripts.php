@@ -14,15 +14,15 @@
   window.REPORTES_ACCESS = <?= !empty($reportes_logueado) ? 'true' : 'false' ?>;
   window.CENTROS_SALUD = <?= json_encode(require __DIR__ . '/centros-salud.php', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 </script>
-<script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20261116-sindatos"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-bienvenida"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-cuentas"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261113-ayuda"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/centros-salud.js?v=20261116-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/reporte-extra.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

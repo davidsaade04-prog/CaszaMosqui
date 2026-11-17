@@ -15,5 +15,10 @@
     <p class="pie-equipo">
       <strong>Ocampo Guillermo</strong> · <strong>Ramirez Lucas</strong> · <strong>Saade David</strong>
     </p>
+    <p class="pie-legal">
+      <a href="<?= e(BASE_URL) ?>/privacidad.php">Privacidad y datos</a> ·
+      <a href="<?= e(BASE_URL) ?>/privacidad.php#limites">Límites del sistema</a> ·
+      <a href="<?= e(BASE_URL) ?>/privacidad.php#reclamo">Pedidos y reclamos</a>
+    </p>
   </div>
 </footer>

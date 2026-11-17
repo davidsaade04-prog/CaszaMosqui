@@ -9,6 +9,8 @@ CREATE DATABASE IF NOT EXISTS formosahack
 USE formosahack;
 
 -- Re-ejecutable (idempotente): elimina y recrea tablas
+DROP TABLE IF EXISTS historial;
+DROP TABLE IF EXISTS reclamos;
 DROP TABLE IF EXISTS fotos_reporte;
 DROP TABLE IF EXISTS comentarios;
 DROP TABLE IF EXISTS reportes;
@@ -47,6 +49,7 @@ CREATE TABLE reportes (
   lat         DOUBLE NULL,  -- ubicación GPS opcional
   lng         DOUBLE NULL,
   cliente_id  VARCHAR(40) NULL,  -- generado por el celular (evita duplicados en reportes sin señal)
+  actualizado_en TIMESTAMP NULL DEFAULT NULL,  -- último cambio de estado (borrado de foto/GPS a los 90 días de controlado)
   UNIQUE KEY ux_reportes_cliente (cliente_id),
   CONSTRAINT fk_reporte_tipo   FOREIGN KEY (tipo_id)
     REFERENCES tipos_criadero (id) ON DELETE CASCADE,
@@ -81,3 +84,31 @@ CREATE TABLE fotos_reporte (
   creado_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_foto_reporte FOREIGN KEY (reporte_id) REFERENCES reportes (id) ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+-- Rendición de cuentas: registro de cambios (quién hizo qué y cuándo)
+CREATE TABLE historial (
+  id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  entidad    VARCHAR(20)  NOT NULL,
+  entidad_id INT UNSIGNED NULL,
+  accion     VARCHAR(30)  NOT NULL,
+  detalle    VARCHAR(255) NOT NULL DEFAULT '',
+  usuario    VARCHAR(60)  NOT NULL DEFAULT '',
+  creado_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_historial_entidad (entidad, entidad_id),
+  INDEX idx_historial_fecha (creado_en)
+) ENGINE = InnoDB;
+
+-- Reclamos y pedidos sobre datos personales (Ley 25.326, arts. 14 y 16)
+CREATE TABLE reclamos (
+  id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  tipo           ENUM('acceso','rectificacion','supresion','error','comentario','otro') NOT NULL,
+  referencia     VARCHAR(60)  NOT NULL DEFAULT '',
+  detalle        TEXT         NOT NULL,
+  contacto       VARCHAR(120) NOT NULL DEFAULT '',
+  estado         ENUM('nuevo','en_curso','resuelto') NOT NULL DEFAULT 'nuevo',
+  respuesta      TEXT         NULL,
+  creado_en      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP    NULL DEFAULT NULL,
+  INDEX idx_reclamo_estado (estado)
+) ENGINE = InnoDB;
+

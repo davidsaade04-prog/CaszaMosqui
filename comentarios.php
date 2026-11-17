@@ -6,6 +6,8 @@
  */
 require_once __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/db.php';
+require_once __DIR__ . '/inc/auth.php';
+$es_admin = reportes_logueado();   // el equipo puede borrar comentarios (moderación)
 
 // Cargar barrios server-side como fallback
 $barrios = [];
@@ -31,8 +33,8 @@ try {
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-bienvenida">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-privacidad2">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-privacidad">
   <style>
     .comentarios-container { max-width: 900px; margin: 0 auto; }
     .comentario-form { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; margin-bottom: 24px; }
@@ -135,6 +137,8 @@ try {
         Comentario <span class="req">*</span>
         <textarea name="texto" id="textarea-comentario" required placeholder="Contanos qué pensás, qué sugerís o qué problema ves en tu barrio..."></textarea>
       </label>
+      <p class="aviso-publico">👁️ <strong>Los comentarios son públicos.</strong> No escribas nombres, teléfonos, direcciones ni datos de otras personas,
+        y no acuses a ningún vecino. El equipo puede borrar los comentarios que expongan a alguien. <a href="<?= e(BASE_URL) ?>/privacidad.php" target="_blank" rel="noopener">Privacidad</a></p>
       <button type="submit" class="btn" id="btn-enviar">Enviar comentario</button>
       <p class="aviso" id="aviso-diario"></p>
     </form>
@@ -153,9 +157,10 @@ try {
 
 <script>
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;
+  window.REPORTES_ACCESS = <?= $es_admin ? 'true' : 'false' ?>;
 </script>
-<script src="<?= e(BASE_URL) ?>/assets/js/comentarios.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/comentarios.js?v=20261116-moderacion"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

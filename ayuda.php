@@ -192,6 +192,8 @@ function video(string $nombre, string $pie): string
           <li>Las <strong>fotos</strong> y los <strong>pines GPS</strong> exactos se ven solo acá. En <strong>🌎 Mapa real</strong>, la casilla <strong>🔥 Mapa de calor</strong> muestra dónde se concentran los criaderos activos.</li>
           <li><strong>📊 Excel</strong> descarga los reportes (con los filtros elegidos) en tres hojas: reportes, resumen por barrio e información.</li>
           <li><strong>Respaldo</strong>: permite descargar una copia de toda la base y restaurarla.</li>
+          <li><strong>📨 Pedidos y reclamos</strong>: los pedidos de los vecinos (acceso, corrección o borrado de datos, reclamos por comentarios). Respondé y marcá cada uno como resuelto: la ley pide responder el acceso en 10 días corridos y las correcciones o borrados en 5 días hábiles.</li>
+          <li><strong>📜 Registro de cambios</strong>: muestra quién hizo cada cambio y cuándo. No se puede editar. Al borrar un reporte o un comentario se pide el motivo.</li>
         </ol>
       </div>
       <?= captura('admin-panel', 'El panel de administración con la lista de reportes.') ?>

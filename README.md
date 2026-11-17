@@ -65,6 +65,13 @@ Plan gratuito: la web "se duerme" tras 15 min sin visitas (tarda ~1 min en despe
 - Sección **Centros de salud** en el inicio (y pines 🏥 en el Mapa real): dirección, horario con **“abierto ahora”**, botón para **llamar** (y WhatsApp donde hay), **¿cuál me queda más cerca?** (GPS) y **Cómo llegar**: dibuja el recorrido a pie o en auto con las indicaciones paso a paso (OSRM de FOSSGIS sobre OpenStreetMap) y abre Google Maps para la navegación por voz.
 - Los datos están en un solo lugar: `inc/centros-salud.php` (los usan el inicio, el test de síntomas y el chatbot). Para sumar un centro, copiar un bloque; lo que no esté confirmado va en `null`.
 
+## 🔒 Privacidad y rendición de cuentas (Ley 25.326 · UNESCO 2021)
+- `privacidad.php`: qué datos se usan, para qué, quién los ve, cuánto tiempo se guardan, la IA que se usa, los derechos de la Ley 25.326 (arts. 14, 16 y 20), los **límites del sistema** y el **formulario de pedidos y reclamos**.
+- Consentimiento obligatorio al reportar; los reportes y comentarios no aceptan teléfonos, correos ni documentos; los comentarios se pueden moderar desde el panel.
+- **Registro de cambios** (`historial`): quién verificó, controló, borró o respondió y cuándo, sin guardar el texto borrado. **Pedidos** (`reclamos`) con número y estado.
+- Minimización: la foto y la ubicación exacta se borran solas 90 días después de controlado el criadero.
+- Sin datos reales del clima no se suma riesgo climático (antes se usaban datos de ejemplo).
+
 ## ✅ Pruebas automáticas
 
 `tests/` prueba el algoritmo de riesgo (`inc/riesgo.php`, igual en PHP y en el navegador), el Excel y la API completa.

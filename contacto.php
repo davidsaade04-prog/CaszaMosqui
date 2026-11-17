@@ -68,6 +68,17 @@ require __DIR__ . '/inc/cabecera.php';
       </div>
     </div>
 
+    <div class="contacto-limites">
+      <h3>🚧 Antes de contratar: lo que CaszaMosqui no hace</h3>
+      <ul>
+        <li>No detecta criaderos por sí solo: depende de que la comunidad reporte, y los barrios con menos conectividad pueden quedar subrepresentados.</li>
+        <li>El mapa incluye reportes sin verificar hasta que el equipo del municipio los revisa: necesita personas capacitadas y con tiempo para hacerlo.</li>
+        <li>No diagnostica enfermedades: el test de síntomas y el asistente solo orientan.</li>
+        <li>El municipio que lo adopte pasa a ser responsable de los datos: debe designar quién atiende los reclamos y cumplir la Ley 25.326.</li>
+      </ul>
+      <p><a href="<?= e(BASE_URL) ?>/privacidad.php#limites">Ver privacidad, límites y responsabilidades completas →</a></p>
+    </div>
+
     <h3 class="contacto-sub">El equipo</h3>
     <div class="contacto-equipo">
       <?php foreach ($datos['equipo'] as $m): if (empty($m['email']) && empty($m['whatsapp'])) continue; ?>

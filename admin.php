@@ -31,7 +31,7 @@ header('Pragma: no-cache');
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-bienvenida">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-privacidad2">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -101,11 +101,47 @@ header('Pragma: no-cache');
     </nav>
   </section>
 
+  <!-- PEDIDOS Y RECLAMOS (Ley 25.326, arts. 14 y 16) -->
+  <section class="panel cuentas" id="reclamos">
+    <div class="panel-head">
+      <h2>📨 Pedidos y reclamos de vecinos</h2>
+      <select data-js-reclamos-filtro aria-label="Filtrar pedidos por estado">
+        <option value="">Todos</option>
+        <option value="nuevo" selected>Nuevos</option>
+        <option value="en_curso">En curso</option>
+        <option value="resuelto">Resueltos</option>
+      </select>
+    </div>
+    <p class="sub">Pedidos de acceso, corrección o borrado de datos, reclamos por comentarios y avisos de errores
+      (formulario de <a href="<?= e(BASE_URL) ?>/privacidad.php#reclamo" target="_blank" rel="noopener">Privacidad</a>).
+      La ley pide responder rápido: el acceso en 10 días corridos y las correcciones o borrados en 5 días hábiles.</p>
+    <div data-js-reclamos><p class="loading">Cargando pedidos…</p></div>
+  </section>
+
+  <!-- REGISTRO DE CAMBIOS (rendición de cuentas) -->
+  <section class="panel cuentas" id="historial">
+    <div class="panel-head">
+      <h2>📜 Registro de cambios</h2>
+      <select data-js-historial-filtro aria-label="Filtrar el registro">
+        <option value="">Todo</option>
+        <option value="reporte">Reportes</option>
+        <option value="comentario">Comentarios</option>
+        <option value="reclamo">Pedidos</option>
+        <option value="sistema">Sistema</option>
+      </select>
+    </div>
+    <p class="sub">Quién hizo qué y cuándo: cada verificación, control, borrado, respuesta a un pedido o descarga de respaldo
+      queda registrada y no se puede editar. Sirve para rendir cuentas si algo sale mal.</p>
+    <div class="historial-wrap" data-js-historial><p class="loading">Cargando registro…</p></div>
+  </section>
+
   <!-- RESPALDO / MUDANZA DE LA BASE -->
   <section class="panel respaldo" data-js-respaldo>
     <h2>🗄️ Respaldo de datos</h2>
     <p class="sub">Descargá una copia de todos los reportes, comentarios y fotos. Sirve para mudar la base de datos
        (la base gratuita de Render vence cada 30 días) o como resguardo. Guía paso a paso: <code>docs/MUDANZA.md</code>.</p>
+    <p class="admin-aviso">🔒 El respaldo tiene <strong>datos personales</strong> (fotos, ubicaciones y pedidos). Guardalo en un lugar seguro,
+      no lo compartas y borralo cuando ya no lo necesites. Cada descarga queda en el registro de cambios.</p>
     <div class="extra-botones">
       <button type="button" data-js-respaldo-descargar>⬇️ Descargar respaldo</button>
       <button type="button" class="btn-ghost" data-js-respaldo-restaurar>⬆️ Restaurar un respaldo…</button>
@@ -122,13 +158,14 @@ header('Pragma: no-cache');
   window.BASE_URL = <?= json_encode(BASE_URL) ?>;
   window.REPORTES_ACCESS = true;
 </script>
-<script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20260925-vivo"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261113-ayuda"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20261116-sindatos"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-cuentas"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-calor.js?v=20261111-app"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261112-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/admin-extra.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/admin-cuentas.js?v=20261116-cuentas"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
 </body>
 </html>

@@ -370,3 +370,5 @@ body.modo-salud .inm-ficha:not(.salud) { opacity: 0; pointer-events: none; }
 }
 .inm-etiqueta.centro.mini { padding: 3px; gap: 0; border-radius: 10px; }
 .inm-etiqueta.centro.mini > span:last-child { display: none; }
+.inm-limite { flex-basis: 100%; margin: 2px 0 0; font-size: .72rem; color: #7fb7c6; line-height: 1.35; }
+.inm-limite a { color: #67e8f9; }

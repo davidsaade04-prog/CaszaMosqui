@@ -62,3 +62,35 @@ CREATE TABLE IF NOT EXISTS fotos_reporte (
   bytes      INTEGER      NOT NULL DEFAULT 0,
   creado_en  TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)
 );
+
+-- v4: rendición de cuentas (Ley 25.326 / UNESCO 2021)
+-- Fecha del último cambio de estado: se usa para borrar foto y ubicación exacta 90 días después de controlado
+ALTER TABLE reportes ADD COLUMN IF NOT EXISTS actualizado_en TIMESTAMP(0) NULL;
+
+-- Registro de cambios: quién hizo qué y cuándo (no se borra al borrar el reporte o comentario)
+CREATE TABLE IF NOT EXISTS historial (
+  id         SERIAL PRIMARY KEY,
+  entidad    VARCHAR(20)  NOT NULL,             -- reporte | comentario | reclamo | sistema
+  entidad_id INTEGER      NULL,
+  accion     VARCHAR(30)  NOT NULL,             -- creado | estado | ubicacion | foto_borrada | borrado | ...
+  detalle    VARCHAR(255) NOT NULL DEFAULT '',
+  usuario    VARCHAR(60)  NOT NULL DEFAULT '',  -- usuario del panel; "público" o "sistema" si no hay sesión
+  creado_en  TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0)
+);
+CREATE INDEX IF NOT EXISTS idx_historial_entidad ON historial (entidad, entidad_id);
+CREATE INDEX IF NOT EXISTS idx_historial_fecha   ON historial (creado_en);
+
+-- Reclamos y pedidos sobre datos personales (acceso, rectificación, supresión: arts. 14 y 16)
+CREATE TABLE IF NOT EXISTS reclamos (
+  id             SERIAL PRIMARY KEY,
+  tipo           VARCHAR(20)  NOT NULL
+                 CHECK (tipo IN ('acceso','rectificacion','supresion','error','comentario','otro')),
+  referencia     VARCHAR(60)  NOT NULL DEFAULT '',
+  detalle        TEXT         NOT NULL,
+  contacto       VARCHAR(120) NOT NULL DEFAULT '',
+  estado         VARCHAR(12)  NOT NULL DEFAULT 'nuevo' CHECK (estado IN ('nuevo','en_curso','resuelto')),
+  respuesta      TEXT         NULL,
+  creado_en      TIMESTAMP(0) NOT NULL DEFAULT LOCALTIMESTAMP(0),
+  actualizado_en TIMESTAMP(0) NULL
+);
+CREATE INDEX IF NOT EXISTS idx_reclamo_estado ON reclamos (estado);
