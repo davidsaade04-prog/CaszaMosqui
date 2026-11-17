@@ -1,6 +1,6 @@
 <?php
 /**
- * CaszaMosqui — Alerta climática (FormosaHack 2026)
+ * CaszaMosqui — Alerta climática
  * GET api/clima.php → JSON con lluvia, temperatura y nivel de riesgo climático.
  *
  * Fuente: Open-Meteo (gratis, sin API key).

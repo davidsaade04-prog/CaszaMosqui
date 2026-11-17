@@ -1,7 +1,7 @@
 <?php
 /**
  * Test de Síntomas — CaszaMosqui
- * FormosaHack 2026 · Detección temprana de dengue/zika/chikungunya
+ * Detección temprana de dengue/zika/chikungunya
  */
 require_once __DIR__ . '/inc/helpers.php';
 ?>

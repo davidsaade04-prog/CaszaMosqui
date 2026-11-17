@@ -1,6 +1,6 @@
 <?php
 /**
- * API REST — CaszaMosqui · FormosaHack 2026
+ * API REST — CaszaMosqui
  * ==========================================
  * Rutas (usar ?route=):
  *   GET    /api/?route=tipos

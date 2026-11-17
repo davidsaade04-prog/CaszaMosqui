@@ -48,7 +48,7 @@ require __DIR__ . '/inc/cabecera.php';
 
     <article class="pv-bloque" id="pv-responsable">
       <h3>👥 Quién es responsable</h3>
-      <p>CaszaMosqui es un desarrollo del equipo <strong><?= e($nombres) ?></strong> (FormosaHack 2026, El Colorado, Formosa).
+      <p>CaszaMosqui es un desarrollo del equipo <strong><?= e($nombres) ?></strong> (El Colorado, Formosa).
         Somos responsables de la base de datos y de responder cualquier pedido o reclamo sobre ella.</p>
       <p>Contacto: <?php if (!empty($contacto['email'])): ?><a href="mailto:<?= e($contacto['email']) ?>"><?= e($contacto['email']) ?></a><?php endif; ?>
         <?php if (!empty($contacto['whatsapp'])): ?> · WhatsApp <?= e($contacto['whatsapp_txt'] ?: $contacto['whatsapp']) ?><?php endif; ?>

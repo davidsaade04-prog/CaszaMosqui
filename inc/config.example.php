@@ -1,6 +1,6 @@
 <?php
 /**
- * Configuración del proyecto FormosaHack 2026.
+ * Configuración del proyecto CaszaMosqui.
  * Copia este archivo como `config.php` y ajusta los valores locales.
  */
 

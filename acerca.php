@@ -26,7 +26,7 @@ require __DIR__ . '/inc/cabecera.php';
       Volver Al Inicio
     </a>
     <h2>👥 Acerca de nosotros</h2>
-    <p class="sub">Somos un equipo de El Colorado, Formosa, profesionales en el uso de la inteligencia artificial. Creamos CaszaMosqui en el <strong>FormosaHack 2026</strong> para atacar un problema que vive nuestra comunidad todos los veranos.</p>
+    <p class="sub">Somos un equipo de El Colorado, Formosa, profesionales en el uso de la inteligencia artificial. Creamos CaszaMosqui para atacar un problema que vive nuestra comunidad todos los veranos.</p>
 
     <div class="acerca-problema">
       <article>
@@ -80,7 +80,7 @@ require __DIR__ . '/inc/cabecera.php';
       <?php endforeach; ?>
     </div>
 
-    <p class="acerca-instituciones">Desarrollado en el marco del <strong>FormosaHack 2026</strong>, con el acompañamiento del Instituto Politécnico Formosa "Dr. Alberto Marcelo Zorrilla" y el Instituto República Federal de Alemania de El Colorado.</p>
+    <p class="acerca-instituciones">Desarrollado con el acompañamiento del Instituto República Federal de Alemania de El Colorado.</p>
 
     <div class="acerca-cta">
       <a href="<?= e(BASE_URL) ?>/contacto.php" class="btn-hero">Hablemos de tu proyecto →</a>

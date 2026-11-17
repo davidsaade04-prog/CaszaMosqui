@@ -36,7 +36,7 @@ $mosquito = '<svg viewBox="0 0 64 40" aria-hidden="true"><g fill="none" stroke="
       <img src="<?= e(BASE_URL) ?>/assets/img/logo-casza-hero.webp" alt="CaszaMosqui" width="1172" height="896" fetchpriority="high">
       <span class="bv-brillo" aria-hidden="true"></span>
     </div>
-    <p class="bv-ceja">FormosaHack 2026 · El Colorado, Formosa</p>
+    <p class="bv-ceja">El Colorado, Formosa</p>
     <h1 id="bienvenida-titulo">¿Cómo querés recorrer CaszaMosqui?</h1>
 
     <div class="bv-opciones">

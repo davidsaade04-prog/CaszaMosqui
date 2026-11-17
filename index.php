@@ -1,7 +1,7 @@
 <?php
 /**
  * CaszaMosqui — Mapa de riesgo (página principal)
- * FormosaHack 2026 · Desafío: enfermedades transmitidas por mosquitos
+ * Desafío: enfermedades transmitidas por mosquitos
  * Los datos se cargan desde la API /api/?route=... con fetch().
  */
 require_once __DIR__ . '/inc/helpers.php';

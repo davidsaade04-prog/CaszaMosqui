@@ -1,7 +1,6 @@
 <?php
 /**
  * Comentarios y Sugerencias por Barrio — CaszaMosqui
- * FormosaHack 2026
  * Sin límite: cada vecino puede comentar todas las veces que quiera; se muestran todos los comentarios.
  */
 require_once __DIR__ . '/inc/helpers.php';
