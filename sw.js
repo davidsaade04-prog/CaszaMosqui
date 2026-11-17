@@ -15,7 +15,7 @@
 
    Para publicar cambios en los archivos cacheados: subir VERSION.
    ============================================================ */
-const VERSION = 'casza-v10-20261116';
+const VERSION = 'casza-v11-20261116';
 const CACHE_APP = `${VERSION}-app`;
 const CACHE_DATOS = `${VERSION}-datos`;
 const CACHE_MAPA = 'casza-teselas-v1';   // independiente de VERSION: las teselas no cambian

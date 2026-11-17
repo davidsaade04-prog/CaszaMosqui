@@ -1587,6 +1587,7 @@ html.con-bienvenida .mosqui, html.con-bienvenida .btn-instalar, html.con-bienven
 .historial-tabla tbody tr:nth-child(even) td { background: #f8fafc; }
 
 /* Fila superior (Ayuda · Acerca · Contacto · Privacidad): no hereda el menú desplazable */
+.topbar .topbar-util { gap: 4px 18px; align-items: center; }
 .topbar .topbar-util a { padding: 2px 0; font-size: .78rem; border-radius: 0; background: none; box-shadow: none; }
 .topbar .topbar-util a:hover { background: none; }
 .topbar .topbar-util a.active { background: none; box-shadow: none; }
@@ -1598,3 +1599,13 @@ html.con-bienvenida .mosqui, html.con-bienvenida .btn-instalar, html.con-bienven
 /* Pista: el botón de reportar se habilita recién al aceptar el aviso de privacidad */
 .acepta-pista { margin: -4px 0 10px; font-size: .86rem; color: #92400e; }
 [data-js-form] button[type=submit]:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Botón para pasar al modo inmersivo (3D) desde el modo normal */
+.topbar .topbar-util a.topbar-inmersivo {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px; border-radius: 999px;
+  color: #fff; font-weight: 700; border: 1px solid rgba(34, 211, 238, .55);
+  background: linear-gradient(135deg, rgba(14, 116, 144, .9), rgba(91, 33, 182, .85));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .04), 0 4px 14px rgba(34, 211, 238, .25);
+}
+.topbar .topbar-util a.topbar-inmersivo svg { width: 14px; height: 14px; }
+.topbar .topbar-util a.topbar-inmersivo:hover { border-color: #22d3ee; box-shadow: 0 0 0 1px rgba(34, 211, 238, .4), 0 6px 18px rgba(34, 211, 238, .35); }

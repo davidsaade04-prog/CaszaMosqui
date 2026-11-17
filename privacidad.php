@@ -50,9 +50,8 @@ require __DIR__ . '/inc/cabecera.php';
       <h3>👥 Quién es responsable</h3>
       <p>CaszaMosqui es un desarrollo del equipo <strong><?= e($nombres) ?></strong> (El Colorado, Formosa).
         Somos responsables de la base de datos y de responder cualquier pedido o reclamo sobre ella.</p>
-      <p>Contacto: <?php if (!empty($contacto['email'])): ?><a href="mailto:<?= e($contacto['email']) ?>"><?= e($contacto['email']) ?></a><?php endif; ?>
-        <?php if (!empty($contacto['whatsapp'])): ?> · WhatsApp <?= e($contacto['whatsapp_txt'] ?: $contacto['whatsapp']) ?><?php endif; ?>
-        · o el <a href="#reclamo">formulario de esta página</a>.</p>
+      <p>Todos los pedidos, consultas y reclamos se hacen por el <a href="#reclamo">formulario de esta página</a>: cada uno recibe un número
+        y queda registrado hasta que lo respondemos.</p>
       <p class="pv-nota">Si un municipio u organismo adopta el sistema, pasa a ser también responsable de la base: debe designar a una persona que atienda los reclamos e
         inscribir la base ante la Agencia de Acceso a la Información Pública cuando corresponda.</p>
     </article>
