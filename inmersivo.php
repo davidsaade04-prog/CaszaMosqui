@@ -9,7 +9,7 @@
 require_once __DIR__ . '/inc/helpers.php';
 
 $centros = require __DIR__ . '/inc/centros-salud.php';
-$v = '20261116-salud';
+$v = '20261116-casas';
 ?>
 <!DOCTYPE html>
 <html lang="es">

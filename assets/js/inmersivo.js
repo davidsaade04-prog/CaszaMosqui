@@ -70,7 +70,7 @@ camara.position.set(0, 230, 0.1);
 const controles = new OrbitControls(camara, canvas);
 controles.enableDamping = true;
 controles.dampingFactor = 0.08;
-controles.minDistance = 16;
+controles.minDistance = 7;      // de cerca se ven las casas de cada manzana
 controles.maxDistance = 190;
 controles.minPolarAngle = 0.12;
 controles.maxPolarAngle = 1.3;
@@ -269,6 +269,100 @@ function estadoHorario(h) {
 }
 (window.CENTROS_SALUD || []).forEach(crearBaliza);
 
+/* ======================= Casas sobre cada manzana (ilustrativo) =======================
+   assets/data/casas.bin: una casa por lote, generada desde el plano municipal
+   (scripts/generar-casas.py). Cada casa = 3 enteros de 16 bits: x, z (centésimas
+   de unidad de escena) y el ángulo de la calle (milésimas de radián).
+   Se dibujan con InstancedMesh: miles de casas en muy pocas llamadas a la GPU. */
+const barrioCasas = new THREE.Group();
+barrioCasas.scale.y = 0.001;              // crecen desde el piso al cargar
+escena.add(barrioCasas);
+let casasCrecer = 0;
+const CASA = { ancho: 0.23, fondo: 0.3 };   // ≈ 8 × 10 m (1 unidad ≈ 35 m)
+
+function geometriaTecho() {
+  // Techo a dos aguas: prisma triangular con la cumbrera a lo largo del frente
+  const w = 0.5, d = 0.5, h = 1;
+  const v = new Float32Array([
+    -w, 0, -d,  w, 0, -d,  w, h, 0,   -w, 0, -d,  w, h, 0,  -w, h, 0,     // faldón trasero
+    -w, 0,  d, -w, h, 0,  w, h, 0,    -w, 0,  d,  w, h, 0,   w, 0,  d,     // faldón delantero
+    -w, 0, -d, -w, h, 0, -w, 0,  d,    w, 0, -d,  w, 0,  d,  w, h, 0,     // hastiales
+  ]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(v, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+async function cargarCasas() {
+  const res = await fetch(BASE + '/assets/data/casas.bin');
+  if (!res.ok) return;
+  const datos = new Int16Array(await res.arrayBuffer());
+  let total = datos.length / 3;
+  // Celulares modestos: una de cada dos casas (se ve igual de poblado de lejos)
+  const paso = MOVIL && (navigator.hardwareConcurrency || 4) <= 4 ? 2 : 1;
+  total = Math.ceil(total / paso);
+
+  const cuerpo = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
+    new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x0b2a38, emissiveIntensity: 1 }),
+    total,
+  );
+  const techo = new THREE.InstancedMesh(
+    geometriaTecho(),
+    new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x071a24, emissiveIntensity: 1, side: THREE.DoubleSide }),
+    total,
+  );
+  const PAREDES = [0x2a5566, 0x30607a, 0x365c6e, 0x3b6670, 0x2c4c60, 0x41687a].map((c) => new THREE.Color(c));
+  // Techos: chapa y tejas (como en El Colorado), apagados para no competir con las torres
+  const TECHOS = [0xa0573a, 0x8c4b33, 0x6f8fa0, 0x5c7d8f, 0xb06a44, 0x7d9aa8].map((c) => new THREE.Color(c));
+
+  // Ventanas encendidas: luz cálida en algunas casas
+  const conLuz = [];
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  const eje = new THREE.Vector3(0, 1, 0);
+  let k = 0;
+  for (let i = 0; i < datos.length / 3; i += paso) {
+    const x = datos[i * 3] / 100, z = datos[i * 3 + 1] / 100, ang = datos[i * 3 + 2] / 1000;
+    // Variación estable por casa (no cambia al recargar)
+    const r1 = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
+    const r2 = Math.abs(Math.sin(i * 78.233) * 12543.123) % 1;
+    const alto = r1 < 0.12 ? 0.27 : 0.12 + r2 * 0.05;          // algunas de dos plantas
+    const ancho = CASA.ancho * (0.85 + r2 * 0.3);
+    q.setFromAxisAngle(eje, -ang);
+    p.set(x, 0, z); s.set(ancho, alto, CASA.fondo * (0.9 + r1 * 0.2));
+    cuerpo.setMatrixAt(k, m.compose(p, q, s));
+    cuerpo.setColorAt(k, PAREDES[Math.floor(r1 * PAREDES.length)]);
+    p.set(x, alto, z); s.set(ancho * 1.1, 0.13 + r2 * 0.05, CASA.fondo * 1.18);   // techo con alero
+    techo.setMatrixAt(k, m.compose(p, q, s));
+    techo.setColorAt(k, TECHOS[Math.floor(r2 * TECHOS.length)]);
+    if (r1 > 0.62) conLuz.push([x, z, ang, alto]);
+    k++;
+  }
+  [cuerpo, techo].forEach((im) => { im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; im.computeBoundingSphere(); });
+  barrioCasas.add(cuerpo, techo);
+
+  // Ventanas: rectangulitos que brillan en el frente de la casa (sin luz de escena: siempre se ven)
+  if (conLuz.length) {
+    const ventanas = new THREE.InstancedMesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffd38a, side: THREE.DoubleSide }),
+      conLuz.length,
+    );
+    conLuz.forEach(([x, z, ang, alto], i) => {
+      q.setFromAxisAngle(eje, -ang);
+      // un poco hacia la calle (frente de la casa), a media altura
+      const fx = Math.sin(ang) * -CASA.fondo * 0.6, fz = Math.cos(ang) * CASA.fondo * 0.6;
+      p.set(x + fx, alto * 0.5, z + fz); s.set(0.1, 0.06, 1);
+      ventanas.setMatrixAt(i, m.compose(p, q, s));
+    });
+    ventanas.instanceMatrix.needsUpdate = true;
+    ventanas.computeBoundingSphere();
+    barrioCasas.add(ventanas);
+  }
+  casasCrecer = performance.now();
+}
+
 /* ======================= Datos ======================= */
 let barrios = [];       // datos del barrio con nivel con clima
 let climaBonus = 0, climaNivel = null;
@@ -362,7 +456,7 @@ function ubicarEtiquetas() {
       c.el.classList.add('mini');
       r = rect(34, 34);
     }
-    if (choca(r) && (c.prio < 90 && !c.centro)) { c.el.classList.remove('ver'); return; }
+    if (choca(r) && c.prio < 90) { c.el.classList.remove('ver'); return; }   // si aun así se encima, se oculta (la baliza sigue a la vista)
     ocupadas.push(r);
     c.el.classList.add('ver');
     c.el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px) translate(-50%, -100%)`;
@@ -644,6 +738,11 @@ function dibujar() {
     if (k >= 1) vuelo = null;
   }
   controles.update();
+  if (casasCrecer) {
+    const k = REDUCIR ? 1 : Math.min(1, (performance.now() - casasCrecer) / 1800);
+    barrioCasas.scale.y = 0.001 + (1 - Math.pow(1 - k, 3)) * 0.999;
+    if (k >= 1) casasCrecer = 0;
+  }
 
   torres.forEach((tr, id) => {
     tr.altura += (tr.alturaObjetivo - tr.altura) * 0.06;
@@ -721,6 +820,7 @@ new THREE.TextureLoader().load(BASE + '/assets/img/plano-holo.webp', (tex) => {
 });
 
 dibujar();
+cargarCasas().catch(() => {});   // si falla, el mapa sigue igual sin casas
 Promise.race([
   cargarDatos(),
   new Promise((ok) => setTimeout(ok, 6000)),

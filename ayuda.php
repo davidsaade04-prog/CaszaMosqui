@@ -61,7 +61,7 @@ function video(string $nombre, string $pie): string
         <ol>
           <li>Cada vez que entrás a CaszaMosqui aparece la pantalla de bienvenida: elegí <strong>Modo normal</strong> (la página de siempre) o <strong>Modo inmersivo</strong>.</li>
           <li>En el modo inmersivo, El Colorado aparece en <strong>3D</strong>: cada barrio es una <strong>torre de luz</strong>. Cuanto más alta, más criaderos activos tiene; el color es su nivel de riesgo (🔴 alto, 🟡 medio, 🟢 bajo). Las balizas con <strong>cruz</strong> son los centros de salud.</li>
-          <li><strong>Arrastrá</strong> para girar el pueblo y <strong>acercá</strong> con la rueda del mouse o pellizcando la pantalla.</li>
+          <li><strong>Arrastrá</strong> para girar el pueblo y <strong>acercá</strong> con la rueda del mouse o pellizcando la pantalla. De cerca vas a ver las <strong>casas de cada manzana</strong> (son ilustrativas: muestran cómo se llena el pueblo, no las casas reales).</li>
           <li><strong>Tocá una torre</strong> para ver su barrio y reportar ahí mismo: el formulario se abre con el barrio ya elegido.</li>
           <li>Las <strong>opciones flotantes</strong> (Reportar, Comentarios, Test de síntomas…) se abren en un panel sin salir del mapa. En el celular están abajo: deslizalas para ver todas.</li>
           <li><strong>🏥 Centros de salud</strong> ilumina las balizas de los centros, atenúa los barrios y muestra la lista con <strong>Emergencias 107</strong>, si está <strong>abierto ahora</strong>, el botón para <strong>llamar</strong> y <strong>Cómo llegar</strong>, que abre el camino desde donde estás.</li>

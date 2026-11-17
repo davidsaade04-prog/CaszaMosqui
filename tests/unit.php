@@ -85,4 +85,18 @@ prueba('teléfonos marcables (+54…) y horarios bien escritos', function () use
     }
 });
 
+seccion('Modo inmersivo · casas ilustrativas');
+prueba('assets/data/casas.bin: casas dentro del plano y bien formadas', function () {
+    $bin = file_get_contents(__DIR__ . '/../assets/data/casas.bin');
+    verdadero($bin !== false && strlen($bin) % 6 === 0, 'el archivo debe tener 3 enteros de 16 bits por casa');
+    $v = array_values(unpack('s*', $bin));
+    $n = intdiv(count($v), 3);
+    verdadero($n > 10000, "pocas casas ($n)");
+    $largo = 100 * 2675 / 2400;
+    for ($i = 0; $i < count($v); $i += 3) {
+        verdadero(abs($v[$i] / 100) <= 50 && abs($v[$i + 1] / 100) <= $largo / 2, 'casa fuera del plano');
+        verdadero($v[$i + 2] >= 0 && $v[$i + 2] <= 3142, 'ángulo fuera de rango');
+    }
+});
+
 exit(resumen_pruebas());
