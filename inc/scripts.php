@@ -16,7 +16,7 @@
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20261116-sindatos"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/calles.js"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-cuentas"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-acepta"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261113-ayuda"></script>

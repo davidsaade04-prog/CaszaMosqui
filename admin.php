@@ -31,7 +31,7 @@ header('Pragma: no-cache');
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-privacidad2">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-pie">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -159,7 +159,7 @@ header('Pragma: no-cache');
   window.REPORTES_ACCESS = true;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/clima.js?v=20261116-sindatos"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-cuentas"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/app.js?v=20261116-acepta"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/leaflet.js"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/geo.js?v=20261019-gps"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-calor.js?v=20261111-app"></script>

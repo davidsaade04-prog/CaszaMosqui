@@ -15,7 +15,7 @@
 
    Para publicar cambios en los archivos cacheados: subir VERSION.
    ============================================================ */
-const VERSION = 'casza-v9-20261116';
+const VERSION = 'casza-v10-20261116';
 const CACHE_APP = `${VERSION}-app`;
 const CACHE_DATOS = `${VERSION}-datos`;
 const CACHE_MAPA = 'casza-teselas-v1';   // independiente de VERSION: las teselas no cambian
@@ -65,7 +65,6 @@ const PRECARGA = [
   'assets/img/logo-casza.jpeg',
   'assets/img/mapa-el-colorado.svg',
   'assets/img/app/icono-192.png',
-  'assets/img/logo-ipf.png',
   'assets/img/logo-rfa.png',
   'assets/img/logo-ia.png',
   'api/index.php?route=tipos',

@@ -118,7 +118,12 @@ function puedeInteractuar() {
 
 function actualizarEstadoLimite() {
   const bloqueado = !puedeInteractuar();
-  $$('[data-js-form] button[type=submit]').forEach((b) => { b.disabled = bloqueado; });
+  // Sin aceptar el aviso de privacidad (Ley 25.326, art. 5) el botón de reportar no se habilita
+  const casilla = $('[data-js-form] input[name=acepta]');
+  const sinAceptar = !!casilla && !casilla.checked;
+  $$('[data-js-form] button[type=submit]').forEach((b) => { b.disabled = bloqueado || sinAceptar; });
+  const pista = $('[data-js-acepta-pista]');
+  if (pista) pista.hidden = bloqueado || !sinAceptar;
   $$('[data-voto]').forEach((b) => { b.disabled = bloqueado; });
 
   // Antes el botón se desactivaba sin explicación y parecía que el reporte "no cargaba"
@@ -689,6 +694,7 @@ async function crearReporte(ev) {
   // Opcionales: ubicación GPS y foto (assets/js/reporte-extra.js)
   const extra = window.CaszaReporteExtra ? window.CaszaReporteExtra.datos() : {};
   const btnEnviar = form.querySelector('button[type=submit]');
+  if (data.acepta !== 'on') { actualizarEstadoLimite(); return; }
   if (btnEnviar) { btnEnviar.disabled = true; btnEnviar.dataset.texto = btnEnviar.textContent; btnEnviar.textContent = extra.foto ? 'Enviando foto…' : 'Enviando…'; }
 
   const datos = {
@@ -737,7 +743,7 @@ async function crearReporte(ev) {
   finally {
     if (btnEnviar && btnEnviar.dataset.texto) btnEnviar.textContent = btnEnviar.dataset.texto;
     actualizarEstadoLimite();   // vuelve a habilitar el botón (o lo deja bloqueado por el límite diario)
-    if (btnEnviar && puedeInteractuar()) btnEnviar.disabled = false;
+    // (actualizarEstadoLimite ya decide si el botón queda habilitado: límite diario + casilla de privacidad)
   }
 }
 
@@ -814,6 +820,7 @@ function bind() {
 
   // Formulario nuevo reporte
   $('[data-js-form]')?.addEventListener('submit', crearReporte);
+$('[data-js-form] input[name=acepta]')?.addEventListener('change', actualizarEstadoLimite);
 
   // Filtros
   $('[data-js-filtros]')?.addEventListener('change', async (ev) => {

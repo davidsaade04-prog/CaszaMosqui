@@ -84,7 +84,8 @@ require __DIR__ . '/inc/cabecera.php';
           Usamos estos datos solo para el mapa de riesgo y los operativos contra el mosquito. La foto y la ubicación exacta
           solo las ve el equipo y se borran a los 90 días de controlado el criadero. No escribas teléfonos ni nombres de otras personas.</span>
       </label>
-      <button type="submit">Reportar criadero</button>
+      <p class="acepta-pista" data-js-acepta-pista>☝️ Marcá la casilla del aviso de privacidad para habilitar el botón.</p>
+      <button type="submit" disabled>Reportar criadero</button>
       <p class="form-msg" data-js-form-msg aria-live="polite"></p>
     </form>
   </section>
