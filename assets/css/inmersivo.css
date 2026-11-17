@@ -377,3 +377,10 @@ body.modo-salud .inm-ficha:not(.salud) { opacity: 0; pointer-events: none; }
    quedaba encima del botón "¿Dudas?" de Mosqui en el celular */
 body.inm [hidden] { display: none !important; }
 .inm-salud:not(.abierta), .inm-ficha:not(.abierta) { pointer-events: none; }
+
+/* PC y tablet: la leyenda va arriba a la derecha, debajo de "Modo normal",
+   para que no se encime con las opciones de la izquierda (Ayuda, Cuestionario…) */
+@media (min-width: 761px) {
+  .inm-leyenda { left: auto; right: 14px; bottom: auto; top: 90px; max-width: 340px; }
+  body.modo-salud .inm-leyenda, body.con-ficha .inm-leyenda { opacity: 0; pointer-events: none; transition-delay: 0s; }
+}
