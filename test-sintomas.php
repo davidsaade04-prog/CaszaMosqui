@@ -5,8 +5,9 @@
  */
 require_once __DIR__ . '/inc/helpers.php';
 ?>
+<?php $embebido = isset($_GET['embed']); ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"<?= $embebido ? ' class="tema-inmersivo"' : '' ?>>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,8 +47,11 @@ require_once __DIR__ . '/inc/helpers.php';
     
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   </style>
+<?php if ($embebido): ?>
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/tema-inmersivo.css?v=20261116-tema2">
+  <script src="<?= e(BASE_URL) ?>/assets/js/tema-inmersivo.js?v=20261116-tema2" defer></script>
+<?php endif; ?>
 </head>
-<?php $embebido = isset($_GET['embed']); ?>
 <body<?= $embebido ? ' class="embebido"' : '' ?>>
 
 <?php if (!$embebido): ?>

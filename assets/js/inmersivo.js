@@ -29,6 +29,7 @@ function latLngAPlano(lat, lng) {
   return [(px / PLANO_W) * 100, (py / PLANO_H) * 100];
 }
 
+let modoSalud = false;   // "Enfocar centros de salud": atenúa los barrios y resalta las balizas
 const COLOR = { alto: 0xef4444, medio: 0xf59e0b, bajo: 0x22c55e, salud: 0x38bdf8 };
 const NIVEL_TXT = { alto: 'Riesgo alto', medio: 'Riesgo medio', bajo: 'Riesgo bajo' };
 const SECCIONES = {
@@ -196,7 +197,8 @@ function actualizarEnjambre(t, cantidad) {
   t.grupo.add(puntos);
 }
 
-/* ---------- Centros de salud: balizas ---------- */
+/* ---------- Centros de salud: balizas bien visibles ---------- */
+const ALTO_CRUZ = 17.5;
 const balizas = [];
 function crearBaliza(c) {
   if (c.lat == null) return;
@@ -204,38 +206,66 @@ function crearBaliza(c) {
   const [x, z] = aEscena(xp, yp);
   const grupo = new THREE.Group();
   grupo.position.set(x, 0, z);
+  const tinte = c.guardia ? 0xef4444 : COLOR.salud;
+  const aditivo = (color, opacity) => new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
 
-  const haz = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.12, 0.12, 9, 8, 1, true).translate(0, 4.5, 0),
-    new THREE.MeshBasicMaterial({ color: COLOR.salud, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }),
-  );
-  grupo.add(haz);
+  // Columna de luz: núcleo brillante + resplandor ancho
+  grupo.add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, ALTO_CRUZ, 10, 1, true).translate(0, ALTO_CRUZ / 2, 0), aditivo(0xbae6fd, 0.9)));
+  grupo.add(new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, ALTO_CRUZ, 20, 1, true).translate(0, ALTO_CRUZ / 2, 0), aditivo(COLOR.salud, 0.13)));
 
+  // Base: pedestal y disco de luz en el piso
+  const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.9, 0.5, 24).translate(0, 0.25, 0),
+    new THREE.MeshStandardMaterial({ color: 0x0c4a6e, emissive: COLOR.salud, emissiveIntensity: 0.6, roughness: 0.4 }));
+  grupo.add(pedestal);
+  const disco = new THREE.Sprite(new THREE.SpriteMaterial({ map: BRILLO, color: COLOR.salud, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+  disco.scale.set(9, 9, 1); disco.position.y = 0.3;
+  grupo.add(disco);
+
+  // Ondas que salen del centro de salud (como un "estoy acá")
+  const ondas = [0, 0.5].map((desfase) => {
+    const o = new THREE.Mesh(new THREE.RingGeometry(1.6, 1.95, 56), aditivo(COLOR.salud, 0.7));
+    o.material.side = THREE.DoubleSide;
+    o.rotation.x = -Math.PI / 2; o.position.y = 0.12; o.userData.desfase = desfase;
+    grupo.add(o);
+    return o;
+  });
+
+  // Cruz médica grande, blanca, con brillo
   const cruz = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: c.guardia ? 0xef4444 : COLOR.salud, emissiveIntensity: 0.9, roughness: 0.3 });
-  cruz.add(new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 0.7), mat));
-  cruz.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 2.2, 0.7), mat));
-  cruz.position.y = 10.2;
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: tinte, emissiveIntensity: 1.1, roughness: 0.25, metalness: 0.1 });
+  cruz.add(new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.1, 1.1), mat));
+  cruz.add(new THREE.Mesh(new THREE.BoxGeometry(1.1, 3.4, 1.1), mat));
+  const marco = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.6, 3.6, 1.3)), new THREE.LineBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.5 }));
+  cruz.add(marco);
+  cruz.position.y = ALTO_CRUZ;
   grupo.add(cruz);
 
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: BRILLO, color: c.guardia ? 0xf87171 : COLOR.salud, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false }));
-  halo.scale.set(5.5, 5.5, 1);
-  halo.position.y = 10.2;
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: BRILLO, color: tinte, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+  halo.scale.set(10, 10, 1);
+  halo.position.y = ALTO_CRUZ;
   grupo.add(halo);
 
-  const base = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.25, 40), new THREE.MeshBasicMaterial({ color: COLOR.salud, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
-  base.rotation.x = -Math.PI / 2;
-  base.position.y = 0.1;
-  grupo.add(base);
-
-  // Zona invisible más grande para tocarla fácil con el dedo
-  const toque = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 12, 8).translate(0, 6, 0), new THREE.MeshBasicMaterial({ visible: false }));
+  // Zona invisible grande para tocarla fácil con el dedo
+  const toque = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, ALTO_CRUZ + 3, 8).translate(0, (ALTO_CRUZ + 3) / 2, 0), new THREE.MeshBasicMaterial({ visible: false }));
   toque.userData = { tipo: 'centro', id: c.id };
   grupo.add(toque);
   tocables.push(toque);
 
   escena.add(grupo);
-  balizas.push({ grupo, cruz, halo, datos: c, fase: Math.random() * 6 });
+  balizas.push({ grupo, cruz, halo, ondas, datos: c, fase: Math.random() * 6, escala: 1 });
+}
+
+/** "Abierto ahora" con la hora de Argentina (mismo criterio que centros-salud.js). */
+function estadoHorario(h) {
+  if (h === '24h') return { estado: 'abierto', texto: 'Abierto 24 h' };
+  if (!Array.isArray(h) || !h.length) return { estado: 'sin-dato', texto: 'Horario a confirmar' };
+  const partes = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const v = (t) => partes.find((p) => p.type === t).value;
+  const dia = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(v('weekday')) + 1;
+  const min = Number(v('hour')) * 60 + Number(v('minute'));
+  const aMin = (s) => { const [a, b] = s.split(':').map(Number); return a * 60 + b; };
+  const abierta = h.find((f) => f.dias.includes(dia) && min >= aMin(f.desde) && min < aMin(f.hasta));
+  return abierta ? { estado: 'abierto', texto: 'Abierto ahora' } : { estado: 'cerrado', texto: 'Cerrado ahora' };
 }
 (window.CENTROS_SALUD || []).forEach(crearBaliza);
 
@@ -304,29 +334,35 @@ function ubicarEtiquetas() {
   torres.forEach((t, id) => {
     const b = t.datos;
     const importante = b.nivel !== 'bajo' || id === hoverId || id === seleccionId;
-    const visible = importante || distancia < 55;
+    const visible = modoSalud ? id === hoverId : (importante || distancia < 55);
     const el = etiquetaDe('b' + id, `${esc(b.nombre)}${b.indice ? ` <b>${b.indice}</b>` : ''}`, 'barrio ' + b.nivel);
     v3.set(t.grupo.position.x, t.altura + 2.2, t.grupo.position.z).project(camara);
     const enPantalla = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1;
     candidatas.push({ el, x: (v3.x + 1) / 2 * w, y: (1 - v3.y) / 2 * h, ok: visible && enPantalla, prio: (id === seleccionId ? 100 : id === hoverId ? 90 : 0) + b.indice * 2 + (b.nivel === 'alto' ? 5 : 0), z: v3.z });
   });
   balizas.forEach((bz) => {
-    const el = etiquetaDe('c' + bz.datos.id, `${bz.datos.guardia ? '🏥' : '🩺'} ${esc(bz.datos.nombre.replace(/ "Opizzo Traverso"/, ''))}`, 'centro');
-    v3.set(bz.grupo.position.x, 12.4, bz.grupo.position.z).project(camara);
+    const c = bz.datos, est = estadoHorario(c.horario);
+    const el = etiquetaDe('c' + c.id, `<span class="ico">${c.guardia ? '🏥' : '🩺'}</span><span><strong>${esc(c.nombre.replace(/ "Opizzo Traverso"/, ''))}</strong><small class="${est.estado}">${est.texto}</small></span>`, 'centro' + (c.guardia ? ' guardia' : ''));
+    v3.set(bz.grupo.position.x, ALTO_CRUZ * bz.escala + 3, bz.grupo.position.z).project(camara);
     const enPantalla = v3.z < 1 && Math.abs(v3.x) < 1.1 && Math.abs(v3.y) < 1.1;
-    const id = 'c:' + bz.datos.id;
-    const visible = bz.datos.guardia || distancia < 70 || id === hoverId || id === seleccionId;
-    candidatas.push({ el, x: (v3.x + 1) / 2 * w, y: (1 - v3.y) / 2 * h, ok: visible && enPantalla, prio: (id === seleccionId ? 100 : id === hoverId ? 90 : 0) + (bz.datos.guardia ? 40 : 3), z: v3.z });
+    const id = 'c:' + c.id;
+    candidatas.push({ el, centro: true, x: (v3.x + 1) / 2 * w, y: (1 - v3.y) / 2 * h, ok: enPantalla, alto: 40, prio: (id === seleccionId ? 100 : id === hoverId ? 95 : 0) + (c.guardia ? 70 : 60), z: v3.z });
   });
   // Evitar que se encimen: entran primero las más importantes
   candidatas.sort((a, b) => b.prio - a.prio);
   const ocupadas = [];
   candidatas.forEach((c) => {
     if (!c.ok) { c.el.classList.remove('ver'); return; }
-    const ancho = c.el.offsetWidth || 90, alto = 24;
-    const r = { x1: c.x - ancho / 2, x2: c.x + ancho / 2, y1: c.y - alto, y2: c.y };
-    const choca = ocupadas.some((o) => r.x1 < o.x2 && r.x2 > o.x1 && r.y1 < o.y2 && r.y2 > o.y1);
-    if (choca && c.prio < 90) { c.el.classList.remove('ver'); return; }
+    const rect = (ancho, alto) => ({ x1: c.x - ancho / 2, x2: c.x + ancho / 2, y1: c.y - alto, y2: c.y });
+    const choca = (r) => ocupadas.some((o) => r.x1 < o.x2 && r.x2 > o.x1 && r.y1 < o.y2 && r.y2 > o.y1);
+    if (c.centro) c.el.classList.remove('mini');
+    let r = rect(c.el.offsetWidth || 90, c.alto || 24);
+    if (choca(r) && c.centro && c.prio < 90) {
+      // Centros de salud muy juntos: quedan como ícono, pero siempre a la vista
+      c.el.classList.add('mini');
+      r = rect(34, 34);
+    }
+    if (choca(r) && (c.prio < 90 && !c.centro)) { c.el.classList.remove('ver'); return; }
     ocupadas.push(r);
     c.el.classList.add('ver');
     c.el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px) translate(-50%, -100%)`;
@@ -359,6 +395,7 @@ canvas.addEventListener('pointerup', (ev) => {
   if (!abajo || Math.hypot(ev.clientX - abajo.x, ev.clientY - abajo.y) > 6) { abajo = null; return; }
   abajo = null;
   const u = objetoEn(ev);
+  if (u && u.tipo === 'barrio' && modoSalud) alternarSalud(false);
   if (u) mostrarFicha(u.tipo, u.id, true);
   else cerrarFicha();
 });
@@ -390,19 +427,29 @@ function mostrarFicha(tipo, id, enfocar) {
     if (!bz) return;
     const c = bz.datos;
     seleccionId = 'c:' + id;
+    if (modoSalud) {
+      // Con la lista de centros abierta, la información y los botones ya están en la lista
+      fichaActual = null;
+      if (enfocar) enfocarEn(bz.grupo.position, 20, MOVIL ? 105 : 82);
+      marcarEnLista(c.id);
+      return;
+    }
     ficha.className = 'inm-ficha salud';
     const tel = c.telefonos && c.telefonos[0];
+    const est = estadoHorario(c.horario);
     ficha.innerHTML = `
       <button type="button" class="inm-ficha-x" data-ficha-cerrar aria-label="Cerrar">✕</button>
       <p class="inm-ficha-tipo">${esc(c.tipo)}</p>
       <h3>${esc(c.nombre)}</h3>
+      <span class="inm-nivel ${est.estado === 'abierto' ? 'bajo' : est.estado === 'cerrado' ? 'alto' : 'sin'}">${est.texto}</span>
       <p class="inm-ficha-dato">📍 ${esc(c.direccion)}</p>
       <p class="inm-ficha-dato">🕒 ${esc(c.horario_txt)}</p>
       <div class="inm-ficha-acciones">
         ${tel ? `<a class="inm-btn inm-btn-verde" href="tel:${esc(tel[2])}">📞 Llamar</a>` : ''}
-        <button type="button" class="inm-btn" data-abrir="salud">🧭 Cómo llegar</button>
+        <button type="button" class="inm-btn inm-btn-azul" data-abrir="salud" data-ir="${esc(c.id)}">🧭 Cómo llegar</button>
       </div>`;
-    if (enfocar) enfocarEn(bz.grupo.position, 10);
+    if (enfocar) enfocarEn(bz.grupo.position, 20, MOVIL ? 105 : 82);
+    marcarEnLista(c.id);
   }
   ficha.hidden = false;
   document.body.classList.add('con-ficha');
@@ -417,6 +464,57 @@ function cerrarFicha() {
 }
 ficha.addEventListener('click', (ev) => { if (ev.target.closest('[data-ficha-cerrar]')) cerrarFicha(); });
 
+
+/* ======================= Enfocar centros de salud ======================= */
+const listaSalud = $('[data-js-salud]');
+function pintarListaSalud() {
+  const ul = listaSalud.querySelector('[data-js-salud-items]');
+  const centros = window.CENTROS_SALUD || [];
+  ul.innerHTML = centros.map((c) => {
+    const est = estadoHorario(c.horario);
+    const tel = c.telefonos && c.telefonos[0];
+    return `<li data-centro="${esc(c.id)}">
+      <button type="button" class="inm-salud-item" ${c.lat != null ? `data-ir-centro="${esc(c.id)}"` : 'disabled'}>
+        <span class="inm-salud-ico${c.guardia ? ' guardia' : ''}" aria-hidden="true">${c.guardia ? '🏥' : '🩺'}</span>
+        <span class="inm-salud-txt"><strong>${esc(c.nombre)}</strong><small>${esc(c.direccion)}</small></span>
+        <span class="inm-salud-estado ${est.estado}">${est.texto}</span>
+      </button>
+      <div class="inm-salud-acciones">
+        ${tel ? `<a class="inm-btn inm-btn-verde" href="tel:${esc(tel[2])}">📞 ${esc(tel[1])}</a>` : ''}
+        <button type="button" class="inm-btn inm-btn-azul" data-abrir="salud" data-ir="${esc(c.id)}">🧭 Cómo llegar</button>
+      </div>
+    </li>`;
+  }).join('');
+}
+function marcarEnLista(id) {
+  listaSalud.querySelectorAll('li').forEach((li) => li.classList.toggle('activo', li.dataset.centro === String(id)));
+  const li = listaSalud.querySelector(`li[data-centro="${CSS.escape(String(id))}"]`);
+  if (li && !listaSalud.hidden) li.scrollIntoView({ block: 'nearest', behavior: REDUCIR ? 'auto' : 'smooth' });
+}
+function alternarSalud(forzar) {
+  modoSalud = typeof forzar === 'boolean' ? forzar : !modoSalud;
+  document.body.classList.toggle('modo-salud', modoSalud);
+  document.querySelectorAll('[data-salud3d]').forEach((b) => b.setAttribute('aria-pressed', String(modoSalud)));
+  if (modoSalud) {
+    cerrarFicha();
+    pintarListaSalud();
+    listaSalud.hidden = false;
+    requestAnimationFrame(() => listaSalud.classList.add('abierta'));
+    // Encuadrar todas las balizas
+    const caja = new THREE.Box3();
+    balizas.forEach((bz) => caja.expandByPoint(bz.grupo.position));
+    const centro = caja.getCenter(new THREE.Vector3());
+    const tam = caja.getSize(new THREE.Vector3());
+    const dist = Math.max(MOVIL ? 70 : 48, Math.max(tam.x, tam.z) * (MOVIL ? 2.6 : 1.9));
+    const objetivo = new THREE.Vector3(centro.x + (MOVIL ? 0 : 6), 0, centro.z + (MOVIL ? 10 : 0));
+    volar(objetivo.clone().add(new THREE.Vector3(0, dist * 0.78, dist * 0.62)), objetivo, 1300);
+    pausarGiro();
+  } else {
+    listaSalud.classList.remove('abierta');
+    setTimeout(() => { if (!modoSalud) listaSalud.hidden = true; }, 300);
+  }
+}
+
 /* ---------- Movimientos de cámara ---------- */
 let vuelo = null;   // { desdePos, haciaPos, desdeObj, haciaObj, t0, dur }
 const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -424,10 +522,10 @@ function volar(haciaPos, haciaObj, dur = 1400) {
   if (REDUCIR) { camara.position.copy(haciaPos); controles.target.copy(haciaObj); return; }
   vuelo = { desdePos: camara.position.clone(), haciaPos: haciaPos.clone(), desdeObj: controles.target.clone(), haciaObj: haciaObj.clone(), t0: performance.now(), dur };
 }
-function enfocarEn(pos, altura) {
+function enfocarEn(pos, altura, distancia) {
   const obj = new THREE.Vector3(pos.x, Math.min(altura, 8) * 0.4, pos.z);
   const dir = camara.position.clone().sub(controles.target).normalize();
-  const dist = MOVIL ? 58 : 48;
+  const dist = distancia || (MOVIL ? 58 : 48);
   volar(obj.clone().add(dir.multiplyScalar(dist)), obj, 1100);
   pausarGiro();
 }
@@ -437,7 +535,7 @@ let giroTimer = null;
 function pausarGiro() {
   controles.autoRotate = false;
   clearTimeout(giroTimer);
-  if (!REDUCIR) giroTimer = setTimeout(() => { if (!panelAbierto && !fichaActual) controles.autoRotate = true; }, 25000);
+  if (!REDUCIR) giroTimer = setTimeout(() => { if (!panelAbierto && !fichaActual && !modoSalud) controles.autoRotate = true; }, 25000);
 }
 controles.addEventListener('start', () => { vuelo = null; pausarGiro(); ocultarGesto(); });
 // Que la cámara no se vaya del pueblo
@@ -454,7 +552,7 @@ function ocultarGesto() { gesto?.classList.add('oculto'); }
 /* ======================= Panel de secciones ======================= */
 const panel = $('[data-js-panel]');
 const frame = $('[data-js-panel-frame]');
-let panelAbierto = false, ultimoFoco = null;
+let panelAbierto = false, ultimoFoco = null, frameTimer = null;
 function abrirSeccion(clave, extra = '') {
   const s = SECCIONES[clave];
   if (!s) return;
@@ -462,7 +560,10 @@ function abrirSeccion(clave, extra = '') {
   ultimoFoco = document.activeElement;
   $('[data-js-panel-titulo]').textContent = s.titulo;
   $('[data-js-panel-link]').href = `${BASE}/${s.url}${extra ? '?' + extra.slice(1) : ''}`;
+  frame.classList.remove('listo');
   frame.src = url;
+  clearTimeout(frameTimer);
+  frameTimer = setTimeout(() => frame.classList.add('listo'), 4000);   // por las dudas, mostrar igual
   panel.hidden = false;
   panelAbierto = true;
   controles.autoRotate = false;
@@ -475,24 +576,37 @@ function cerrarSeccion() {
   panelAbierto = false;
   panel.classList.remove('abierto');
   document.body.classList.remove('con-panel');
-  setTimeout(() => { if (!panelAbierto) { panel.hidden = true; frame.src = 'about:blank'; } }, 320);
+  setTimeout(() => { if (!panelAbierto) { panel.hidden = true; frame.classList.remove('listo'); frame.src = 'about:blank'; } }, 320);
   cargarDatos().catch(() => {});
   if (ultimoFoco && ultimoFoco.focus) ultimoFoco.focus();
   pausarGiro();
 }
 document.addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-abrir]');
-  if (b) { ev.preventDefault(); abrirSeccion(b.dataset.abrir, b.dataset.barrio ? '&barrio=' + encodeURIComponent(b.dataset.barrio) : ''); return; }
+  if (b) {
+    ev.preventDefault();
+    const extra = b.dataset.barrio ? '&barrio=' + encodeURIComponent(b.dataset.barrio) : b.dataset.ir ? '&ir=' + encodeURIComponent(b.dataset.ir) : '';
+    abrirSeccion(b.dataset.abrir, extra);
+    return;
+  }
+  const s = ev.target.closest('[data-salud3d]');
+  if (s) { ev.preventDefault(); alternarSalud(); return; }
+  const item = ev.target.closest('[data-ir-centro]');
+  if (item) { ev.preventDefault(); mostrarFicha('centro', item.dataset.irCentro, true); return; }
   if (ev.target.closest('[data-js-panel-cerrar]')) cerrarSeccion();
 });
 document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape') return;
   if (panelAbierto) cerrarSeccion();
   else if (fichaActual) cerrarFicha();
+  else if (modoSalud) alternarSalud(false);
 });
 // Un reporte enviado desde el panel actualiza las torres al instante
 window.addEventListener('message', (ev) => {
-  if (ev.origin === location.origin && ev.data && ev.data.tipo === 'casza-actualizar') cargarDatos().catch(() => {});
+  if (ev.origin !== location.origin || !ev.data) return;
+  if (ev.data.tipo === 'casza-actualizar') cargarDatos().catch(() => {});
+  // La sección ya tomó el estilo inmersivo: mostrarla sin parpadeo de colores claros
+  if (ev.data.tipo === 'casza-tema-listo') { clearTimeout(frameTimer); frame.classList.add('listo'); }
 });
 
 // En el celular la barra de opciones se desliza: quitar el esfumado al llegar al final
@@ -535,16 +649,19 @@ function dibujar() {
     tr.altura += (tr.alturaObjetivo - tr.altura) * 0.06;
     tr.cuerpo.scale.y = tr.altura;
     const resalta = id === hoverId || id === seleccionId;
-    tr.cuerpo.material.emissiveIntensity += ((resalta ? 1.1 : 0.55) - tr.cuerpo.material.emissiveIntensity) * 0.15;
+    tr.cuerpo.material.emissiveIntensity += ((resalta ? 1.1 : modoSalud ? 0.15 : 0.55) - tr.cuerpo.material.emissiveIntensity) * 0.15;
+    tr.cuerpo.material.opacity += ((modoSalud && !resalta ? 0.22 : 0.9) - tr.cuerpo.material.opacity) * 0.12;
+    tr.halo.material.opacity += ((modoSalud ? 0.12 : 0.8) - tr.halo.material.opacity) * 0.12;
+    if (tr.enjambre) tr.enjambre.visible = !modoSalud;
     const pulso = REDUCIR ? 0 : Math.sin(t * 2 + tr.fase);
     tr.halo.position.y = tr.altura + 0.6;
     const s = (tr.datos.nivel === 'alto' ? 7.5 : tr.datos.nivel === 'medio' ? 6 : 4.5) + pulso * 0.6 + (resalta ? 2 : 0);
     tr.halo.scale.set(s, s, 1);
-    if (tr.anillo.material.opacity > 0 && !REDUCIR) {
+    if (tr.anillo.material.opacity > 0 && !REDUCIR && !modoSalud) {
       const k = (t * 0.6 + tr.fase) % 1;
       tr.anillo.scale.setScalar(1 + k * (tr.datos.nivel === 'alto' ? 2.6 : 1.8));
       tr.anillo.material.opacity = 0.8 * (1 - k);
-    }
+    } else if (modoSalud) tr.anillo.material.opacity = Math.max(0.001, tr.anillo.material.opacity * 0.9);
     if (tr.enjambre) {
       const pos = tr.enjambre.geometry.attributes.position;
       tr.enjambre.userData.semillas.forEach((m, i) => {
@@ -556,13 +673,21 @@ function dibujar() {
   });
 
   balizas.forEach((bz) => {
-    if (!REDUCIR) {
-      bz.cruz.rotation.y = t * 0.8 + bz.fase;
-      bz.cruz.position.y = 10.2 + Math.sin(t * 1.6 + bz.fase) * 0.4;
-      bz.halo.position.y = bz.cruz.position.y;
-    }
     const id = 'c:' + bz.datos.id, resalta = id === hoverId || id === seleccionId;
-    const s = 5.5 + (resalta ? 2.5 : 0);
+    const escala = (modoSalud ? 1.3 : 1) * (resalta ? 1.12 : 1);
+    bz.escala += (escala - bz.escala) * 0.1;
+    bz.grupo.scale.setScalar(bz.escala);
+    if (!REDUCIR) {
+      bz.cruz.rotation.y = t * 0.9 + bz.fase;
+      bz.cruz.position.y = ALTO_CRUZ + Math.sin(t * 1.6 + bz.fase) * 0.5;
+      bz.halo.position.y = bz.cruz.position.y;
+      bz.ondas.forEach((o) => {
+        const k = (t * 0.45 + o.userData.desfase + bz.fase) % 1;
+        o.scale.setScalar(1 + k * 3.2);
+        o.material.opacity = 0.75 * (1 - k);
+      });
+    }
+    const s = (modoSalud ? 12 : 10) + (resalta ? 3 : 0) + (REDUCIR ? 0 : Math.sin(t * 2.2 + bz.fase) * 0.8);
     bz.halo.scale.set(s, s, 1);
   });
 

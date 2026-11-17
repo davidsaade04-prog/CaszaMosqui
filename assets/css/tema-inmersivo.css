@@ -1,0 +1,98 @@
+/* ============================================================
+   CaszaMosqui — Tema inmersivo para las secciones abiertas dentro
+   del modo 3D (páginas con ?embed=1). El modo normal no lo usa.
+   La página queda transparente: detrás se ve el mapa 3D desenfocado.
+   Lo que no cubre esta hoja lo oscurece assets/js/tema-inmersivo.js.
+   ============================================================ */
+html.tema-inmersivo {
+  color-scheme: dark;
+  --fondo: transparent;
+  --panel: rgba(9, 20, 34, .62);
+  --texto: #e6f6fa;
+  --suave: #9fd8e6;
+  --borde: rgba(103, 232, 249, .22);
+  --acento: #22d3ee;
+  --acento-oscuro: #67e8f9;
+  --rojo: #ef4444;
+  --verde: #22c55e;
+  --ambar: #f59e0b;
+  --sombra: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+html.tema-inmersivo, html.tema-inmersivo body { background: transparent !important; color: var(--texto); }
+html.tema-inmersivo ::selection { background: #a5f3fc; color: #060b16; }
+:where(html.tema-inmersivo) a { color: #67e8f9; }
+html.tema-inmersivo :focus-visible { outline: 2px solid #67e8f9; outline-offset: 2px; }
+
+/* Bloques principales: vidrio oscuro con borde cian */
+html.tema-inmersivo .panel,
+html.tema-inmersivo .test-card,
+html.tema-inmersivo .salud-card,
+html.tema-inmersivo .salud-ruta,
+html.tema-inmersivo .ayuda-tema,
+html.tema-inmersivo .acerca-problema article,
+html.tema-inmersivo .equipo-card {
+  background: rgba(9, 20, 34, .58) !important;
+  border-color: rgba(103, 232, 249, .22) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+  color: var(--texto);
+}
+html.tema-inmersivo .panel { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+html.tema-inmersivo h1, html.tema-inmersivo h2, html.tema-inmersivo h3, html.tema-inmersivo h4 { color: #fff; }
+html.tema-inmersivo .panel > h2 { font-family: "Inter Display", "Segoe UI", system-ui, sans-serif; letter-spacing: -.02em; }
+html.tema-inmersivo .sub, html.tema-inmersivo small, html.tema-inmersivo .hint { color: var(--suave); }
+
+/* Formularios */
+html.tema-inmersivo input:not([type=checkbox]):not([type=radio]):not([type=range]),
+html.tema-inmersivo select,
+html.tema-inmersivo textarea {
+  background: rgba(2, 8, 18, .55) !important;
+  color: #f0fbfd !important;
+  border: 1px solid rgba(103, 232, 249, .3) !important;
+  border-radius: 10px;
+}
+html.tema-inmersivo input::placeholder, html.tema-inmersivo textarea::placeholder { color: #6fa7b6 !important; }
+html.tema-inmersivo input:focus, html.tema-inmersivo select:focus, html.tema-inmersivo textarea:focus {
+  border-color: #67e8f9 !important; box-shadow: 0 0 0 3px rgba(34, 211, 238, .22) !important; outline: none;
+}
+html.tema-inmersivo select option { background: #0b1220; color: #e6f6fa; }
+html.tema-inmersivo label { color: #cfeaf1; }
+html.tema-inmersivo input[type=checkbox], html.tema-inmersivo input[type=radio] { accent-color: #22d3ee; }
+
+/* Botones principales en rojo con brillo, como "Reportar criadero" del 3D */
+html.tema-inmersivo form[data-js-form] button[type=submit] {
+  background: linear-gradient(180deg, #f05252, #dc2626) !important; color: #fff !important; border: 0 !important;
+  box-shadow: 0 10px 24px rgba(239, 68, 68, .35); font-weight: 700;
+}
+html.tema-inmersivo form[data-js-form] button[type=submit]:hover { filter: brightness(1.08); }
+html.tema-inmersivo .btn-alerta { box-shadow: 0 10px 24px rgba(239, 68, 68, .3); }
+
+/* Mapas Leaflet dentro de las secciones: mismas calles, versión nocturna */
+html.tema-inmersivo .leaflet-container { background: #0b1220 !important; }
+html.tema-inmersivo .leaflet-tile-pane { filter: invert(1) hue-rotate(185deg) brightness(.92) contrast(.9) saturate(.55); }
+html.tema-inmersivo .leaflet-popup-content-wrapper, html.tema-inmersivo .leaflet-popup-tip {
+  background: rgba(9, 20, 34, .95) !important; color: var(--texto) !important; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+}
+html.tema-inmersivo .leaflet-bar a { background: rgba(9, 20, 34, .92) !important; color: #e6f6fa !important; border-color: rgba(103, 232, 249, .3) !important; }
+html.tema-inmersivo .leaflet-control-attribution { background: rgba(6, 11, 22, .7) !important; color: #9fd8e6 !important; }
+html.tema-inmersivo .leaflet-control-attribution a { color: #67e8f9 !important; }
+html.tema-inmersivo .mapa-plano { filter: brightness(.85) contrast(1.05); }
+
+/* Capturas de la Ayuda: con borde de luz */
+html.tema-inmersivo .ayuda-captura img, html.tema-inmersivo .ayuda-video video { border-color: rgba(103, 232, 249, .35) !important; box-shadow: 0 14px 40px rgba(0, 0, 0, .5); }
+
+/* Barras de desplazamiento finas y oscuras */
+html.tema-inmersivo { scrollbar-color: rgba(103, 232, 249, .35) transparent; scrollbar-width: thin; }
+html.tema-inmersivo ::-webkit-scrollbar { width: 8px; height: 8px; }
+html.tema-inmersivo ::-webkit-scrollbar-thumb { background: rgba(103, 232, 249, .3); border-radius: 8px; }
+html.tema-inmersivo ::-webkit-scrollbar-track { background: transparent; }
+
+/* Aviso de conexión: también de vidrio */
+html.tema-inmersivo .estado-conexion { background: rgba(9, 20, 34, .92) !important; color: #e6f6fa !important; border: 1px solid rgba(103, 232, 249, .3); }
+
+/* Mientras el convertidor recalcula colores, sin transiciones (lee los valores finales) */
+html.tema-recalculando *, html.tema-recalculando *::before, html.tema-recalculando *::after { transition: none !important; }
+
+/* El panel del modo inmersivo ya muestra el título: no repetirlo adentro */
+html.tema-inmersivo #nuevo > h2:first-of-type,
+html.tema-inmersivo #salud > h2:first-of-type,
+html.tema-inmersivo #ayuda > h2:first-of-type { display: none; }

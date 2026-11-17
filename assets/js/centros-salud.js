@@ -338,4 +338,7 @@
   // "Abierto ahora" se actualiza solo cada minuto
   setInterval(render, 60000);
   window.CaszaSalud.comoLlegar = comoLlegar;
+  // centros-salud.php?ir=ID abre directamente "Cómo llegar" (lo usa el modo inmersivo)
+  const ir = new URLSearchParams(location.search).get('ir');
+  if (ir && CENTROS.some((c) => c.id === ir)) setTimeout(() => comoLlegar(ir), 300);
 })();

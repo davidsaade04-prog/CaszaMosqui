@@ -16,8 +16,9 @@ try {
     $barrios = [];
 }
 ?>
+<?php $embebido = isset($_GET['embed']); ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"<?= $embebido ? ' class="tema-inmersivo"' : '' ?>>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,8 +71,11 @@ try {
     .btn-volver-inicio:hover { background: #475569; }
     .btn-volver-inicio svg { width: 16px; height: 16px; }
   </style>
+<?php if ($embebido): ?>
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/tema-inmersivo.css?v=20261116-tema2">
+  <script src="<?= e(BASE_URL) ?>/assets/js/tema-inmersivo.js?v=20261116-tema2" defer></script>
+<?php endif; ?>
 </head>
-<?php $embebido = isset($_GET['embed']); ?>
 <body<?= $embebido ? ' class="embebido"' : '' ?>>
 
 <?php if (!$embebido): ?>

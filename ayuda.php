@@ -63,7 +63,8 @@ function video(string $nombre, string $pie): string
           <li>En el modo inmersivo, El Colorado aparece en <strong>3D</strong>: cada barrio es una <strong>torre de luz</strong>. Cuanto más alta, más criaderos activos tiene; el color es su nivel de riesgo (🔴 alto, 🟡 medio, 🟢 bajo). Las balizas con <strong>cruz</strong> son los centros de salud.</li>
           <li><strong>Arrastrá</strong> para girar el pueblo y <strong>acercá</strong> con la rueda del mouse o pellizcando la pantalla.</li>
           <li><strong>Tocá una torre</strong> para ver su barrio y reportar ahí mismo: el formulario se abre con el barrio ya elegido.</li>
-          <li>Las <strong>opciones flotantes</strong> (Reportar, Centros de salud, Comentarios, Test de síntomas…) se abren en un panel sin salir del mapa. En el celular están abajo: deslizalas para ver todas.</li>
+          <li>Las <strong>opciones flotantes</strong> (Reportar, Comentarios, Test de síntomas…) se abren en un panel sin salir del mapa. En el celular están abajo: deslizalas para ver todas.</li>
+          <li><strong>🏥 Centros de salud</strong> ilumina las balizas de los centros, atenúa los barrios y muestra la lista con <strong>Emergencias 107</strong>, si está <strong>abierto ahora</strong>, el botón para <strong>llamar</strong> y <strong>Cómo llegar</strong>, que abre el camino desde donde estás.</li>
           <li>Para volver a la página de siempre, tocá <strong>Modo normal</strong> arriba a la derecha.</li>
         </ol>
         <p class="ayuda-tip">💡 Si tu celular es viejo y el 3D anda lento, usá el modo normal: tiene exactamente la misma información.</p>

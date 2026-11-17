@@ -14,6 +14,7 @@
   font-weight: 800; font-display: swap;
 }
 :root {
+  color-scheme: dark;
   --noche: #060b16;
   --cian: #22d3ee;
   --cian-claro: #67e8f9;
@@ -200,11 +201,15 @@ body.lista .inm-leyenda { opacity: 1; }
 .inm-panel-hoja {
   position: absolute; top: 12px; right: 12px; bottom: 12px; width: min(620px, calc(100vw - 24px));
   display: flex; flex-direction: column; border-radius: 20px; overflow: hidden;
-  background: #f1f5f9; box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(103, 232, 249, .35);
+  /* vidrio: detrás se ve el pueblo en 3D desenfocado */
+  background: rgba(6, 11, 22, .72);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(103, 232, 249, .35), inset 0 1px 0 rgba(255, 255, 255, .06);
   transform: translateX(105%); transition: transform .38s var(--curva);
 }
 .inm-panel.abierto .inm-panel-hoja { transform: none; }
 .inm-panel-hoja header {
+  position: relative; z-index: 1;
   display: flex; align-items: center; gap: 8px; padding: 12px 12px 12px 18px;
   background: linear-gradient(135deg, #0b1220, #0f2233); border-bottom: 1px solid rgba(103, 232, 249, .3);
 }
@@ -214,7 +219,12 @@ body.lista .inm-leyenda { opacity: 1; }
   background: rgba(103, 232, 249, .08); color: #e0f7fb; text-decoration: none; font-size: 1rem; cursor: pointer;
 }
 .inm-panel-abrir:hover, .inm-panel-x:hover { background: rgba(103, 232, 249, .22); }
-.inm-panel-hoja iframe { flex: 1; width: 100%; border: 0; background: #f1f5f9; }
+.inm-panel-hoja iframe { flex: 1; width: 100%; border: 0; background: transparent; color-scheme: dark; opacity: 0; transition: opacity .3s var(--curva); }
+.inm-panel-hoja iframe.listo { opacity: 1; }
+.inm-panel-cargando { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; justify-items: center; gap: 12px; color: var(--suave); font-size: .9rem; pointer-events: none; transition: opacity .3s; }
+.inm-panel-cargando .inm-carga-barra { width: 140px; }
+.inm-panel-hoja:has(iframe.listo) .inm-panel-cargando { opacity: 0; }
+.inm-panel-hoja { position: absolute; }
 
 /* ---------- Mosqui ---------- */
 .inm-mosqui {
@@ -285,3 +295,78 @@ body.con-panel .inm-ficha { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
 }
+
+/* ---------- Centros de salud: más destacados ---------- */
+.inm-leyenda i.salud { background: radial-gradient(circle, #e0f2fe 30%, var(--salud)); box-shadow: 0 0 12px var(--salud), 0 0 0 2px rgba(56, 189, 248, .35); }
+.inm-orbe-salud { border-color: rgba(56, 189, 248, .6); }
+.inm-orbe-salud .inm-orbe-ico {
+  background: radial-gradient(circle at 35% 30%, #e0f2fe, #38bdf8 50%, #0369a1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 0 22px rgba(56, 189, 248, .65);
+}
+.inm-orbe-salud:hover { background: rgba(3, 105, 161, .45); border-color: #7dd3fc; }
+.inm-orbe-salud[aria-pressed="true"] { background: rgba(3, 105, 161, .6); border-color: #bae6fd; box-shadow: 0 0 0 2px rgba(56, 189, 248, .45), 0 12px 34px rgba(0, 0, 0, .45); }
+
+.inm-etiqueta.centro {
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 6px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(3, 105, 161, .95), rgba(14, 165, 233, .9)); border: 1px solid rgba(224, 242, 254, .55);
+  box-shadow: 0 0 18px rgba(56, 189, 248, .55), 0 6px 16px rgba(0, 0, 0, .4); color: #fff; font-size: .8rem;
+}
+.inm-etiqueta.centro.guardia { background: linear-gradient(135deg, rgba(185, 28, 28, .95), rgba(239, 68, 68, .9)); border-color: rgba(254, 226, 226, .6); box-shadow: 0 0 20px rgba(239, 68, 68, .55), 0 6px 16px rgba(0, 0, 0, .4); }
+.inm-etiqueta.centro .ico { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: #fff; font-size: .95rem; }
+.inm-etiqueta.centro > span:last-child { display: grid; line-height: 1.15; }
+.inm-etiqueta.centro strong { font-weight: 700; }
+.inm-etiqueta.centro small { font-size: .68rem; font-weight: 600; opacity: .95; }
+.inm-etiqueta.centro small::before { content: "●"; margin-right: 4px; font-size: .6rem; }
+.inm-etiqueta.centro small.abierto::before { color: #86efac; }
+.inm-etiqueta.centro small.cerrado::before { color: #fecaca; }
+.inm-etiqueta.centro small.sin-dato::before { color: #e2e8f0; }
+
+.inm-nivel.sin { background: rgba(148, 163, 184, .16); color: #e2e8f0; box-shadow: inset 0 0 0 1px rgba(148, 163, 184, .5); }
+.inm-btn-azul { background: #0284c7; border-color: #0284c7; color: #fff; }
+.inm-btn-azul:hover { background: #0369a1; }
+
+/* Lista flotante de centros (modo "enfocar salud") */
+.inm-salud {
+  position: fixed; z-index: 12; right: 18px; top: 96px; width: min(360px, calc(100vw - 36px)); max-height: calc(100vh - 190px);
+  display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; border-top: 4px solid var(--salud);
+  background: var(--vidrio); border-left: 1px solid var(--vidrio-borde); border-right: 1px solid var(--vidrio-borde); border-bottom: 1px solid var(--vidrio-borde);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .5), 0 0 40px rgba(56, 189, 248, .15);
+  transform: translateX(24px); opacity: 0; transition: transform .35s var(--curva), opacity .35s var(--curva);
+}
+.inm-salud.abierta { transform: none; opacity: 1; }
+.inm-salud header { display: flex; align-items: center; justify-content: space-between; }
+.inm-salud h2 { margin: 0; font-family: "Inter Display", system-ui, sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: -.02em; }
+.inm-salud header .inm-ficha-x { position: static; }
+.inm-salud-107 { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: #dc2626; color: #fff; text-decoration: none; box-shadow: 0 8px 20px rgba(220, 38, 38, .35); }
+.inm-salud-107 > span:first-child { font-size: 1.4rem; }
+.inm-salud-107 strong { display: block; font-size: .95rem; }
+.inm-salud-107 small { display: block; font-size: .72rem; opacity: .9; }
+.inm-salud-107:hover { background: #b91c1c; }
+.inm-salud-items { list-style: none; margin: 0; padding: 0 2px 0 0; display: grid; gap: 8px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(103, 232, 249, .3) transparent; }
+.inm-salud-items li { border-radius: 13px; border: 1px solid rgba(56, 189, 248, .25); background: rgba(3, 30, 50, .45); transition: border-color .2s, background .2s; }
+.inm-salud-items li.activo { border-color: #7dd3fc; background: rgba(3, 105, 161, .3); box-shadow: 0 0 0 1px rgba(125, 211, 252, .35); }
+.inm-salud-item { width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; align-items: center; padding: 10px; border: 0; background: none; color: var(--texto); font: inherit; text-align: left; cursor: pointer; border-radius: 13px; }
+.inm-salud-item:disabled { cursor: default; }
+.inm-salud-ico { grid-row: span 2; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #e0f2fe; font-size: 1.15rem; box-shadow: 0 0 14px rgba(56, 189, 248, .45); }
+.inm-salud-ico.guardia { background: #fee2e2; box-shadow: 0 0 14px rgba(239, 68, 68, .45); }
+.inm-salud-txt { display: grid; line-height: 1.2; }
+.inm-salud-txt strong { font-size: .9rem; }
+.inm-salud-txt small { font-size: .76rem; color: var(--suave); }
+.inm-salud-estado { grid-column: 2; justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+.inm-salud-estado.abierto { background: rgba(34, 197, 94, .18); color: #bbf7d0; }
+.inm-salud-estado.cerrado { background: rgba(239, 68, 68, .18); color: #fecaca; }
+.inm-salud-estado.sin-dato { background: rgba(148, 163, 184, .18); color: #e2e8f0; }
+.inm-salud-acciones { display: none; flex-wrap: wrap; gap: 6px; padding: 0 10px 10px 58px; }
+.inm-salud-items li.activo .inm-salud-acciones { display: flex; }
+.inm-salud-acciones .inm-btn { padding: 7px 10px; font-size: .8rem; }
+.inm-salud-guia { border: 1px solid rgba(56, 189, 248, .45); background: rgba(56, 189, 248, .1); color: #e0f2fe; font: inherit; font-weight: 700; font-size: .84rem; padding: 9px; border-radius: 11px; cursor: pointer; }
+.inm-salud-guia:hover { background: rgba(56, 189, 248, .22); }
+body.modo-salud .inm-ficha:not(.salud) { opacity: 0; pointer-events: none; }
+@media (max-width: 760px) {
+  .inm-salud { top: auto; left: 10px; right: 10px; width: auto; bottom: calc(112px + var(--seguro-abajo)); max-height: 46vh; transform: translateY(24px); padding: 12px; }
+  .inm-salud.abierta { transform: none; }
+  body.modo-salud .inm-leyenda, body.modo-salud .inm-mosqui { opacity: 0; pointer-events: none; }
+}
+.inm-etiqueta.centro.mini { padding: 3px; gap: 0; border-radius: 10px; }
+.inm-etiqueta.centro.mini > span:last-child { display: none; }

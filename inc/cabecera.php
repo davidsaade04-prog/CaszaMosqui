@@ -21,7 +21,7 @@ if (!function_exists('nav_clase')) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"<?= $embebido ? ' class="tema-inmersivo"' : '' ?>>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +39,10 @@ if (!function_exists('nav_clase')) {
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/clima.css?v=20260925-vivo">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
+<?php if ($embebido): ?>
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/tema-inmersivo.css?v=20261116-tema2">
+  <script src="<?= e(BASE_URL) ?>/assets/js/tema-inmersivo.js?v=20261116-tema2" defer></script>
+<?php endif; ?>
 </head>
 <body<?= $embebido ? ' class="embebido"' : '' ?>>
 <?php if (!empty($bienvenida) && !$embebido) require __DIR__ . '/bienvenida.php'; ?>

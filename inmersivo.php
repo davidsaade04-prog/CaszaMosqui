@@ -9,7 +9,7 @@
 require_once __DIR__ . '/inc/helpers.php';
 
 $centros = require __DIR__ . '/inc/centros-salud.php';
-$v = '20261116-inmersivo';
+$v = '20261116-salud';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -68,7 +68,7 @@ $v = '20261116-inmersivo';
     <button type="button" class="inm-orbe inm-orbe-principal" data-abrir="reportar" style="--i:0">
       <span class="inm-orbe-ico" aria-hidden="true">📢</span><span class="inm-orbe-txt">Reportar criadero</span>
     </button>
-    <button type="button" class="inm-orbe" data-abrir="salud" style="--i:1">
+    <button type="button" class="inm-orbe inm-orbe-salud" data-salud3d aria-pressed="false" style="--i:1">
       <span class="inm-orbe-ico" aria-hidden="true">🏥</span><span class="inm-orbe-txt">Centros de salud</span>
     </button>
     <button type="button" class="inm-orbe" data-abrir="comentarios" style="--i:2">
@@ -96,6 +96,17 @@ $v = '20261116-inmersivo';
     <p class="inm-gesto" data-js-gesto>Arrastrá para girar · acercá con la rueda o pellizcando · tocá una torre</p>
   </aside>
 
+  <!-- Centros de salud: lista flotante del modo "enfocar salud" -->
+  <section class="inm-salud" data-js-salud hidden aria-label="Centros de salud de El Colorado">
+    <header>
+      <h2>🏥 Centros de salud</h2>
+      <button type="button" class="inm-ficha-x" data-salud3d aria-label="Cerrar centros de salud">✕</button>
+    </header>
+    <a class="inm-salud-107" href="tel:107"><span aria-hidden="true">🚑</span><span><strong>Emergencias 107</strong><small>Signos de alarma: llamá o andá a la guardia</small></span></a>
+    <ul class="inm-salud-items" data-js-salud-items></ul>
+    <button type="button" class="inm-salud-guia" data-abrir="salud">Ver la guía completa y el más cercano →</button>
+  </section>
+
   <!-- Ficha del barrio o centro de salud tocado -->
   <section class="inm-ficha" data-js-ficha hidden aria-live="polite"></section>
 
@@ -108,7 +119,8 @@ $v = '20261116-inmersivo';
         <a class="inm-panel-abrir" data-js-panel-link href="#" target="_blank" rel="noopener" title="Abrir en una pestaña nueva">↗</a>
         <button type="button" class="inm-panel-x" data-js-panel-cerrar aria-label="Cerrar y volver al mapa">✕</button>
       </header>
-      <iframe data-js-panel-frame title="Sección de CaszaMosqui"></iframe>
+      <div class="inm-panel-cargando" aria-hidden="true"><span class="inm-carga-barra"><span></span></span>Abriendo…</div>
+      <iframe data-js-panel-frame title="Sección de CaszaMosqui" allowtransparency="true" allow="geolocation; camera; clipboard-write; web-share"></iframe>
     </section>
   </div>
 
