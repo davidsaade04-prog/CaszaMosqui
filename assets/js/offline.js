@@ -187,7 +187,17 @@
     b.className = 'btn-instalar';
     b.innerHTML = '<span aria-hidden="true">📲</span><span class="btn-instalar-txt">Instalar app</span>';
     b.title = 'Instalar CaszaMosqui en este dispositivo';
-    topbar.appendChild(b);
+    // Va arriba a la derecha, a la izquierda del botón "Administrador" (antes tapaba "Ayuda")
+    let acciones = topbar.querySelector('.topbar-acciones');
+    if (!acciones) {
+      acciones = document.createElement('div');
+      acciones.className = 'topbar-acciones';
+      const admin = topbar.querySelector(':scope > .btn-admin');
+      topbar.prepend(acciones);
+      if (admin) acciones.appendChild(admin);
+    }
+    acciones.prepend(b);
+    topbar.classList.add('con-instalar');
     b.addEventListener('click', instalar);
     return b;
   }

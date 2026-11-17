@@ -32,8 +32,8 @@ try {
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-modo">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-privacidad">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-botones">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-arriba">
   <style>
     .comentarios-container { max-width: 900px; margin: 0 auto; }
     .comentario-form { background: var(--panel); border: 1px solid var(--borde); border-radius: var(--radio); box-shadow: var(--sombra); padding: 24px; margin-bottom: 24px; }
@@ -160,7 +160,7 @@ try {
   window.REPORTES_ACCESS = <?= $es_admin ? 'true' : 'false' ?>;
 </script>
 <script src="<?= e(BASE_URL) ?>/assets/js/comentarios.js?v=20261116-moderacion"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261116-instalar"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

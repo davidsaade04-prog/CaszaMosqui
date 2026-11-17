@@ -20,8 +20,8 @@ require_once __DIR__ . '/inc/helpers.php';
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-modo">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-privacidad">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-botones">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-arriba">
   <script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
   <style>
     .test-container { max-width: 720px; margin: 0 auto; }
@@ -240,7 +240,7 @@ require_once __DIR__ . '/inc/helpers.php';
     }
   });
 </script>
-<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261116-instalar"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

@@ -31,7 +31,7 @@ header('Pragma: no-cache');
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" href="<?= e(BASE_URL) ?>/assets/img/app/favicon-48.png" type="image/png">
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-modo">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/styles.css?v=20261116-botones">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/leaflet.css">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/mapa-plano.css">
 </head>
@@ -166,6 +166,6 @@ header('Pragma: no-cache');
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261112-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/admin-extra.js?v=20261111-app"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/admin-cuentas.js?v=20261116-cuentas"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261116-instalar"></script>
 </body>
 </html>

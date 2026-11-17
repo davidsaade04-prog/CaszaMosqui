@@ -81,7 +81,9 @@
 .mosqui-aviso { margin: 0; padding: 0 12px 8px; font-size: .7rem; color: #64748b; text-align: center; background: #fff; }
 
 @media (max-width: 520px) {
-  .mosqui { right: 12px; bottom: 12px; }
+  /* Más arriba en el celular: abajo de todo lo tapan la barra del navegador y la de gestos */
+  .mosqui { right: 14px; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .mosqui-lanzador { box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 10px 28px rgba(14, 116, 144, .45); }
   .mosqui-lanzador-txt { display: none; }
   .mosqui-lanzador { padding: 8px; }
   .mosqui.abierto { left: 0; right: 0; bottom: 0; }

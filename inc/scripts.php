@@ -22,7 +22,7 @@
 <script src="<?= e(BASE_URL) ?>/assets/js/mapa-real.js?v=20261113-ayuda"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/centros-salud.js?v=20261116-salud"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/reporte-extra.js?v=20261019-gps"></script>
-<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
+<script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261116-instalar"></script>
 <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>

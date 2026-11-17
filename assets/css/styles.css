@@ -1609,3 +1609,16 @@ html.con-bienvenida .mosqui, html.con-bienvenida .btn-instalar, html.con-bienven
 }
 .topbar .topbar-util a.topbar-inmersivo svg { width: 14px; height: 14px; }
 .topbar .topbar-util a.topbar-inmersivo:hover { border-color: #22d3ee; box-shadow: 0 0 0 1px rgba(34, 211, 238, .4), 0 6px 18px rgba(34, 211, 238, .35); }
+
+/* Botones de arriba a la derecha: "Instalar app" a la izquierda de "Administrador" */
+.topbar-acciones { position: absolute; top: 14px; right: 16px; z-index: 5; display: flex; align-items: center; gap: 8px; }
+.topbar-acciones .btn-admin, .topbar-acciones .btn-instalar { position: static; }
+.topbar.con-instalar .topbar-util { padding-right: 330px; }
+@media (max-width: 760px) {
+  .topbar-acciones { top: 10px; right: 10px; gap: 6px; }
+  .topbar-acciones .btn-instalar { padding: 8px 10px; }
+  .topbar.con-instalar .topbar-util { padding-right: 104px; }
+}
+@media (max-width: 520px) { .pie { padding-bottom: 140px; } }
+/* Comentarios y Test de síntomas: "Volver al inicio" va al principio del contenido, no flotando sobre la cabecera */
+.comentarios-container > .btn-volver-inicio, .test-container > .btn-volver-inicio { position: static; margin: 0 0 18px; width: max-content; }

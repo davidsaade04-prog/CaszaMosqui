@@ -9,7 +9,7 @@
 require_once __DIR__ . '/inc/helpers.php';
 
 $centros = require __DIR__ . '/inc/centros-salud.php';
-$v = '20261116-privacidad';
+$v = '20261116-mosqui';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -27,7 +27,7 @@ $v = '20261116-privacidad';
   <link rel="apple-touch-icon" href="<?= e(BASE_URL) ?>/assets/img/app/apple-touch-icon.png">
   <link rel="preload" href="<?= e(BASE_URL) ?>/assets/vendor/three/three.module.min.js" as="script" crossorigin>
   <link rel="preload" href="<?= e(BASE_URL) ?>/assets/img/plano-holo.webp" as="image" crossorigin="anonymous">
-  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-privacidad">
+  <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/chatbot.css?v=20261116-arriba">
   <link rel="stylesheet" href="<?= e(BASE_URL) ?>/assets/css/inmersivo.css?v=<?= $v ?>">
   <script type="importmap">
     { "imports": { "three": "<?= e(BASE_URL) ?>/assets/vendor/three/three.module.min.js" } }
@@ -136,7 +136,7 @@ $v = '20261116-privacidad';
     window.CENTROS_SALUD = <?= json_encode($centros, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   </script>
   <script type="module" src="<?= e(BASE_URL) ?>/assets/js/inmersivo.js?v=<?= $v ?>"></script>
-  <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261111-app"></script>
+  <script src="<?= e(BASE_URL) ?>/assets/js/offline.js?v=20261116-instalar"></script>
   <script src="<?= e(BASE_URL) ?>/assets/js/chatbot.js?v=20261116-privacidad"></script>
 </body>
 </html>
