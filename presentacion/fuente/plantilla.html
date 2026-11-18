@@ -1,0 +1,854 @@
+<title>Vuelo CaszaMosqui</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Exo+2:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: escenario 16:9 fijo y centrado. Capas: fondo hiperrealista (DOM) → escena 3D transparente
+   (mosquito realista, títulos 3D, partículas) → grano/viñeta → HUD. Todo medido en cqw/cqh. */
+:root {
+  --noche: #02060e;
+  --cian: #22d3ee;
+  --cian-claro: #a5f3fc;
+  --texto: #eef8ff;
+  --suave: #9dbccd;
+  --alerta: #fb3a5b;
+  --ok: #34d399;
+  --salud: #38bdf8;
+  --vidrio: rgba(4, 14, 26, .7);
+  --display: "Orbitron", "Segoe UI", system-ui, sans-serif;
+  --cuerpo: "Exo 2", "Segoe UI", system-ui, sans-serif;
+  --mono: "Share Tech Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--noche); color: var(--texto); font-family: var(--cuerpo);
+  display: grid; place-items: center; overflow: hidden;
+  padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+#escenario { position: relative; width: min(100vw, calc(100dvh * 16 / 9)); max-width: 100%; aspect-ratio: 16 / 9;
+  container-type: size; overflow: hidden; background: #000; isolation: isolate; }
+
+/* Fondos hiperrealistas */
+.fondo { position: absolute; inset: 0; will-change: transform, opacity, filter; transform-origin: 60% 55%; }
+.fondo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+.fondo .marcas { position: absolute; inset: 0; }
+
+/* Marcas holográficas ancladas a los objetos de la foto */
+.marca-h { position: absolute; transform: translate(-50%, -100%); display: grid; justify-items: center; pointer-events: none;
+  opacity: 0; transition: opacity .5s ease, transform .6s cubic-bezier(.2, .9, .25, 1.3); --c: var(--alerta); }
+.marca-h.on { opacity: 1; }
+.marca-h:not(.on) { transform: translate(-50%, -80%); }
+.marca-h b { display: flex; align-items: center; gap: .5cqw; white-space: nowrap; font-family: var(--display); font-weight: 800; font-size: .92cqw; letter-spacing: .08em;
+  color: #fff; padding: .45cqw .8cqw .45cqw .6cqw; border: 1px solid var(--c); border-left-width: .3cqw; border-radius: .25cqw;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 30%, rgba(3, 10, 20, .8)), rgba(3, 10, 20, .72));
+  box-shadow: 0 0 1.2cqw color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 .8cqw color-mix(in srgb, var(--c) 25%, transparent);
+  text-shadow: 0 0 .5cqw color-mix(in srgb, var(--c) 80%, transparent); }
+.marca-h b svg { width: 1cqw; height: 1cqw; flex: none; }
+.marca-h small { display: block; font-family: var(--mono); font-weight: 400; font-size: .68cqw; letter-spacing: .12em; color: color-mix(in srgb, var(--c) 70%, #fff); }
+.marca-h i { width: 1px; height: 3.2cqh; background: linear-gradient(var(--c), transparent); }
+.marca-h s { width: .9cqw; height: .9cqw; border-radius: 50%; border: 2px solid var(--c); box-shadow: 0 0 .8cqw var(--c); transform: translateY(50%); }
+.marca-h s::after { content: ""; position: absolute; inset: -.6cqw; border-radius: 50%; border: 1px solid var(--c); animation: ping 1.8s ease-out infinite; }
+.marca-h s { position: relative; }
+@keyframes ping { from { transform: scale(.3); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; z-index: 1; }
+
+/* Película: viñeta, grano y barras de luz */
+.vineta { position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: radial-gradient(ellipse 75% 80% at 55% 50%, transparent 55%, rgba(0, 0, 0, .55) 100%),
+              linear-gradient(90deg, rgba(2, 6, 14, .72) 0, rgba(2, 6, 14, .25) 38%, transparent 55%); }
+.grano { position: absolute; inset: -50%; pointer-events: none; z-index: 2; opacity: .09; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grano .5s steps(4) infinite; }
+@keyframes grano { 0% { transform: translate(0, 0); } 25% { transform: translate(-3%, 2%); } 50% { transform: translate(2%, -3%); } 75% { transform: translate(-2%, -1%); } }
+.relampago { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: #dfe9ff; mix-blend-mode: soft-light; opacity: 0; }
+
+.hud { position: absolute; inset: 0; z-index: 3; pointer-events: none; transition: opacity .4s; }
+.hud.oculto { opacity: 0; }
+.hud button, .hud .tarjeta, .hud .riel { pointer-events: auto; }
+
+.tele { position: absolute; left: 2.4cqw; top: 3cqh; font-family: var(--mono); font-size: .92cqw; color: var(--cian-claro);
+  display: grid; gap: .35cqh; letter-spacing: .06em; text-shadow: 0 0 .6cqw rgba(34, 211, 238, .55); }
+.tele b { font-family: var(--display); font-weight: 800; font-size: 1.1cqw; letter-spacing: .14em; color: var(--texto); display: flex; align-items: center; gap: .6cqw; }
+.tele b i { width: .7cqw; height: .7cqw; border-radius: 50%; background: var(--alerta); box-shadow: 0 0 .8cqw var(--alerta); animation: rec 1.4s steps(2) infinite; }
+.tele span { color: var(--suave); }
+.tele span em { font-style: normal; color: var(--cian-claro); font-variant-numeric: tabular-nums; }
+@keyframes rec { 50% { opacity: .15; } }
+
+.marca { position: absolute; right: 2.4cqw; top: 2.6cqh; display: flex; align-items: center; gap: .8cqw; }
+.marca img { width: 3.4cqw; height: auto; border-radius: .5cqw; box-shadow: 0 0 0 1px rgba(165, 243, 252, .3), 0 0 1.4cqw rgba(34, 211, 238, .35); }
+.marca strong { font-family: var(--display); font-weight: 900; font-size: 1.35cqw; letter-spacing: .04em; }
+.marca small { display: block; font-family: var(--mono); font-size: .8cqw; color: var(--cian-claro); letter-spacing: .12em; }
+
+/* Encuadre de seguimiento sobre el mosquito */
+.foco { position: absolute; width: 11cqw; height: 11cqw; transform: translate(-50%, -50%); opacity: 0; transition: opacity .5s; }
+.foco.on { opacity: .5; }
+.foco::before, .foco::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(var(--cian-claro), var(--cian-claro)) top left / 1.4cqw 2px no-repeat, linear-gradient(var(--cian-claro), var(--cian-claro)) top left / 2px 1.4cqw no-repeat,
+              linear-gradient(var(--cian-claro), var(--cian-claro)) top right / 1.4cqw 2px no-repeat, linear-gradient(var(--cian-claro), var(--cian-claro)) top right / 2px 1.4cqw no-repeat,
+              linear-gradient(var(--cian-claro), var(--cian-claro)) bottom left / 1.4cqw 2px no-repeat, linear-gradient(var(--cian-claro), var(--cian-claro)) bottom left / 2px 1.4cqw no-repeat,
+              linear-gradient(var(--cian-claro), var(--cian-claro)) bottom right / 1.4cqw 2px no-repeat, linear-gradient(var(--cian-claro), var(--cian-claro)) bottom right / 2px 1.4cqw no-repeat; }
+.foco span { position: absolute; left: 100%; top: 0; margin-left: .6cqw; white-space: nowrap; font-family: var(--mono); font-size: .78cqw; letter-spacing: .1em;
+  color: var(--cian-claro); text-shadow: 0 0 .5cqw rgba(0, 0, 0, .9); line-height: 1.5; }
+.foco span em { font-style: normal; color: #fff; }
+
+.tarjeta { position: absolute; left: 2.6cqw; top: 18.5cqh; width: 32cqw; padding: 2.1cqw 2.2cqw 2.3cqw;
+  background: linear-gradient(160deg, rgba(8, 30, 48, .8), var(--vidrio) 60%);
+  border: 1px solid rgba(103, 232, 249, .32); border-radius: .4cqw;
+  -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow: 0 0 2.4cqw rgba(34, 211, 238, .14), inset 0 0 2cqw rgba(34, 211, 238, .06);
+  opacity: 0; transform: translateX(-2cqw); transition: opacity .5s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
+.tarjeta.visible { opacity: 1; transform: none; }
+.tarjeta::before, .tarjeta::after { content: ""; position: absolute; width: 2cqw; height: 2cqw; border: 2px solid var(--cian); }
+.tarjeta::before { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+.tarjeta::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+.tarjeta .etq { font-family: var(--mono); font-size: 1cqw; letter-spacing: .2em; color: var(--cian); display: flex; gap: 1cqw; align-items: center; }
+.tarjeta .etq::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(34, 211, 238, .6), transparent); }
+.tarjeta h2 { margin: .9cqh 0 .4cqh; font-family: var(--display); font-weight: 900; font-size: 2.45cqw; line-height: 1.12; letter-spacing: .02em; text-wrap: balance;
+  background: linear-gradient(180deg, #fff 30%, var(--cian-claro)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 .7cqw rgba(34, 211, 238, .45)); }
+.tarjeta .bajada { margin: 0 0 1.6cqh; font-size: 1.2cqw; color: var(--suave); }
+.tarjeta ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.2cqh; }
+.tarjeta li { position: relative; padding-left: 1.7cqw; font-size: 1.3cqw; line-height: 1.42;
+  opacity: 0; transform: translateY(.8cqh); transition: opacity .45s ease, transform .45s ease; }
+.tarjeta.visible li { opacity: 1; transform: none; }
+.tarjeta li::before { content: ""; position: absolute; left: .2cqw; top: .62em; width: .62cqw; height: .62cqw; transform: rotate(45deg);
+  background: var(--cian); box-shadow: 0 0 .6cqw var(--cian); }
+.tarjeta li strong { color: #fff; font-weight: 700; }
+.tarjeta .cierre { margin: 2cqh 0 0; font-family: var(--display); font-weight: 800; font-size: 1.5cqw; letter-spacing: .04em; color: var(--ok);
+  text-shadow: 0 0 1cqw rgba(52, 211, 153, .55); }
+
+.riel { position: absolute; left: 46%; bottom: 3cqh; transform: translateX(-50%); display: flex; align-items: flex-start; }
+.riel button { all: unset; cursor: pointer; display: grid; justify-items: center; gap: .8cqh; width: 10.2cqw; position: relative; }
+.riel button::before { content: ""; position: absolute; top: .55cqw; left: -50%; width: 100%; height: 2px; background: rgba(103, 232, 249, .22); z-index: -1; }
+.riel button:first-child::before { display: none; }
+.riel button.hecha::before, .riel button.actual::before { background: linear-gradient(90deg, var(--cian), var(--cian-claro)); box-shadow: 0 0 .6cqw var(--cian); }
+.riel i { width: 1.1cqw; height: 1.1cqw; border-radius: 50%; border: 2px solid rgba(103, 232, 249, .6); background: #031220; transition: .3s; }
+.riel button.hecha i { background: var(--cian); border-color: var(--cian); }
+.riel button.actual i { background: #fff; border-color: #fff; box-shadow: 0 0 0 .35cqw rgba(34, 211, 238, .35), 0 0 1.4cqw var(--cian); }
+.riel span { white-space: nowrap; font-family: var(--mono); font-size: .86cqw; letter-spacing: .05em; color: var(--suave); text-align: center; line-height: 1.25; text-shadow: 0 0 .5cqw #000, 0 0 .2cqw #000; }
+.riel span b { display: block; font-weight: 400; color: var(--cian); }
+.riel button.actual span { color: #fff; }
+.riel button:focus-visible i { outline: 2px solid #fff; outline-offset: .3cqw; }
+
+.controles { position: absolute; right: 1.6cqw; bottom: 3.4cqh; display: flex; gap: .6cqw; }
+.controles button { all: unset; cursor: pointer; font-family: var(--mono); font-size: .82cqw; letter-spacing: .08em; color: var(--suave);
+  padding: .5cqw .8cqw; border: 1px solid rgba(103, 232, 249, .25); border-radius: .3cqw; background: rgba(3, 14, 26, .6); }
+.controles button:hover, .controles button[aria-pressed="true"] { color: #fff; border-color: var(--cian); }
+.controles button:focus-visible { outline: 2px solid #fff; }
+
+.notas { position: absolute; left: 50%; bottom: 13cqh; transform: translateX(-50%); width: 62cqw; padding: 1.3cqw 1.6cqw; z-index: 4;
+  background: rgba(2, 8, 16, .92); border: 1px dashed rgba(251, 191, 36, .55); border-radius: .4cqw; font-size: 1.12cqw; line-height: 1.5; color: #fde68a; }
+.notas b { display: block; font-family: var(--mono); font-weight: 400; font-size: .8cqw; letter-spacing: .14em; color: #fbbf24; margin-bottom: .5cqh; }
+
+.portada { position: absolute; inset: 0; z-index: 3; display: grid; align-content: center; justify-items: start; gap: 1.6cqh; padding-left: 7cqw;
+  transition: opacity .8s, transform .8s; }
+.portada.fuera { opacity: 0; transform: translateX(-3cqw); pointer-events: none; }
+.portada img { width: 7.5cqw; border-radius: 1cqw; box-shadow: 0 0 0 1px rgba(165, 243, 252, .35), 0 0 3cqw rgba(34, 211, 238, .45); }
+.portada .sup { font-family: var(--mono); font-size: 1.1cqw; letter-spacing: .4em; color: var(--cian-claro); margin: 0; }
+.portada h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: 6cqw; letter-spacing: .02em; line-height: 1;
+  color: #fff; text-shadow: 0 0 1.2cqw rgba(34, 211, 238, .8), 0 .25cqw 0 #0e7490, 0 .5cqw 0 #155e75, 0 .75cqw 0 #164e63, 0 1cqw 2cqw rgba(0, 0, 0, .7); }
+.portada p.lema { margin: .6cqh 0 0; font-size: 1.55cqw; color: var(--texto); max-width: 40cqw; text-shadow: 0 0 1cqw #000; }
+.portada button { all: unset; cursor: pointer; margin-top: 2cqh; font-family: var(--display); font-weight: 800; font-size: 1.3cqw; letter-spacing: .14em;
+  padding: 1cqw 2.4cqw; border-radius: 99cqw; color: #03131f; background: linear-gradient(90deg, var(--cian-claro), var(--cian));
+  box-shadow: 0 0 2.4cqw rgba(34, 211, 238, .6); animation: latido 2.2s ease-in-out infinite; }
+.portada button:focus-visible { outline: 2px solid #fff; outline-offset: .4cqw; }
+.portada .atajos { margin: 1cqh 0 0; font-family: var(--mono); font-size: .95cqw; color: var(--suave); letter-spacing: .06em; }
+.portada .atajos kbd { font: inherit; color: var(--cian-claro); border: 1px solid rgba(103, 232, 249, .3); border-radius: .2cqw; padding: 0 .3cqw; }
+@keyframes latido { 50% { box-shadow: 0 0 3.6cqw rgba(34, 211, 238, .95); transform: scale(1.03); } }
+
+.cargando { position: absolute; inset: 0; z-index: 6; display: grid; place-content: center; gap: 1cqh; justify-items: center; background: #02060e;
+  font-family: var(--mono); font-size: 1.1cqw; letter-spacing: .3em; color: var(--cian-claro); transition: opacity .6s; }
+.cargando.fuera { opacity: 0; pointer-events: none; }
+.cargando i { width: 18cqw; height: 2px; background: linear-gradient(90deg, transparent, var(--cian), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: barrido 1.1s linear infinite; }
+@keyframes barrido { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+.error3d { position: absolute; inset: 0; z-index: 7; display: grid; place-content: center; text-align: center; padding: 4cqw; font-size: 1.4cqw; background: #02060e; }
+
+@media (prefers-reduced-motion: reduce) {
+  .portada button, .tele b i, .grano, .marca-h s::after { animation: none; }
+  .tarjeta, .tarjeta li { transition: none; }
+}
+</style>
+
+<div id="escenario">
+  <div class="fondo" id="fondoA"><img alt=""><div class="marcas"></div></div>
+  <div class="fondo" id="fondoB"><img alt=""><div class="marcas"></div></div>
+  <canvas id="c" aria-label="Recorrido 3D: un mosquito Aedes aegypti vuela por El Colorado y se detiene en cada etapa"></canvas>
+  <div class="relampago" id="relampago"></div>
+  <div class="vineta" aria-hidden="true"></div>
+  <div class="grano" aria-hidden="true"></div>
+
+  <div class="hud" id="hud">
+    <div class="tele" aria-hidden="true">
+      <b><i></i>SEGUIMIENTO</b>
+      <span>OBJETIVO <em>Aedes aegypti</em> (hembra)</span>
+      <span>ALETEO <em>500 Hz</em></span>
+      <span>ALTURA <em id="t-alt">1.4</em> m · VEL <em id="t-vel">0.0</em> km/h</span>
+      <span>ZONA <em>El Colorado, Formosa</em></span>
+      <span>ESTADO <em id="t-est">En espera</em></span>
+    </div>
+    <div class="marca">
+      <img src="__LOGO__" alt="">
+      <div><strong>CaszaMosqui</strong><small>RECORRIDO 3D</small></div>
+    </div>
+    <div class="foco" id="foco" aria-hidden="true"></div>
+
+    <section class="tarjeta" id="tarjeta" aria-live="polite">
+      <div class="etq" id="tj-etq">ETAPA 01 / 07</div>
+      <h2 id="tj-titulo"></h2>
+      <p class="bajada" id="tj-bajada"></p>
+      <ul id="tj-lista"></ul>
+      <p class="cierre" id="tj-cierre" hidden></p>
+    </section>
+
+    <nav class="riel" id="riel" aria-label="Etapas del recorrido"></nav>
+    <div class="controles">
+      <button type="button" id="b-sonido" aria-pressed="false" title="Zumbido del mosquito (M)">SONIDO</button>
+      <button type="button" id="b-notas" aria-pressed="false" title="Notas para exponer (N)">NOTAS</button>
+      <button type="button" id="b-pantalla" title="Pantalla completa (F)">⛶</button>
+    </div>
+    <div class="notas" id="notas" hidden><b>NOTAS PARA EXPONER · solo las ves si las abrís (N)</b><span id="notas-txt"></span></div>
+  </div>
+
+  <div class="portada" id="portada">
+    <img src="__LOGO__" alt="Logo de CaszaMosqui">
+    <p class="sup">RECORRIDO 3D · EL COLORADO, FORMOSA</p>
+    <h1>CaszaMosqui</h1>
+    <p class="lema">Seguí a una hembra de <em>Aedes aegypti</em> en su vuelo por El Colorado y mirá cómo la frenamos entre todos.</p>
+    <button type="button" id="b-despegar">DESPEGAR →</button>
+    <p class="atajos"><kbd>→</kbd> o clic: avanzar · <kbd>←</kbd> volver · <kbd>1</kbd>–<kbd>7</kbd> ir a una etapa · <kbd>N</kbd> notas · <kbd>F</kbd> pantalla completa</p>
+  </div>
+  <div class="cargando" id="cargando"><span>PREPARANDO EL VUELO…</span><i></i></div>
+</div>
+
+<script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+/* =========================================================
+   Iconos de las marcas
+   ========================================================= */
+const IC = {
+  alerta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>',
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>',
+  cruz: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7zm0 4a3 3 0 100 6 3 3 0 000-6z"/></svg>',
+  gota: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s7 8 7 13a7 7 0 01-14 0c0-5 7-13 7-13z"/></svg>',
+  persona: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 22a8 8 0 0116 0z"/></svg>',
+  escudo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H8l-4 4z"/></svg>',
+};
+
+/* =========================================================
+   Contenido de las 7 etapas
+   x, y = posición en la foto (%); hover = dónde se queda el mosquito (fracción de pantalla)
+   ========================================================= */
+const ETAPAS = [
+  { corto: 'Problemática', titulo3d: 'PROBLEMÁTICA', color: 0xfb3a5b, img: '__IMG1__',
+    titulo: 'La problemática', bajada: 'Una noche después de la lluvia, en un patio de El Colorado.',
+    puntos: [
+      'El <strong>Aedes aegypti</strong> transmite dengue, chikungunya y zika.',
+      'Se cría en <strong>agua quieta</strong>: cubiertas, baldes, botellas, macetas, tanques sin tapa y basurales.',
+      'Los criaderos están en patios y terrenos de todos los barrios, pero nadie tenía el mapa completo.',
+      'Los avisos se perdían: sin registro, sin seguimiento y sin saber qué barrio estaba peor.' ],
+    notas: 'La protagonista es una hembra de Aedes aegypti: fíjense en la lira blanca del tórax y los anillos blancos de las patas. Es la que pica y transmite dengue. Cada objeto con agua quieta que ven en este patio es un criadero. El problema no es que no existan: es que nadie sabía dónde estaban ni cuántos había en cada barrio.',
+    foco: [62, 62], hover: [0.53, 0.62, -0.6], titulo3dPos: [0.63, 0.14, 0.42],
+    marcas: [[59, 52, 'CUBIERTAS', 'alerta', 'agua de lluvia'], [69, 68, 'BALDES CON AGUA', 'alerta'], [65, 87, 'BOTELLAS', 'alerta'],
+      [83, 67, 'MACETAS CON PLATO', 'alerta'], [77, 40, 'TANQUE SIN TAPA', 'alerta'], [93, 55, 'BASURAL', 'alerta']],
+    luz: { key: [0xffb26b, -1, 1, 0.6, 2.4], rim: [0x4fd1ff, 1, 0.6, -1, 3.0], amb: [0x1b2a4a, 0.55] } },
+  { corto: 'Solución + mapa', titulo3d: 'SOLUCIÓN + MAPA', color: 0x22d3ee, img: '__IMG2__',
+    titulo: 'La solución: CaszaMosqui', bajada: 'Una plataforma web comunitaria con el mapa de riesgo de El Colorado.',
+    puntos: [
+      'Mapa de la ciudad con un <strong>semáforo de riesgo por barrio</strong>: rojo, amarillo y verde.',
+      'El riesgo sale de los criaderos activos que reportan los vecinos.',
+      'Se usa desde el celular, <strong>se instala como app</strong> y funciona sin señal.',
+      'Dos formas de verla: <strong>modo normal</strong> y <strong>modo inmersivo en 3D</strong>.' ],
+    notas: 'En la plaza, el mapa de El Colorado como holograma. Cada columna de luz es un barrio: roja si tiene muchos criaderos activos, amarilla si tiene algunos, verde si está controlado. Esto le muestra a todos, vecinos y municipio, dónde está el problema hoy.',
+    foco: [68, 55], hover: [0.5, 0.42, -0.55], titulo3dPos: [0.64, 0.14, 0.42],
+    marcas: [[66, 46, 'RIESGO ALTO', 'alerta'], [74, 48, 'RIESGO MEDIO', 'medio'], [58, 63, 'RIESGO BAJO', 'ok'], [70, 63, 'MAPA DE EL COLORADO', 'info', 'por barrio']],
+    luz: { key: [0x7ee8ff, 1, 0.3, 0.2, 2.6], rim: [0xffc27a, -1, 1, -1, 2.0], amb: [0x10263a, 0.6] } },
+  { corto: 'Reporte + clima', titulo3d: 'REPORTE + CLIMA', color: 0xfbbf24, img: '__IMG3__',
+    titulo: 'Reporte + clima', bajada: 'Un vecino ve un criadero y lo marca en menos de un minuto.',
+    puntos: [
+      'Elige el <strong>tipo de criadero</strong> y el barrio, y suma <strong>foto y ubicación</strong>.',
+      'Acepta el aviso de privacidad y recibe su <strong>número de reporte</strong>.',
+      'El <strong>clima del día</strong> (lluvia, temperatura y humedad) ajusta el riesgo de cada barrio.',
+      'Si no hay datos reales del clima, no se inventan: el riesgo no sube.' ],
+    notas: 'Tormenta de verano en El Colorado. Un vecino ve una cubierta con agua al borde de la calle, le saca una foto y la marca en el mapa. Después de la lluvia y con calor el mosquito se reproduce más rápido, por eso el sistema sube el riesgo esos días.',
+    foco: [55, 62], hover: [0.47, 0.56, -0.6], titulo3dPos: [0.73, 0.26, 0.38],
+    marcas: [[49, 68, 'CUBIERTA CON AGUA', 'alerta'], [62, 47, 'FOTO + UBICACIÓN', 'info', 'reporte en curso'], [46, 31, 'LLUVIA + CALOR', 'medio', 'el riesgo sube']],
+    luz: { key: [0xa9b8d6, 0, 1, 1, 1.5], rim: [0xffcf8a, 1, 1, -1, 2.8], amb: [0x182233, 0.6] }, lluvia: true },
+  { corto: 'Prevención + salud', titulo3d: 'PREVENCIÓN + SALUD', color: 0x34d399, img: '__IMG4__',
+    titulo: 'Prevención + salud', bajada: 'Cortar el ciclo en casa y saber a dónde ir.',
+    puntos: [
+      'Cuatro gestos simples: <strong>dar vuelta, tapar, vaciar y tirar</strong>.',
+      '<strong>Test de síntomas</strong> que orienta (no diagnostica) y cuestionario para aprender.',
+      'Centros de salud con dirección y horario: Hospital “Opizzo Traverso”, Clínica del Sol y Consultorio La Sagrada Familia.',
+      'Ante signos de alarma: <strong>Emergencias 107</strong>.' ],
+    notas: 'El mismo tipo de patio, pero bien: el balde dado vuelta, el tanque tapado, la maceta con arena y la basura en la bolsa. Sin agua quieta, no hay mosquito. Y si alguien tiene síntomas, la página le dice a qué centro de salud ir.',
+    foco: [68, 55], hover: [0.53, 0.55, -0.6], titulo3dPos: [0.6, 0.11, 0.36],
+    marcas: [[59, 60, 'DAR VUELTA', 'ok'], [73, 37, 'TAPAR', 'ok'], [70, 67, 'VACIAR', 'ok'], [88, 58, 'TIRAR', 'ok'], [72, 25, 'CENTRO DE SALUD', 'salud', 'emergencias 107']],
+    luz: { key: [0x8fb4ff, 0, 1, 1, 1.6], rim: [0x5eead4, 1, 0.5, -1, 2.6], amb: [0x15233d, 0.6] } },
+  { corto: 'Comunidad', titulo3d: 'COMUNIDAD', color: 0xa78bfa, img: '__IMG5__',
+    titulo: 'Comunidad', bajada: 'La prevención deja de ser un aviso aislado.',
+    puntos: [
+      'Cada vecino que reporta suma un punto al <strong>mapa de todos</strong>.',
+      '<strong>Comentarios por barrio</strong>, con moderación.',
+      '<strong>Mosqui</strong>, el asistente virtual, responde dudas a cualquier hora.',
+      'Escuelas, familias y vecinos trabajando con la misma información.' ],
+    notas: 'Vecinos de todas las edades limpiando la cuadra juntos. Ninguno solo puede limpiar el barrio, pero juntos sí. Y Mosqui, nuestro asistente, está siempre disponible para responder cómo tapar un tanque o qué hacer con las cubiertas.',
+    foco: [64, 50], hover: [0.5, 0.27, -0.6], titulo3dPos: [0.68, 0.13, 0.34],
+    marcas: [[66, 37, 'VECINOS QUE REPORTAN', 'violeta'], [48, 72, 'LIMPIEZA DEL BARRIO', 'ok'], [88, 33, 'MOSQUI RESPONDE', 'info', '“¿cómo tapo el tanque?”']],
+    luz: { key: [0xffb37a, -1, 0.6, -0.6, 2.4], rim: [0xa78bfa, 1, 0.5, -1, 2.2], amb: [0x2a2240, 0.55] } },
+  { corto: 'Administración', titulo3d: 'ADMINISTRACIÓN', color: 0x38bdf8, img: '__IMG6__',
+    titulo: 'Administración', bajada: 'El equipo municipal verifica y actúa.',
+    puntos: [
+      'Cada reporte pasa por estados: <strong>pendiente → verificado → controlado</strong>.',
+      'Las fotos y la ubicación exacta <strong>solo las ve el administrador</strong>.',
+      '<strong>Registro de cambios</strong>: quién hizo qué, cuándo y por qué.',
+      'Pedidos y reclamos con número y plazos (Ley 25.326). Foto y GPS se borran a los 90 días de controlado.' ],
+    notas: 'Detrás del mapa hay personas. El equipo municipal revisa cada reporte antes de actuar: acá está mirando la foto de una cubierta con agua. Todo queda registrado, y cuidamos los datos de los vecinos como pide la ley de protección de datos personales.',
+    foco: [55, 55], hover: [0.5, 0.21, -0.5], titulo3dPos: [0.83, 0.17, 0.27],
+    marcas: [[53, 57, 'VERIFICAR EL REPORTE', 'salud', 'pendiente → verificado → controlado'], [60, 30, 'DATOS PROTEGIDOS', 'info', 'Ley 25.326'], [86, 45, 'REGISTRO DE CAMBIOS', 'salud']],
+    luz: { key: [0x7cc4ff, 0.2, 0.2, -1, 2.4], rim: [0x38bdf8, 1, 0.6, 0.5, 2.0], amb: [0x0d1b30, 0.6] } },
+  { corto: 'Impacto y cierre', titulo3d: 'IMPACTO', color: 0x34d399, img: '__IMG7__',
+    titulo: 'Impacto y cierre', bajada: 'Del aviso suelto al mapa compartido.',
+    puntos: [
+      'Operativos <strong>donde más se necesitan</strong>, con datos del día.',
+      'Vecinos informados y protagonistas de la prevención.',
+      'Menos criaderos, menos mosquitos, menos casos.',
+      'Se puede llevar a <strong>cualquier municipio</strong>.' ],
+    cierre: 'Sin criaderos, no hay mosquito.',
+    notas: 'Amanece en El Colorado: calles limpias y chicos jugando afuera. Ese es el objetivo de CaszaMosqui. Gracias por acompañarnos en este vuelo.',
+    foco: [69, 30], hover: [0.5, 0.36, -0.55], titulo3dPos: [0.7, 0.5, 0.34], logo: true,
+    marcas: [[62, 75, 'CALLES LIMPIAS', 'ok'], [74, 84, 'VECINOS PROTAGONISTAS', 'ok']],
+    luz: { key: [0xffd08a, -1, 0.5, -0.8, 2.8], rim: [0xfff1c1, 0.5, 1, -1, 1.8], amb: [0x3a3020, 0.6] } },
+];
+const N = ETAPAS.length;
+const COLOR_MARCA = { alerta: '#fb3a5b', ok: '#34d399', medio: '#fbbf24', info: '#67e8f9', salud: '#38bdf8', violeta: '#c4b5fd' };
+const ICONO_MARCA = { alerta: IC.alerta, ok: IC.ok, medio: IC.gota, info: IC.pin, salud: IC.cruz, violeta: IC.persona };
+
+/* =========================================================
+   Motor
+   ========================================================= */
+const $ = (s) => document.querySelector(s);
+const escenario = $('#escenario');
+const canvas = $('#c');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+} catch (e) {
+  const d = document.createElement('div'); d.className = 'error3d';
+  d.textContent = 'Este navegador no puede mostrar gráficos 3D (WebGL). Probá con Chrome o Edge actualizados.';
+  escenario.appendChild(d); throw e;
+}
+renderer.setClearColor(0x000000, 0);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+const FOV = 35;
+const camera = new THREE.PerspectiveCamera(FOV, 16 / 9, 0.05, 200);
+function ajustar() {
+  const r = escenario.getBoundingClientRect(); if (!r.width) return;
+  renderer.setSize(r.width, r.height, false); camera.aspect = r.width / r.height; camera.updateProjectionMatrix();
+}
+new ResizeObserver(ajustar).observe(escenario); ajustar();
+
+const reloj = { value: 0 };
+const SRGB = THREE.SRGBColorSpace;
+const lerp = THREE.MathUtils.lerp;
+const suave = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const easeIn = (t) => t * t * t;
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const easeBack = (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+let semilla = 11; const rnd = () => (semilla = (semilla * 16807) % 2147483647) / 2147483647;
+
+/* punto del mundo que cae en una posición de pantalla (fracciones 0–1) a cierta distancia */
+function enPantalla(fx, fy, dist, out = new THREE.Vector3()) {
+  const h = 2 * dist * Math.tan(THREE.MathUtils.degToRad(FOV / 2)), w = h * camera.aspect;
+  return out.set((fx - 0.5) * w, (0.5 - fy) * h, -dist);
+}
+function anchoVisible(dist) { return 2 * dist * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * camera.aspect; }
+
+/* Esperar fuentes (para las letras 3D) e imágenes */
+await Promise.race([
+  Promise.all(['900 64px Orbitron', '800 64px Orbitron', '600 32px "Exo 2"', '20px "Share Tech Mono"'].map((f) => document.fonts.load(f))),
+  new Promise((r) => setTimeout(r, 2500)),
+]).catch(() => {});
+const imagenes = await Promise.all(ETAPAS.map((e) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(i); i.src = e.img; })));
+
+/* Reflejos del mosquito tomados de cada foto */
+const pmrem = new THREE.PMREMGenerator(renderer);
+const entornos = imagenes.map((img) => {
+  const t = new THREE.Texture(img); t.colorSpace = SRGB; t.mapping = THREE.EquirectangularReflectionMapping; t.needsUpdate = true;
+  const rt = pmrem.fromEquirectangular(t); t.dispose(); return rt.texture;
+});
+scene.environment = entornos[0];
+if ('environmentIntensity' in scene) scene.environmentIntensity = 0.75;
+
+/* Luces que cambian con cada escena */
+const luzAmb = new THREE.HemisphereLight(0x1b2a4a, 0x05070c, 0.55); scene.add(luzAmb);
+const luzKey = new THREE.DirectionalLight(0xffffff, 2); scene.add(luzKey, luzKey.target);
+const luzRim = new THREE.DirectionalLight(0xffffff, 2); scene.add(luzRim, luzRim.target);
+function aplicarLuz(a, b, k) {
+  const A = a.luz, B = b.luz, c = new THREE.Color();
+  luzKey.color.copy(c.set(A.key[0]).lerp(new THREE.Color(B.key[0]), k)); luzKey.intensity = lerp(A.key[4], B.key[4], k);
+  luzKey.position.set(lerp(A.key[1], B.key[1], k), lerp(A.key[2], B.key[2], k), lerp(A.key[3], B.key[3], k)).multiplyScalar(10);
+  luzRim.color.copy(c.set(A.rim[0]).lerp(new THREE.Color(B.rim[0]), k)); luzRim.intensity = lerp(A.rim[4], B.rim[4], k);
+  luzRim.position.set(lerp(A.rim[1], B.rim[1], k), lerp(A.rim[2], B.rim[2], k), lerp(A.rim[3], B.rim[3], k)).multiplyScalar(10);
+  luzAmb.color.copy(c.set(A.amb[0]).lerp(new THREE.Color(B.amb[0]), k)); luzAmb.intensity = lerp(A.amb[1], B.amb[1], k);
+}
+aplicarLuz(ETAPAS[0], ETAPAS[0], 0);
+
+/* =========================================================
+   Texturas procedurales del mosquito
+   ========================================================= */
+function lienzo(w, h, dibujar) { const c = document.createElement('canvas'); c.width = w; c.height = h; dibujar(c.getContext('2d'), w, h); return c; }
+function textura(c, { repetir = false } = {}) { const t = new THREE.CanvasTexture(c); t.colorSpace = SRGB; t.anisotropy = 8; if (repetir) t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+function pixeles(w, h, f) {
+  return lienzo(w, h, (x) => { const img = x.createImageData(w, h);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const [r, g, b] = f(i / w, j / h); const k = (j * w + i) * 4; img.data[k] = r; img.data[k + 1] = g; img.data[k + 2] = b; img.data[k + 3] = 255; }
+    x.putImageData(img, 0, 0); });
+}
+const OSC = [30, 22, 17], BLANCO = [236, 234, 226], PLATA = [196, 200, 204];
+const mezclar = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+const ruido = () => (rnd() - 0.5) * 16;
+
+/* Tórax con la lira blanca, la marca típica del Aedes aegypti */
+const texTorax = textura(pixeles(512, 256, (u, v) => {
+  const th = u * Math.PI * 2, ph = v * Math.PI;
+  const px = -Math.cos(th) * Math.sin(ph), py = Math.cos(ph), pz = Math.sin(th) * Math.sin(ph);
+  let k = 0;
+  if (py > 0.05) {
+    const curva = 0.5 - 0.22 * Math.pow(pz + 0.15, 2);
+    if (Math.abs(Math.abs(px) - curva) < 0.05 && pz > -0.8 && pz < 0.6) k = 1;
+    if (Math.abs(Math.abs(px) - 0.075) < 0.024 && pz > -0.6 && pz < 0.3) k = Math.max(k, 0.9);
+  }
+  if (Math.abs(py) < 0.35 && Math.abs(px) > 0.72 && Math.sin(pz * 16 + 1) > 0.35) k = Math.max(k, 0.75);
+  const n = ruido(); return mezclar([OSC[0] + n, OSC[1] + n, OSC[2] + n], BLANCO, k);
+}));
+/* Abdomen: bandas claras en la base de cada segmento y manchas plateadas a los costados */
+const texAbdomen = textura(pixeles(256, 512, (u, v) => {
+  const seg = (v * 8) % 1, lado = Math.abs(Math.sin(u * Math.PI * 2)), dorso = Math.max(0, -Math.cos(u * Math.PI * 2));
+  let k = 0;
+  if (seg < 0.06 && dorso > 0.5) k = 0.18;
+  if (seg < 0.13 && lado > 0.9) k = Math.max(k, 0.7);
+  if (dorso < 0.02 && seg < 0.18) k = Math.max(k, 0.45);
+  const n = ruido(); return mezclar([OSC[0] + n, OSC[1] + n, OSC[2] + n], k > 0.9 ? PLATA : BLANCO, k);
+}));
+const texFemur = textura(pixeles(16, 256, (u, v) => { const n = ruido(); return v > 0.93 ? BLANCO : (v < 0.2 && u > 0.5 ? mezclar(OSC, PLATA, 0.4) : [OSC[0] + n, OSC[1] + n, OSC[2] + n]); }));
+const texTarso = textura(pixeles(16, 128, (u, v) => { const n = ruido(); return v < 0.3 ? BLANCO : [OSC[0] + n, OSC[1] + n, OSC[2] + n]; }));
+const texTarsoBlanco = textura(pixeles(16, 64, () => mezclar(BLANCO, PLATA, rnd() * 0.3)));
+const texOjo = textura(lienzo(256, 128, (x, w, h) => {
+  x.fillStyle = '#0d0907'; x.fillRect(0, 0, w, h);
+  for (let j = 0; j < 22; j++) for (let i = 0; i < 44; i++) { x.fillStyle = `rgba(${60 + rnd() * 50},${30 + rnd() * 20},${20 + rnd() * 20},.9)`;
+    x.beginPath(); x.arc(i * 6 + (j % 2) * 3, j * 6, 2.3, 0, 7); x.fill(); }
+}));
+const texAla = textura(lienzo(512, 128, (x, w, h) => {
+  x.clearRect(0, 0, w, h);
+  x.fillStyle = 'rgba(214,228,238,.34)'; x.fillRect(0, 0, w, h);
+  x.strokeStyle = 'rgba(55,42,32,.85)'; x.lineWidth = 2.2;
+  for (let k = 0; k < 7; k++) { x.beginPath(); x.moveTo(0, h / 2 + (k - 3) * 2); x.bezierCurveTo(w * 0.35, h / 2 + (k - 3) * 9, w * 0.7, h / 2 + (k - 3) * 11, w, h / 2 + (k - 3) * 7); x.stroke(); }
+  x.lineWidth = 1.4; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(w * (0.3 + k * 0.15), h * 0.2); x.lineTo(w * (0.34 + k * 0.15), h * 0.8); x.stroke(); }
+  // flecos de escamas en el borde
+  x.strokeStyle = 'rgba(40,32,26,.55)'; x.lineWidth = 1;
+  for (let i = 0; i < w; i += 3) { x.beginPath(); x.moveTo(i, h - 2); x.lineTo(i + 1, h - 12 - rnd() * 6); x.stroke(); x.beginPath(); x.moveTo(i, 2); x.lineTo(i + 1, 8 + rnd() * 4); x.stroke(); }
+}));
+
+/* =========================================================
+   Mosquito realista (hembra de Aedes aegypti)
+   ========================================================= */
+const quitina = (map, extra = {}) => new THREE.MeshPhysicalMaterial({ map, roughness: 0.48, metalness: 0.05, clearcoat: 0.55, clearcoatRoughness: 0.35, sheen: 0.6, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x8a96a8), ...extra });
+const mTorax = quitina(texTorax), mAbd = quitina(texAbdomen), mOscuro = quitina(null, { color: 0x1d1612 });
+const mFemur = quitina(texFemur, { clearcoat: 0.3 }), mTarso = quitina(texTarso, { clearcoat: 0.3 }), mTarsoB = quitina(texTarsoBlanco, { clearcoat: 0.3 });
+const mOjo = new THREE.MeshPhysicalMaterial({ map: texOjo, color: 0xffffff, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08, iridescence: 0.6, iridescenceIOR: 1.4, iridescenceThicknessRange: [180, 420] });
+const mAla = new THREE.MeshPhysicalMaterial({ map: texAla, transparent: true, side: THREE.DoubleSide, depthWrite: false, roughness: 0.18, metalness: 0,
+  iridescence: 1, iridescenceIOR: 1.33, iridescenceThicknessRange: [150, 520], envMapIntensity: 1.6 });
+
+function tubo(puntos, r0, r1, mat, seg = 24) {
+  const curva = new THREE.CatmullRomCurve3(puntos.map((p) => new THREE.Vector3(...p)));
+  const geo = new THREE.TubeGeometry(curva, seg, 1, 10, false);
+  // afinar el tubo a lo largo
+  const pos = geo.attributes.position, nrm = geo.attributes.normal, tmp = new THREE.Vector3();
+  for (let i = 0; i <= seg; i++) { const c = curva.getPointAt(i / seg), r = lerp(r0, r1, i / seg);
+    for (let j = 0; j <= 10; j++) { const k = i * 11 + j; tmp.fromBufferAttribute(nrm, k); pos.setXYZ(k, c.x + tmp.x * r, c.y + tmp.y * r, c.z + tmp.z * r); } }
+  geo.computeVertexNormals();
+  return new THREE.Mesh(geo, mat);
+}
+function segmento(a, b, r0, r1, mat) {
+  const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b), L = va.distanceTo(vb);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, L, 10, 1), mat);
+  m.position.copy(va).lerp(vb, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize()); return m;
+}
+
+const mosquito = new THREE.Group();   // raíz: posición y rumbo
+const cuerpo = new THREE.Group();     // cabeceo, alabeo y balanceo
+mosquito.add(cuerpo); scene.add(mosquito); mosquito.scale.setScalar(0.6);
+const patas = [], alas = [];
+{
+  // tórax jorobado
+  const torax = new THREE.Mesh(new THREE.SphereGeometry(0.16, 48, 32), mTorax); torax.scale.set(0.88, 0.84, 1.2); torax.position.set(0, 0.02, -0.1); torax.rotation.x = -0.18; cuerpo.add(torax);
+  const escutelo = new THREE.Mesh(new THREE.SphereGeometry(0.06, 20, 14), mOscuro); escutelo.scale.set(1.4, 0.6, 0.8); escutelo.position.set(0, 0.11, 0.07); cuerpo.add(escutelo);
+  // abdomen segmentado
+  const perfil = []; const L = 0.78;
+  for (let i = 0; i <= 64; i++) { const y = (i / 64) * L; let r = 0.074 * Math.pow(Math.sin(Math.PI * Math.min(0.999, (y + 0.06) / (L + 0.1))), 0.55);
+    r *= 1 - 0.07 * (1 - Math.cos(2 * Math.PI * y * 8 / L)) / 2; perfil.push(new THREE.Vector2(Math.max(0.004, r), y)); }
+  const abdomen = new THREE.Mesh(new THREE.LatheGeometry(perfil, 40), mAbd);
+  abdomen.rotation.x = Math.PI / 2 + 0.22; abdomen.position.set(0, -0.01, 0.08); abdomen.scale.set(1, 1, 0.92); cuerpo.add(abdomen);
+  // cabeza y ojos compuestos
+  const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.075, 24, 18), mOscuro); cabeza.position.set(0, -0.005, -0.34); cuerpo.add(cabeza);
+  for (const s of [-1, 1]) { const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.068, 32, 24), mOjo); ojo.scale.set(0.75, 1, 0.95); ojo.position.set(s * 0.042, 0.005, -0.355); cuerpo.add(ojo); }
+  // probóscide, palpos con punta blanca y antenas
+  cuerpo.add(tubo([[0, -0.03, -0.4], [0, -0.07, -0.55], [0, -0.13, -0.72], [0, -0.21, -0.86]], 0.011, 0.004, mOscuro, 20));
+  for (const s of [-1, 1]) {
+    cuerpo.add(tubo([[s * 0.012, -0.025, -0.4], [s * 0.016, -0.05, -0.45], [s * 0.018, -0.075, -0.49]], 0.009, 0.006, mOscuro, 8));
+    const punta = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 8), mTarsoB); punta.position.set(s * 0.018, -0.077, -0.492); cuerpo.add(punta);
+    const ant = tubo([[s * 0.02, 0.03, -0.39], [s * 0.06, 0.07, -0.5], [s * 0.1, 0.1, -0.64], [s * 0.13, 0.12, -0.74]], 0.006, 0.0025, mOscuro, 14); cuerpo.add(ant);
+    // verticilos de pelos de la antena
+    const pelos = [];
+    for (let k = 1; k < 9; k++) { const t = k / 9, cx = s * lerp(0.02, 0.13, t), cy = lerp(0.03, 0.12, t), cz = lerp(-0.39, -0.74, t);
+      for (let q = 0; q < 6; q++) { const a = (q / 6) * Math.PI * 2; pelos.push(cx, cy, cz, cx + Math.cos(a) * 0.02, cy + Math.sin(a) * 0.02, cz - 0.006); } }
+    const gp = new THREE.BufferGeometry(); gp.setAttribute('position', new THREE.Float32BufferAttribute(pelos, 3));
+    cuerpo.add(new THREE.LineSegments(gp, new THREE.LineBasicMaterial({ color: 0x3a2e26, transparent: true, opacity: 0.7 })));
+  }
+  // seis patas: coxa, fémur (rodilla blanca), tibia y cinco tarsos con anillos blancos
+  const defs = [
+    { z: -0.2, dirs: [[0.3, -1, -0.2], [0.55, -0.35, -0.75], [0.25, -0.95, -0.35], [0.12, -1, 0.05]], hind: false },
+    { z: -0.11, dirs: [[0.5, -1, 0], [1, -0.25, 0.08], [0.45, -1, 0.25], [0.18, -1, 0.35]], hind: false },
+    { z: -0.02, dirs: [[0.4, -1, 0.3], [0.75, -0.3, 0.85], [0.25, -0.35, 1], [0.08, 0.55, 1]], hind: true },
+  ];
+  const largos = [0.05, 0.42, 0.46, 0.5];
+  for (const s of [-1, 1]) for (const d of defs) {
+    const pata = new THREE.Group(); pata.position.set(s * 0.075, -0.09, d.z); cuerpo.add(pata);
+    let p = [0, 0, 0];
+    d.dirs.forEach((dir, k) => {
+      const v = new THREE.Vector3(dir[0] * s, dir[1], dir[2]).normalize();
+      if (k < 3) { const q = [p[0] + v.x * largos[k], p[1] + v.y * largos[k], p[2] + v.z * largos[k]];
+        pata.add(segmento(p, q, [0.0095, 0.0075, 0.0055][k], [0.0085, 0.0065, 0.0045][k], k === 1 ? mFemur : (k === 0 ? mOscuro : mFemur)));
+        const art = new THREE.Mesh(new THREE.SphereGeometry([0.009, 0.0072, 0.005][k], 10, 8), k === 1 ? mTarsoB : mOscuro); art.position.set(...q); pata.add(art);
+        p = q; }
+      else { // tarsos: cinco segmentos que se curvan suave
+        let dirAct = v.clone(); const caida = new THREE.Vector3(0, d.hind ? 0.4 : -1, d.hind ? 0.6 : 0.2).normalize();
+        for (let t = 0; t < 5; t++) { dirAct.lerp(caida, 0.18).normalize(); const L2 = largos[3] / 5;
+          const q = [p[0] + dirAct.x * L2, p[1] + dirAct.y * L2, p[2] + dirAct.z * L2];
+          const blanco = d.hind && t === 4; pata.add(segmento(p, q, 0.0042 - t * 0.0005, 0.0038 - t * 0.0005, blanco ? mTarsoB : mTarso)); p = q; }
+      }
+    });
+    pata.userData = { s, hind: d.hind, base: pata.rotation.clone() }; patas.push(pata);
+  }
+  // alas con borrón de aleteo (varias capas)
+  const forma = new THREE.Shape(); forma.moveTo(0, 0); forma.bezierCurveTo(0.08, 0.06, 0.5, 0.095, 0.66, 0.025); forma.bezierCurveTo(0.68, 0.0, 0.66, -0.03, 0.6, -0.04); forma.bezierCurveTo(0.42, -0.07, 0.12, -0.05, 0, 0);
+  const geoAla = new THREE.ShapeGeometry(forma, 24);
+  { const uv = geoAla.attributes.uv, pos = geoAla.attributes.position; for (let k = 0; k < pos.count; k++) uv.setXY(k, pos.getX(k) / 0.68, (pos.getY(k) + 0.07) / 0.17); }
+  geoAla.rotateX(-Math.PI / 2);
+  for (const s of [-1, 1]) {
+    const raiz = new THREE.Group(); raiz.position.set(s * 0.06, 0.11, -0.08); cuerpo.add(raiz);
+    const capas = [];
+    for (let k = 0; k < 7; k++) {
+      const m = mAla.clone(); m.opacity = k === 0 ? 1 : 0.42;
+      const ala = new THREE.Mesh(geoAla, m); if (s < 0) ala.scale.x = -1;
+      const piv = new THREE.Group(); piv.add(ala); raiz.add(piv); capas.push(piv);
+    }
+    // halterio (balancín) detrás del ala
+    const hal = tubo([[s * 0.05, 0.06, 0.02], [s * 0.07, 0.07, 0.06]], 0.004, 0.003, mOscuro, 6); cuerpo.add(hal);
+    const bola = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), mTarsoB); bola.position.set(s * 0.072, 0.072, 0.065); cuerpo.add(bola);
+    raiz.userData = { s, capas }; alas.push(raiz);
+  }
+}
+
+function animarMosquito(t, vuelo) {
+  const amp = vuelo ? 1.05 : 0.9, f = vuelo ? 47 : 39;
+  alas.forEach((r) => { const s = r.userData.s;
+    r.userData.capas.forEach((c, k) => {
+      const fase = k === 0 ? Math.sin(t * f) : (k - 3) / 3; // capa 0 aletea; las demás forman el abanico borroso
+      c.rotation.set(0, s * (0.35 + fase * 0.25), s * fase * amp);
+    }); });
+  patas.forEach((p, k) => { const s = p.userData.s, d = p.userData.hind;
+    p.rotation.x = (vuelo ? 0.35 : 0) + Math.sin(t * 1.6 + k) * 0.04 + (d && !vuelo ? -0.2 : 0);
+    p.rotation.z = s * Math.sin(t * 1.2 + k * 0.7) * 0.03; });
+}
+
+/* =========================================================
+   Letras 3D y logo (con el mismo estilo holográfico)
+   ========================================================= */
+function fuente(px, peso = 900, familia = 'Orbitron') { return `${peso} ${px}px "${familia}", "Segoe UI", system-ui, sans-serif`; }
+function lienzoTexto(txt, px = 150) {
+  const tmp = document.createElement('canvas').getContext('2d'); tmp.font = fuente(px); if ('letterSpacing' in tmp) tmp.letterSpacing = `${px * 0.05}px`;
+  const w = Math.ceil(tmp.measureText(txt).width + px * 0.7), h = Math.ceil(px * 1.5);
+  return lienzo(w, h, (x) => { x.font = fuente(px); if ('letterSpacing' in x) x.letterSpacing = `${px * 0.05}px`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.fillText(txt, w / 2, h / 2 + px * 0.05); });
+}
+function desenfocar(c, r) { return lienzo(c.width + r * 4, c.height + r * 4, (x) => { x.filter = `blur(${r}px)`; x.drawImage(c, r * 2, r * 2); x.drawImage(c, r * 2, r * 2); }); }
+function letras3D(txt, color) {
+  const c = lienzoTexto(txt), tex = textura(c), ancho = c.width / c.height, geo = new THREE.PlaneGeometry(ancho, 1);
+  const g = new THREE.Group(), base = new THREE.Color(color), capas = 20, prof = 0.3;
+  for (let i = capas; i >= 0; i--) { const k = i / capas;
+    const col = i === 0 ? new THREE.Color(0xffffff).lerp(base, 0.15) : base.clone().multiplyScalar(0.6 * (1 - k) + 0.1);
+    const p = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, color: col, transparent: true, alphaTest: 0.42, toneMapped: false })); p.position.z = -k * prof; g.add(p); }
+  const gc = desenfocar(c, 16);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(ancho * gc.width / c.width, gc.height / c.height),
+    new THREE.MeshBasicMaterial({ map: textura(gc), color: base, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.85, toneMapped: false }));
+  glow.position.z = -prof - 0.05; g.add(glow);
+  g.userData.ancho = ancho; return g;
+}
+const DIST_TIT = 16;
+const titulos = ETAPAS.map((e, i) => {
+  const g = new THREE.Group();
+  const t = letras3D(e.titulo3d, e.color), num = letras3D(`0${i + 1}`, e.color);
+  const [fx, fy, maxW] = e.titulo3dPos, anchoMundo = anchoVisible(DIST_TIT) * maxW;
+  const esc = Math.min(1.25, anchoMundo / t.userData.ancho);
+  t.scale.setScalar(esc); num.scale.setScalar(esc * 0.5);
+  num.position.set(-(t.userData.ancho * esc) / 2 + (num.userData.ancho * esc * 0.5) / 2, esc * 0.78, 0);
+  g.add(t, num); enPantalla(fx, fy, DIST_TIT, g.position); g.rotation.y = -0.18; g.rotation.x = 0.04;
+  g.visible = false; g.userData = { t0: -10, fy }; scene.add(g); return g;
+});
+/* logo del cierre dentro del anillo de luz */
+let logo3d;
+{
+  const img = new Image(); img.src = '__LOGO__'; await img.decode().catch(() => {});
+  const lado = 512, circ = lienzo(lado, lado, (x) => { const r = lado / 2; x.drawImage(img, 0, 0, lado, lado);
+    const g = x.createRadialGradient(r, r, r * 0.8, r, r, r); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.globalCompositeOperation = 'destination-in'; x.fillStyle = g; x.beginPath(); x.arc(r, r, r, 0, 7); x.fill(); });
+  const tl = textura(circ);
+  const D = 16, w = anchoVisible(D) * 0.165;
+  logo3d = new THREE.Mesh(new THREE.PlaneGeometry(w, w), new THREE.MeshBasicMaterial({ map: tl, transparent: true, toneMapped: false, side: THREE.DoubleSide }));
+  enPantalla(0.69, 0.23, D, logo3d.position); logo3d.visible = false; scene.add(logo3d);
+}
+
+/* =========================================================
+   Partículas: polvo en suspensión, estelas de velocidad y lluvia
+   ========================================================= */
+const brillo = textura(lienzo(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }));
+const NP = 260, polvoPos = new Float32Array(NP * 3), polvoVel = new Float32Array(NP);
+for (let i = 0; i < NP; i++) { polvoPos[i * 3] = (rnd() - 0.5) * 14; polvoPos[i * 3 + 1] = (rnd() - 0.5) * 8; polvoPos[i * 3 + 2] = -1 - rnd() * 22; polvoVel[i] = 0.5 + rnd(); }
+const polvoGeo = new THREE.BufferGeometry(); polvoGeo.setAttribute('position', new THREE.BufferAttribute(polvoPos, 3));
+const polvoMat = new THREE.PointsMaterial({ size: 0.06, map: brillo, color: 0xffe2b8, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending });
+scene.add(new THREE.Points(polvoGeo, polvoMat));
+const NE = 180, estPos = new Float32Array(NE * 6);
+const estGeo = new THREE.BufferGeometry(); estGeo.setAttribute('position', new THREE.BufferAttribute(estPos, 3));
+const estMat = new THREE.LineBasicMaterial({ color: 0xbfefff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+scene.add(new THREE.LineSegments(estGeo, estMat));
+const estSem = Array.from({ length: NE }, () => ({ x: (rnd() - 0.5) * 12, y: (rnd() - 0.5) * 7, z: -rnd() * 30 }));
+const NL = 500, lluPos = new Float32Array(NL * 6);
+const lluGeo = new THREE.BufferGeometry(); lluGeo.setAttribute('position', new THREE.BufferAttribute(lluPos, 3));
+const lluMat = new THREE.LineBasicMaterial({ color: 0xcfe3ff, transparent: true, opacity: 0, depthWrite: false });
+scene.add(new THREE.LineSegments(lluGeo, lluMat));
+const lluSem = Array.from({ length: NL }, () => ({ x: (rnd() - 0.5) * 16, y: (rnd() - 0.5) * 10, z: -2 - rnd() * 16, v: 9 + rnd() * 5 }));
+
+/* =========================================================
+   Fondos y marcas
+   ========================================================= */
+const capas = [$('#fondoA'), $('#fondoB')];
+let frente = 0;
+function cargarFondo(capa, i) {
+  const e = ETAPAS[i]; capa.querySelector('img').src = e.img; capa.style.transformOrigin = `${e.foco[0]}% ${e.foco[1]}%`;
+  capa.querySelector('.marcas').innerHTML = e.marcas.map(([x, y, txt, tipo, sub]) =>
+    `<div class="marca-h" style="left:${x}%;top:${y}%;--c:${COLOR_MARCA[tipo]}"><b>${ICONO_MARCA[tipo]}<span>${txt}${sub ? `<small>${sub}</small>` : ''}</span></b><i></i><s></s></div>`).join('');
+}
+function encenderMarcas(capa, on) { capa.querySelectorAll('.marca-h').forEach((m, k) => { m.style.transitionDelay = on ? `${0.5 + k * 0.22}s` : '0s'; m.classList.toggle('on', on); }); }
+function estiloCapa(capa, escala, op, blur, brillo = 1) {
+  capa.style.transform = `scale(${escala.toFixed(4)})`; capa.style.opacity = op.toFixed(3);
+  capa.style.filter = blur > 0.05 || brillo !== 1 ? `blur(${blur.toFixed(2)}px) brightness(${brillo.toFixed(3)})` : 'none';
+}
+
+/* =========================================================
+   Estado y vuelo
+   ========================================================= */
+const estado = { etapa: -1, vuelo: null, llegada: 0, notas: false };
+const PORTADA = { hover: [0.72, 0.52, Math.PI - 0.55], luz: ETAPAS[0].luz };
+const DIST_M = 3.6;
+function poseDe(i) { const h = i < 0 ? PORTADA.hover : ETAPAS[i].hover; return { pos: enPantalla(h[0], h[1], i < 0 ? 2.2 : DIST_M), yaw: h[2] }; }
+const poseVuelo = () => ({ pos: enPantalla(0.5, 0.56, 4.4), yaw: 0 });
+
+function volar(hacia) {
+  if (estado.vuelo || hacia === estado.etapa || hacia < 0 || hacia >= N) return;
+  const desde = estado.etapa;
+  ocultarTarjeta();
+  const atras = capas[frente], nueva = capas[1 - frente];
+  encenderMarcas(atras, false);
+  cargarFondo(nueva, hacia); estiloCapa(nueva, 1.5, 0, 8); nueva.style.zIndex = 0; atras.style.zIndex = 0;
+  estado.vuelo = { desde, hacia, t0: reloj.value, dur: desde < 0 ? 4.6 : 4.2, atras, nueva, kb: atras._kb || 1, env: false };
+  $('#t-est').textContent = `En vuelo → ${ETAPAS[hacia].corto}`;
+  $('#foco').classList.remove('on');
+  sonido.vuelo(true);
+}
+function llegar(i) {
+  const v = estado.vuelo; if (v) { frente = 1 - frente; estiloCapa(v.atras, 1, 0, 0); }
+  estado.etapa = i; estado.vuelo = null; estado.llegada = reloj.value;
+  encenderMarcas(capas[frente], true);
+  titulos.forEach((t, k) => { t.visible = k === i; if (k === i) t.userData.t0 = reloj.value; });
+  logo3d.visible = !!ETAPAS[i].logo;
+  mostrarTarjeta(i); pintarRiel();
+  $('#t-est').textContent = `Etapa ${i + 1}: ${ETAPAS[i].corto}`;
+  $('#foco').classList.add('on');
+  sonido.vuelo(false);
+  try { history.replaceState(null, '', `#etapa-${i + 1}`); } catch (e) { /* sin historial en este marco */ }
+}
+
+/* =========================================================
+   HUD
+   ========================================================= */
+const riel = $('#riel');
+ETAPAS.forEach((e, i) => {
+  const b = document.createElement('button'); b.type = 'button';
+  b.innerHTML = `<i></i><span><b>${String(i + 1).padStart(2, '0')}</b>${e.corto}</span>`;
+  b.setAttribute('aria-label', `Ir a la etapa ${i + 1}: ${e.corto}`);
+  b.addEventListener('click', (ev) => { ev.stopPropagation(); empezar(); volar(i); });
+  riel.appendChild(b);
+});
+function pintarRiel() { [...riel.children].forEach((b, i) => { b.classList.toggle('actual', i === estado.etapa); b.classList.toggle('hecha', i < estado.etapa); b.toggleAttribute('aria-current', i === estado.etapa); }); }
+function mostrarTarjeta(i) {
+  const e = ETAPAS[i];
+  $('#tj-etq').textContent = `ETAPA ${String(i + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+  $('#tj-titulo').textContent = e.titulo; $('#tj-bajada').textContent = e.bajada;
+  $('#tj-lista').innerHTML = e.puntos.map((p, k) => `<li style="transition-delay:${0.25 + k * 0.14}s">${p}</li>`).join('');
+  const ci = $('#tj-cierre'); ci.hidden = !e.cierre; ci.textContent = e.cierre || '';
+  $('#notas-txt').textContent = e.notas;
+  requestAnimationFrame(() => $('#tarjeta').classList.add('visible'));
+}
+function ocultarTarjeta() { $('#tarjeta').classList.remove('visible'); }
+
+/* Sonido: zumbido sintetizado a 500 Hz, como el aleteo real */
+const sonido = (() => {
+  let ctx, gan, osc, osc2, encendido = false, enVuelo = false;
+  function crear() {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    gan = ctx.createGain(); gan.gain.value = 0;
+    const filtro = ctx.createBiquadFilter(); filtro.type = 'bandpass'; filtro.frequency.value = 1100; filtro.Q.value = 0.8;
+    osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 500;
+    osc2 = ctx.createOscillator(); osc2.type = 'sawtooth'; osc2.frequency.value = 1003;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 7; const lg = ctx.createGain(); lg.gain.value = 14; lfo.connect(lg); lg.connect(osc.frequency);
+    const m2 = ctx.createGain(); m2.gain.value = 0.35;
+    osc.connect(filtro); osc2.connect(m2); m2.connect(filtro); filtro.connect(gan); gan.connect(ctx.destination);
+    osc.start(); osc2.start(); lfo.start();
+  }
+  function nivel() { if (!ctx) return; gan.gain.setTargetAtTime(encendido ? (enVuelo ? 0.05 : 0.016) : 0, ctx.currentTime, 0.25);
+    osc.frequency.setTargetAtTime(enVuelo ? 540 : 495, ctx.currentTime, 0.4); }
+  return {
+    alternar() { try { if (!ctx) crear(); ctx.resume(); encendido = !encendido; nivel(); } catch (e) { encendido = false; } return encendido; },
+    vuelo(v) { enVuelo = v; nivel(); },
+  };
+})();
+const bSon = $('#b-sonido');
+bSon.addEventListener('click', (e) => { e.stopPropagation(); bSon.setAttribute('aria-pressed', String(sonido.alternar())); });
+const bNot = $('#b-notas');
+function alternarNotas() { estado.notas = !estado.notas; $('#notas').hidden = !estado.notas; bNot.setAttribute('aria-pressed', String(estado.notas)); }
+bNot.addEventListener('click', (e) => { e.stopPropagation(); alternarNotas(); });
+function pantallaCompleta() { try { if (document.fullscreenElement) document.exitFullscreen(); else escenario.requestFullscreen?.().catch(() => {}); } catch (e) { /* el marco no lo permite */ } }
+$('#b-pantalla').addEventListener('click', (e) => { e.stopPropagation(); pantallaCompleta(); });
+
+let empezado = false;
+function empezar() { if (empezado) return; empezado = true; $('#portada').classList.add('fuera'); }
+$('#b-despegar').addEventListener('click', (e) => { e.stopPropagation(); empezar(); volar(0); });
+canvas.addEventListener('click', () => { if (!empezado) { empezar(); volar(0); } else avanzar(1); });
+function avanzar(d) { if (!empezado) { empezar(); volar(0); return; } if (estado.vuelo) return; const h = estado.etapa + d; if (h >= 0 && h < N) volar(h); }
+window.addEventListener('keydown', (ev) => {
+  const k = ev.key;
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(k)) { ev.preventDefault(); avanzar(1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(k)) { ev.preventDefault(); avanzar(-1); }
+  else if (/^[1-7]$/.test(k)) { empezar(); volar(Number(k) - 1); }
+  else if (k === 'f' || k === 'F') pantallaCompleta();
+  else if (k === 'n' || k === 'N') alternarNotas();
+  else if (k === 'h' || k === 'H') $('#hud').classList.toggle('oculto');
+  else if (k === 'm' || k === 'M') bSon.click();
+});
+
+/* =========================================================
+   Bucle
+   ========================================================= */
+cargarFondo(capas[0], 0); estiloCapa(capas[0], 1.04, 1, 7, 0.55); capas[0]._kb = 1.04; estiloCapa(capas[1], 1, 0, 0);
+camera.position.set(0, 0, 0); camera.lookAt(0, 0, -1);
+const pose = poseDe(-1); mosquito.position.copy(pose.pos); mosquito.rotation.y = pose.yaw;
+let ultimo = performance.now(), velSuave = 0;
+const prev = new THREE.Vector3(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), vFoco = new THREE.Vector3();
+let proxRelampago = 3, destello = 0;
+
+function angLerp(a, b, k) { let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI; if (d < -Math.PI) d += Math.PI * 2; return a + d * k; }
+
+function cuadro(ahora) {
+  const dt = Math.min(0.05, (ahora - ultimo) / 1000); ultimo = ahora;
+  reloj.value += dt; const t = reloj.value;
+  const v = estado.vuelo;
+  let velocidad = 0;
+  if (v) {
+    const x = Math.min(1, (t - v.t0) / v.dur);
+    // fondos: acercamiento a la escena actual y llegada a la nueva
+    const desdePortada = v.desde < 0;
+    estiloCapa(v.atras, v.kb * (1 + 1.1 * easeIn(Math.min(1, x / 0.62))), 1 - suave(0.36, 0.62, x), lerp(desdePortada ? 7 : 0, 9, suave(0.12, 0.55, x)), desdePortada ? 0.55 : 1);
+    estiloCapa(v.nueva, 1 + 0.5 * (1 - easeOut(suave(0.36, 1, x))), suave(0.36, 0.62, x), 9 * (1 - suave(0.5, 0.9, x)));
+    // mosquito: de su lugar al centro (de espaldas), y del centro al lugar nuevo
+    const a = poseDe(v.desde), m = poseVuelo(), b = poseDe(v.hacia);
+    const k1 = suave(0, 0.26, x), k2 = suave(0.72, 1, x);
+    tmpA.copy(a.pos).lerp(m.pos, k1); tmpB.copy(m.pos).lerp(b.pos, k2);
+    mosquito.position.copy(x < 0.5 ? tmpA : tmpB);
+    mosquito.rotation.y = x < 0.5 ? angLerp(a.yaw, m.yaw, k1) : angLerp(m.yaw, b.yaw, k2);
+    cuerpo.rotation.z = Math.sin(x * Math.PI * 2) * 0.28 * Math.sin(Math.PI * x);
+    cuerpo.rotation.x = 0.18 * Math.sin(Math.PI * x);
+    velocidad = Math.sin(Math.PI * x);
+    if (!v.env && x > 0.5) { v.env = true; scene.environment = entornos[v.hacia]; }
+    aplicarLuz(v.desde < 0 ? PORTADA : ETAPAS[v.desde], ETAPAS[v.hacia], suave(0.35, 0.65, x));
+    titulos.forEach((tt) => { if (tt.visible) tt.scale.setScalar(Math.max(0.001, 1 - suave(0, 0.18, x))); });
+    if (logo3d.visible) logo3d.material.opacity = 1 - suave(0, 0.2, x);
+    if (x >= 1) { v.nueva._kb = 1; llegar(v.hacia); }
+  } else {
+    const p = poseDe(estado.etapa);
+    mosquito.position.set(p.pos.x + Math.sin(t * 0.9) * 0.05, p.pos.y + Math.sin(t * 1.7) * 0.035, p.pos.z + Math.sin(t * 0.6) * 0.04);
+    mosquito.rotation.y = p.yaw + Math.sin(t * 0.5) * 0.08;
+    cuerpo.rotation.z = Math.sin(t * 1.1) * 0.05; cuerpo.rotation.x = -0.05 + Math.sin(t * 1.3) * 0.04;
+    if (estado.etapa >= 0) {
+      // movimiento lento de cámara sobre la foto (efecto Ken Burns)
+      const kb = 1 + 0.035 * (0.5 - 0.5 * Math.cos((t - estado.llegada) * 0.18)); capas[frente]._kb = kb; estiloCapa(capas[frente], kb, 1, 0);
+      const tt = titulos[estado.etapa], d = t - tt.userData.t0;
+      tt.scale.setScalar(Math.max(0.001, easeBack(Math.min(1, d / 0.7))));
+      tt.visible = !(d < 0.55 && Math.sin(d * 80) > 0.55);
+      tt.position.y += Math.sin(t * 1.2) * 0.0015;
+      if (logo3d.visible) { logo3d.material.opacity = Math.min(1, d / 1.2); logo3d.rotation.y = Math.sin(t * 0.6) * 0.25; }
+    }
+  }
+  animarMosquito(t, !!v);
+
+  // polvo y estelas
+  for (let i = 0; i < NP; i++) { polvoPos[i * 3 + 1] += Math.sin(t * 0.3 + i) * 0.0015; polvoPos[i * 3] += Math.cos(t * 0.2 + i) * 0.0012;
+    polvoPos[i * 3 + 2] += velocidad * dt * 22 * polvoVel[i]; if (polvoPos[i * 3 + 2] > -0.5) polvoPos[i * 3 + 2] = -23; }
+  polvoGeo.attributes.position.needsUpdate = true;
+  const largo = 0.2 + velocidad * 3.2;
+  estSem.forEach((s, i) => { s.z += velocidad * dt * 40; if (s.z > 0) { s.z = -30; s.x = (rnd() - 0.5) * 12; s.y = (rnd() - 0.5) * 7; }
+    estPos.set([s.x, s.y, s.z, s.x, s.y, s.z - largo], i * 6); });
+  estGeo.attributes.position.needsUpdate = true; estMat.opacity = velocidad * 0.5;
+  // lluvia (etapa 3)
+  const llueve = !v && estado.etapa === 2 ? 1 : (v && v.hacia === 2 ? suave(0.6, 1, (t - v.t0) / v.dur) : 0);
+  lluMat.opacity = lerp(lluMat.opacity, llueve * 0.42, 0.06);
+  if (lluMat.opacity > 0.01) { lluSem.forEach((s, i) => { s.y -= s.v * dt; if (s.y < -5) s.y = 5; lluPos.set([s.x, s.y, s.z, s.x - 0.03, s.y - 0.35, s.z], i * 6); }); lluGeo.attributes.position.needsUpdate = true; }
+  // relámpagos lejanos en la tormenta
+  const rel = $('#relampago');
+  if (llueve > 0.9 && t > proxRelampago) { proxRelampago = t + 4 + rnd() * 6; rel.style.transition = 'none'; rel.style.opacity = '.55'; destello = 7;
+    requestAnimationFrame(() => { rel.style.transition = 'opacity .6s'; rel.style.opacity = '0'; }); }
+  if (!v && estado.etapa >= 0) aplicarLuz(ETAPAS[estado.etapa], ETAPAS[estado.etapa], 0);
+  destello *= 0.86; luzRim.intensity += destello;
+
+  // recuadro de seguimiento sobre el mosquito
+  vFoco.copy(mosquito.position).project(camera);
+  const foco = $('#foco'); foco.style.left = `${(vFoco.x * 0.5 + 0.5) * 100}%`; foco.style.top = `${(0.5 - vFoco.y * 0.5) * 100}%`;
+
+  // telemetría
+  velSuave = lerp(velSuave, velocidad * 2.4 + 0.15, 0.08);
+  $('#t-vel').textContent = velSuave.toFixed(1);
+  $('#t-alt').textContent = (1.4 + (0.5 - (vFoco.y * -0.5 + 0.5)) * 2 + velocidad * 1.2).toFixed(1);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(cuadro);
+}
+
+pintarRiel();
+requestAnimationFrame(cuadro);
+$('#cargando').classList.add('fuera');
+const inicial = /^#etapa-([1-7])$/.exec(location.hash);
+if (inicial) { empezar(); const i = Number(inicial[1]) - 1;
+  cargarFondo(capas[frente], i); estiloCapa(capas[frente], 1, 1, 0); scene.environment = entornos[i]; aplicarLuz(ETAPAS[i], ETAPAS[i], 0);
+  const p = poseDe(i); mosquito.position.copy(p.pos); llegar(i); }
+</script>
