@@ -3,7 +3,8 @@
  * CaszaMosqui — Alerta climática
  * GET api/clima.php → JSON con lluvia, temperatura y nivel de riesgo climático.
  *
- * Fuente: Open-Meteo (gratis, sin API key).
+ * Fuente: Open-Meteo (gratis, sin API key). Respaldo: MET Noruega (api.met.no), para cuando
+ * Open-Meteo rechaza al servidor por el límite diario (en Render la dirección se comparte).
  * Condiciones actuales (temperatura, humedad, lluvia, viento) + historial de 14 días.
  * Caché de 10 minutos en /cache/clima.json. Si no hay internet, usa la última caché
  * y, si no existe, datos de ejemplo marcados como "sin conexión" (la demo nunca se cae).
@@ -34,7 +35,7 @@ function descargar(string $url): ?string
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 8,
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_USERAGENT      => 'CaszaMosqui/1.0 (El Colorado, Formosa)',
+            CURLOPT_USERAGENT      => 'CaszaMosqui/1.0 github.com/davidsaade04-prog/CaszaMosqui',
             // XAMPP en Windows suele no traer certificados CA; son datos públicos de clima.
             CURLOPT_SSL_VERIFYPEER => false,
         ]);
@@ -113,7 +114,7 @@ function evaluar(array $d, string $fuente): array
 
     $hoy = array_search(date('Y-m-d'), $fechas, true);
     if ($hoy === false) {
-        $hoy = 14; // past_days=14 → hoy es el índice 14
+        $hoy = min(14, count($fechas)); // past_days=14 → hoy es el índice 14
     }
 
     // Últimos 14 días (sin hoy), últimos 7 para temperatura, hoy + 3 días de pronóstico
@@ -122,6 +123,14 @@ function evaluar(array $d, string $fuente): array
     for ($i = max(0, $hoy - 7); $i < $hoy; $i++) {
         if ($tmax[$i] !== null && $tmin[$i] !== null) {
             $medias7[] = ($tmax[$i] + $tmin[$i]) / 2;
+        }
+    }
+    if (!$medias7) {
+        // Sin días pasados (respaldo sin historial): se usa la temperatura prevista para hoy y los 2 días siguientes
+        for ($i = $hoy; $i < min(count($fechas), $hoy + 3); $i++) {
+            if ($tmax[$i] !== null && $tmin[$i] !== null) {
+                $medias7[] = ($tmax[$i] + $tmin[$i]) / 2;
+            }
         }
     }
     $tmedia7   = $medias7 ? array_sum($medias7) / count($medias7) : 0.0;
@@ -152,9 +161,11 @@ function evaluar(array $d, string $fuente): array
     }
 
     $textos = [
-        'open-meteo' => 'Open-Meteo (datos en vivo, se actualiza cada 10 min)',
-        'cache'      => 'Open-Meteo (última actualización guardada)',
-        'offline'    => 'sin conexión · datos de ejemplo',
+        'open-meteo'  => 'Open-Meteo (datos en vivo, se actualiza cada 10 min)',
+        'cache'       => 'Open-Meteo (última actualización guardada)',
+        'met'         => 'MET Noruega (en vivo) + lluvia de los últimos días guardada',
+        'met-parcial' => 'MET Noruega (en vivo, sin registro de la lluvia de los últimos días)',
+        'offline'     => 'sin conexión · datos de ejemplo',
     ];
 
     // Condiciones actuales (solo con datos reales de Open-Meteo)
@@ -211,44 +222,208 @@ function datosEjemplo(): array
     ]];
 }
 
-// 1) Caché fresca
-if (is_file($cacheFile) && time() - filemtime($cacheFile) < CACHE_TTL) {
-    $d = json_decode((string)file_get_contents($cacheFile), true);
-    if (isset($d['daily']['time'])) {
-        echo json_encode(evaluar($d, 'open-meteo'), JSON_UNESCAPED_UNICODE);
-        exit;
+/* =========================================================
+   Caché persistente: archivo + base de datos. En Render el disco se borra cada vez
+   que el servidor se reinicia, así que la base guarda la última consulta buena.
+   ========================================================= */
+function cache_db(): ?PDO
+{
+    static $pdo = false;
+    if ($pdo !== false) {
+        return $pdo;
     }
+    $pdo = null;
+    try {
+        require_once __DIR__ . '/../inc/db.php';
+        $c = db();
+        $c->exec('CREATE TABLE IF NOT EXISTS clima_cache (clave VARCHAR(30) PRIMARY KEY, datos TEXT NOT NULL, guardado BIGINT NOT NULL)');
+        $pdo = $c;
+    } catch (Throwable $e) {
+        error_log('clima: sin base para la caché · ' . $e->getMessage());
+    }
+    return $pdo;
 }
-
-// 2) Datos en vivo
-$url = 'https://api.open-meteo.com/v1/forecast?' . http_build_query([
-    'latitude'      => LAT,
-    'longitude'     => LON,
-    'daily'         => 'precipitation_sum,temperature_2m_max,temperature_2m_min',
-    'current'       => 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day',
-    'past_days'     => 14,
-    'forecast_days' => 4,
-    'timezone'      => 'America/Argentina/Cordoba',
-]);
-$raw = descargar($url);
-$d   = $raw ? json_decode($raw, true) : null;
-
-if (isset($d['daily']['time'])) {
+/** @return array{0: array, 1: int}|null  [datos, antigüedad en segundos] */
+function leer_cache(string $clave): ?array
+{
+    global $cacheDir;
+    $archivo = "$cacheDir/clima-$clave.json";
+    if (is_file($archivo)) {
+        $d = json_decode((string)file_get_contents($archivo), true);
+        if (is_array($d)) {
+            return [$d, time() - filemtime($archivo)];
+        }
+    }
+    if ($db = cache_db()) {
+        try {
+            $st = $db->prepare('SELECT datos, guardado FROM clima_cache WHERE clave = ?');
+            $st->execute([$clave]);
+            if ($f = $st->fetch()) {
+                $d = json_decode((string)$f['datos'], true);
+                if (is_array($d)) {
+                    return [$d, time() - (int)$f['guardado']];
+                }
+            }
+        } catch (Throwable $e) { /* sin caché */ }
+    }
+    return null;
+}
+function guardar_cache(string $clave, array $d): void
+{
+    global $cacheDir;
+    $json = json_encode($d, JSON_UNESCAPED_UNICODE);
     if (!is_dir($cacheDir)) {
         @mkdir($cacheDir, 0775, true);
     }
-    @file_put_contents($cacheFile, $raw);
-    echo json_encode(evaluar($d, 'open-meteo'), JSON_UNESCAPED_UNICODE);
+    @file_put_contents("$cacheDir/clima-$clave.json", $json);
+    if ($db = cache_db()) {
+        try {
+            $db->beginTransaction();
+            $db->prepare('DELETE FROM clima_cache WHERE clave = ?')->execute([$clave]);
+            $db->prepare('INSERT INTO clima_cache (clave, datos, guardado) VALUES (?, ?, ?)')->execute([$clave, $json, time()]);
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+        }
+    }
+}
+function responder(array $r): void
+{
+    echo json_encode($r, JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// 3) Sin internet: última caché si tiene menos de 48 h. Si no, NO se inventa el clima:
-//    se avisa que no hay datos y el semáforo se calcula solo con los reportes (bonus 0).
-if (is_file($cacheFile) && filemtime($cacheFile) > time() - 48 * 3600) {
-    $d = json_decode((string)file_get_contents($cacheFile), true);
-    if (isset($d['daily']['time'])) {
-        echo json_encode(evaluar($d, 'cache'), JSON_UNESCAPED_UNICODE);
-        exit;
+/* =========================================================
+   Respaldo: MET Noruega (api.met.no, gratis, sin clave). Da las condiciones actuales y el
+   pronóstico, pero no la lluvia de los días pasados: esa se toma de la última consulta
+   guardada de Open-Meteo si la hay.
+   ========================================================= */
+function codigo_desde_simbolo(string $s): int
+{
+    $s = preg_replace('/_(day|night|polartwilight)$/', '', $s);
+    if (str_contains($s, 'thunder')) return 95;
+    if (str_contains($s, 'sleet')) return 67;
+    if (str_contains($s, 'snow')) return 73;
+    if (str_starts_with($s, 'heavyrainshowers')) return 82;
+    if (str_starts_with($s, 'lightrainshowers')) return 80;
+    if (str_starts_with($s, 'rainshowers')) return 81;
+    if (str_starts_with($s, 'heavyrain')) return 65;
+    if (str_starts_with($s, 'lightrain')) return 61;
+    if (str_starts_with($s, 'rain')) return 63;
+    return ['clearsky' => 0, 'fair' => 1, 'partlycloudy' => 2, 'cloudy' => 3, 'fog' => 45][$s] ?? 3;
+}
+function datos_met(?array $historial): ?array
+{
+    $raw = descargar('https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=' . round(LAT, 3) . '&lon=' . round(LON, 3));
+    $m = $raw ? json_decode($raw, true) : null;
+    $serie = $m['properties']['timeseries'] ?? null;
+    if (!$serie) {
+        return null;
+    }
+    $zona = new DateTimeZone('America/Argentina/Cordoba');
+    $dias = [];
+    foreach ($serie as $p) {
+        $f = (new DateTime($p['time']))->setTimezone($zona)->format('Y-m-d');
+        $det = $p['data']['instant']['details'] ?? [];
+        $ll = $p['data']['next_1_hours']['details']['precipitation_amount']
+            ?? $p['data']['next_6_hours']['details']['precipitation_amount'] ?? 0;
+        $dias[$f] ??= ['lluvia' => 0.0, 'max' => null, 'min' => null];
+        $dias[$f]['lluvia'] += (float)$ll;
+        if (isset($det['air_temperature'])) {
+            $t = (float)$det['air_temperature'];
+            $dias[$f]['max'] = $dias[$f]['max'] === null ? $t : max($dias[$f]['max'], $t);
+            $dias[$f]['min'] = $dias[$f]['min'] === null ? $t : min($dias[$f]['min'], $t);
+        }
+    }
+    $hoy = date('Y-m-d');
+    $time = $lluvia = $tmax = $tmin = [];
+    // días pasados: de la última consulta de Open-Meteo guardada (si existe)
+    if ($historial && isset($historial['daily']['time'])) {
+        foreach ($historial['daily']['time'] as $k => $f) {
+            if ($f < $hoy && $f >= date('Y-m-d', strtotime('-14 days'))) {
+                $time[] = $f; $lluvia[] = $historial['daily']['precipitation_sum'][$k];
+                $tmax[] = $historial['daily']['temperature_2m_max'][$k]; $tmin[] = $historial['daily']['temperature_2m_min'][$k];
+            }
+        }
+    }
+    $pasados = count($time);
+    foreach ($dias as $f => $v) {
+        if ($f < $hoy || count($time) >= $pasados + 4) {
+            continue;
+        }
+        $time[] = $f; $lluvia[] = round($v['lluvia'], 1); $tmax[] = $v['max']; $tmin[] = $v['min'];
+    }
+    $a = $serie[0]['data'];
+    $simbolo = $a['next_1_hours']['summary']['symbol_code'] ?? $a['next_6_hours']['summary']['symbol_code'] ?? 'cloudy';
+    $temp = (float)($a['instant']['details']['air_temperature'] ?? 0);
+    return [
+        'daily' => ['time' => $time, 'precipitation_sum' => $lluvia, 'temperature_2m_max' => $tmax, 'temperature_2m_min' => $tmin],
+        'current' => [
+            'time' => (new DateTime($serie[0]['time']))->setTimezone($zona)->format('Y-m-d\TH:i'),
+            'temperature_2m' => $temp, 'apparent_temperature' => $temp,
+            'relative_humidity_2m' => $a['instant']['details']['relative_humidity'] ?? 0,
+            'precipitation' => $a['next_1_hours']['details']['precipitation_amount'] ?? 0,
+            'weather_code' => codigo_desde_simbolo($simbolo),
+            'wind_speed_10m' => (float)($a['instant']['details']['wind_speed'] ?? 0) * 3.6,
+            'is_day' => str_ends_with($simbolo, '_night') ? 0 : 1,
+        ],
+        'sin_historial' => $pasados === 0,
+    ];
+}
+
+// 1) Caché fresca (de la fuente que haya respondido último)
+if ($c = leer_cache('ultimo')) {
+    [$d, $edad] = $c;
+    if ($edad < CACHE_TTL && isset($d['datos']['daily']['time'])) {
+        responder(evaluar($d['datos'], $d['fuente']));
     }
 }
-echo json_encode(sinDatosClima(evaluar(datosEjemplo(), 'offline')), JSON_UNESCAPED_UNICODE);
+
+// 2) Open-Meteo en vivo (si no nos rechazó por límite en la última media hora)
+$bloqueo = leer_cache('bloqueo-open-meteo');
+if (!$bloqueo || $bloqueo[1] > 1800) {
+    $url = 'https://api.open-meteo.com/v1/forecast?' . http_build_query([
+        'latitude'      => LAT,
+        'longitude'     => LON,
+        'daily'         => 'precipitation_sum,temperature_2m_max,temperature_2m_min',
+        'current'       => 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day',
+        'past_days'     => 14,
+        'forecast_days' => 4,
+        'timezone'      => 'America/Argentina/Cordoba',
+    ]);
+    $raw = descargar($url);
+    $d   = $raw ? json_decode($raw, true) : null;
+    if (isset($d['daily']['time'])) {
+        guardar_cache('open-meteo', $d);
+        guardar_cache('ultimo', ['fuente' => 'open-meteo', 'datos' => $d]);
+        responder(evaluar($d, 'open-meteo'));
+    }
+    if (isset($d['error'])) {
+        // límite diario del servicio (el servidor gratuito comparte dirección con otros sitios)
+        guardar_cache('bloqueo-open-meteo', ['motivo' => $d['reason'] ?? 'error']);
+    }
+}
+
+// 3) Última consulta de Open-Meteo de menos de 3 horas
+$om = leer_cache('open-meteo');
+if ($om && $om[1] < 3 * 3600 && isset($om[0]['daily']['time'])) {
+    responder(evaluar($om[0], 'cache'));
+}
+
+// 4) Respaldo: MET Noruega (actual + pronóstico), con la lluvia pasada de la última consulta guardada
+$historial = ($om && $om[1] < 14 * 86400) ? $om[0] : null;
+$met = datos_met($historial);
+if ($met && $met['daily']['time']) {
+    $fuente = $met['sin_historial'] ? 'met-parcial' : 'met';
+    guardar_cache('ultimo', ['fuente' => $fuente, 'datos' => $met]);
+    responder(evaluar($met, $fuente));
+}
+
+// 5) Sin ninguna fuente: última consulta de Open-Meteo de menos de 48 h. Si no, NO se inventa
+//    el clima: se avisa que no hay datos y el semáforo se calcula solo con los reportes (bonus 0).
+if ($om && $om[1] < 48 * 3600 && isset($om[0]['daily']['time'])) {
+    responder(evaluar($om[0], 'cache'));
+}
+responder(sinDatosClima(evaluar(datosEjemplo(), 'offline')));
