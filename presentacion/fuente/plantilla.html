@@ -170,6 +170,28 @@ body {
   .portada button, .tele b i, .grano, .marca-h s::after { animation: none; }
   .tarjeta, .tarjeta li { transition: none; }
 }
+/* Vida en las fotos: parches enmascarados que se mueven apenas, luces que respiran y parallax con el puntero */
+.fondo { translate: calc(var(--px, 0) * -.35cqw) calc(var(--py, 0) * -.22cqw); }
+.fondo video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.gl-fondo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.vida { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.pv { position: absolute; background-image: var(--foto); background-repeat: no-repeat; transform-origin: 50% 100%; will-change: transform;
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent 100%); mask-image: radial-gradient(closest-side, #000 55%, transparent 100%);
+  translate: calc(var(--px, 0) * var(--d, 0) * 1cqw) calc(var(--py, 0) * var(--d, 0) * .6cqw);
+  animation: var(--an) var(--du, 6s) ease-in-out var(--de, 0s) infinite alternate; }
+.pv.n { transform-origin: 50% 50%; }
+.gl { position: absolute; border-radius: 50%; mix-blend-mode: screen; background: radial-gradient(closest-side, rgba(var(--gc), .55), transparent); opacity: .2;
+  animation: v-pulso var(--du, 3.6s) ease-in-out var(--de, 0s) infinite alternate; }
+.vida svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vida path { fill: none; stroke: #c4b5fd; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 21; opacity: .75; vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px #a78bfa); animation: v-linea 2.4s linear infinite; }
+@keyframes v-hoja { from { transform: rotate(calc(var(--v) * -1deg)) skewX(calc(var(--v) * -.8deg)); } to { transform: rotate(calc(var(--v) * 1deg)) skewX(calc(var(--v) * .8deg)); } }
+@keyframes v-nube { from { transform: translateX(calc(var(--v) * -1cqw)); } to { transform: translateX(calc(var(--v) * 1cqw)); } }
+@keyframes v-pers { from { transform: rotate(0) scale(1); } to { transform: rotate(calc(var(--v) * 1deg)) scale(1.003, 1.007); } }
+@keyframes v-mano { from { transform: rotate(calc(var(--v) * -1deg)) translateY(-.05cqw); } to { transform: rotate(calc(var(--v) * 1deg)) translateY(.05cqw); } }
+@keyframes v-pulso { from { opacity: .12; } to { opacity: .85; } }
+@keyframes v-linea { to { stroke-dashoffset: -24; } }
+@media (prefers-reduced-motion: reduce) { .pv, .gl, .vida path { animation: none !important; } }
 </style>
 
 <div id="escenario">
@@ -293,7 +315,7 @@ const ETAPAS = [
     foco: [68, 55], hover: [0.53, 0.55, -0.6], titulo3dPos: [0.6, 0.11, 0.36],
     marcas: [[59, 60, 'DAR VUELTA', 'ok'], [73, 37, 'TAPAR', 'ok'], [70, 67, 'VACIAR', 'ok'], [88, 58, 'TIRAR', 'ok'], [72, 25, 'CENTRO DE SALUD', 'salud', 'emergencias 107']],
     luz: { key: [0x8fb4ff, 0, 1, 1, 1.6], rim: [0x5eead4, 1, 0.5, -1, 2.6], amb: [0x15233d, 0.6] } },
-  { corto: 'Comunidad', titulo3d: 'COMUNIDAD', color: 0xa78bfa, img: '__IMG5__',
+  { corto: 'Comunidad', titulo3d: 'COMUNIDAD', color: 0xa78bfa, img: '__IMG5__', video: 'e5.mp4',
     titulo: 'Comunidad', bajada: 'La prevención deja de ser un aviso aislado.',
     puntos: [
       'Cada vecino que reporta suma un punto al <strong>mapa de todos</strong>.',
@@ -303,8 +325,10 @@ const ETAPAS = [
     notas: 'Vecinos de todas las edades limpiando la cuadra juntos. Ninguno solo puede limpiar el barrio, pero juntos sí. Y Mosqui, nuestro asistente, está siempre disponible para responder cómo tapar un tanque o qué hacer con las cubiertas.',
     foco: [64, 50], hover: [0.5, 0.27, -0.6], titulo3dPos: [0.68, 0.13, 0.34],
     marcas: [[66, 37, 'VECINOS QUE REPORTAN', 'violeta'], [48, 72, 'LIMPIEZA DEL BARRIO', 'ok'], [88, 33, 'MOSQUI RESPONDE', 'info', '“¿cómo tapo el tanque?”']],
+    // posiciones sobre el último cuadro del video (las marcas aparecen cuando el video termina)
+    marcasVideo: [[45, 52, 'VECINOS QUE REPORTAN', 'violeta'], [56, 86, 'LIMPIEZA DEL BARRIO', 'ok'], [90, 40, 'MOSQUI RESPONDE', 'info', '“¿cómo tapo el tanque?”']],
     luz: { key: [0xffb37a, -1, 0.6, -0.6, 2.4], rim: [0xa78bfa, 1, 0.5, -1, 2.2], amb: [0x2a2240, 0.55] } },
-  { corto: 'Administración', titulo3d: 'ADMINISTRACIÓN', color: 0x38bdf8, img: '__IMG6__',
+  { corto: 'Administración', titulo3d: 'ADMINISTRACIÓN', color: 0x38bdf8, img: '__IMG6__', video: 'e6.mp4',
     titulo: 'Administración', bajada: 'El equipo municipal verifica y actúa.',
     puntos: [
       'Cada reporte pasa por estados: <strong>pendiente → verificado → controlado</strong>.',
@@ -314,8 +338,9 @@ const ETAPAS = [
     notas: 'Detrás del mapa hay personas. El equipo municipal revisa cada reporte antes de actuar: acá está mirando la foto de una cubierta con agua. Todo queda registrado, y cuidamos los datos de los vecinos como pide la ley de protección de datos personales.',
     foco: [55, 55], hover: [0.5, 0.21, -0.5], titulo3dPos: [0.83, 0.17, 0.27],
     marcas: [[53, 57, 'VERIFICAR EL REPORTE', 'salud', 'pendiente → verificado → controlado'], [60, 30, 'DATOS PROTEGIDOS', 'info', 'Ley 25.326'], [86, 45, 'REGISTRO DE CAMBIOS', 'salud']],
+    marcasVideo: [[48, 45, 'VERIFICAR EL REPORTE', 'salud', 'pendiente → verificado → controlado'], [55, 16, 'DATOS PROTEGIDOS', 'info', 'Ley 25.326'], [60, 72, 'REGISTRO DE CAMBIOS', 'salud']],
     luz: { key: [0x7cc4ff, 0.2, 0.2, -1, 2.4], rim: [0x38bdf8, 1, 0.6, 0.5, 2.0], amb: [0x0d1b30, 0.6] } },
-  { corto: 'Impacto y cierre', titulo3d: 'IMPACTO', color: 0x34d399, img: '__IMG7__',
+  { corto: 'Impacto y cierre', titulo3d: 'IMPACTO', color: 0x34d399, img: '__IMG7__', video: 'e7.mp4',
     titulo: 'Impacto y cierre', bajada: 'Del aviso suelto al mapa compartido.',
     puntos: [
       'Operativos <strong>donde más se necesitan</strong>, con datos del día.',
@@ -324,8 +349,9 @@ const ETAPAS = [
       'Se puede llevar a <strong>cualquier municipio</strong>.' ],
     cierre: 'Sin criaderos, no hay mosquito.',
     notas: 'Amanece en El Colorado: calles limpias y chicos jugando afuera. Ese es el objetivo de CaszaMosqui. Gracias por acompañarnos en este vuelo.',
-    foco: [69, 30], hover: [0.5, 0.36, -0.55], titulo3dPos: [0.7, 0.5, 0.34], logo: true,
+    foco: [69, 30], hover: [0.5, 0.36, -0.55], titulo3dPos: [0.73, 0.66, 0.32], logo: [0.69, 0.23], logoVideo: [0.73, 0.375],
     marcas: [[62, 75, 'CALLES LIMPIAS', 'ok'], [74, 84, 'VECINOS PROTAGONISTAS', 'ok']],
+    marcasVideo: [[60, 77, 'CALLES LIMPIAS', 'ok'], [86, 80, 'VECINOS PROTAGONISTAS', 'ok']],
     luz: { key: [0xffd08a, -1, 0.5, -0.8, 2.8], rim: [0xfff1c1, 0.5, 1, -1, 1.8], amb: [0x3a3020, 0.6] } },
 ];
 const N = ETAPAS.length;
@@ -641,13 +667,125 @@ scene.add(new THREE.LineSegments(lluGeo, lluMat));
 const lluSem = Array.from({ length: NL }, () => ({ x: (rnd() - 0.5) * 16, y: (rnd() - 0.5) * 10, z: -2 - rnd() * 16, v: 9 + rnd() * 5 }));
 
 /* =========================================================
+   Vida en las fotos (solo las imágenes de cada etapa)
+   Cada entrada: [tipo, centro x %, centro y %, ancho %, alto %, valor, desfase]
+   h = hojas/árboles (valor: grados) · n = nubes/bandada (valor: ancho de pantalla %) · p = persona (grados de inclinación; el signo
+   marca hacia dónde se inclina) · m = mano · g = luz que respira (valor: c cian, v violeta, a ámbar, r rojo, g verde)
+   l = línea holográfica que viaja entre personas (valor: lista de puntos)
+   ========================================================= */
+const COL_VIDA = { c: '34,211,238', v: '167,139,250', a: '251,191,36', r: '251,58,91', g: '52,211,153' };
+const VIDA = [
+  [['h', 55, 13, 30, 30, .7], ['h', 21, 20, 16, 24, .6, -2], ['h', 92, 37, 16, 18, .8, -1], ['g', 7.5, 26, 6, 11, 'a'], ['g', 47, 83, 8, 14, 'c']],
+  [['h', 9, 22, 22, 50, .6], ['h', 80, 25, 34, 52, .7], ['h', 20, 38, 10, 18, .8, -2], ['g', 77, 58, 24, 22, 'c'], ['g', 30, 33, 5, 9, 'a']],
+  [['n', 48, 20, 96, 40, .9], ['m', 80, 78, 38, 46, .35], ['g', 49, 63, 5, 9, 'c'], ['g', 64, 11, 6, 10, 'a']],
+  [['h', 14, 25, 30, 55, .6], ['h', 38, 32, 30, 40, .7, -2], ['h', 49, 25, 9, 20, .9, -1], ['g', 72, 22, 8, 12, 'g']],
+  [['h', 75, 17, 16, 30, .8], ['h', 51, 26, 20, 34, .6, -2],
+   ['p', 33, 65, 10, 38, .35, 0], ['p', 50, 64, 11, 46, .4, -1], ['p', 62, 60, 11, 52, -.4, -3], ['p', 69, 60, 9, 52, -.35, -4.5], ['p', 85, 58, 10, 36, .3, -2], ['p', 91, 60, 10, 50, -.4, -5],
+   ['l', 0, 0, 0, 0, [[50, 50], [62, 52], [69, 47], [85, 47], [91, 43]]]],
+  [['p', 79, 66, 36, 72, .25], ['g', 50, 54, 26, 30, 'c'], ['g', 60, 19, 12, 22, 'c'], ['g', 85, 32, 14, 18, 'a'], ['h', 27, 50, 12, 18, .8]],
+  [['g', 69, 24, 26, 38, 'g'], ['g', 14, 28, 40, 50, 'a'], ['h', 92, 52, 14, 30, .8], ['h', 30, 57, 40, 18, .5], ['h', 80, 60, 30, 16, .6, -2], ['n', 92, 28, 14, 10, 1.2], ['p', 64, 83, 10, 16, .3]],
+];
+/* Fondo en video (etapas con `video`): queda quieto en su primer cuadro y arranca al llegar; al terminar se queda en el último */
+const sinMovimiento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fondoVideo(capa, e) {
+  let vid = capa.querySelector('video');
+  if (!e.video) { if (vid) { vid.pause(); vid.style.display = 'none'; } return; }
+  if (!vid) { vid = document.createElement('video'); vid.muted = true; vid.playsInline = true; vid.preload = 'auto'; vid.setAttribute('aria-hidden', 'true');
+    capa.insertBefore(vid, capa.querySelector('img').nextSibling); }
+  vid.style.display = ''; vid.pause();
+  if (!vid.src.endsWith(e.video)) vid.src = e.video; else vid.currentTime = 0;
+}
+function arrancarVideo(capa, i) {
+  /* Etapas con video: la cámara se mueve durante 10 s, así que las marcas y el logo aparecen
+     recién en el último cuadro, ya ubicados sobre él. Si el video no puede reproducirse,
+     se muestra la foto con sus marcas de siempre. */
+  const e = ETAPAS[i], vid = capa.querySelector('video');
+  const sinVideo = () => { if (vid && e.video) vid.style.display = 'none'; encenderMarcas(capa, true); mostrarLogo(i, false); };
+  if (!e.video || !vid || sinMovimiento) { sinVideo(); return; }
+  logo3d.visible = false;
+  vid.onended = () => {
+    if (estado.etapa !== i || estado.vuelo || capa !== capas[frente]) return;
+    pintarMarcas(capa, e.marcasVideo || e.marcas); encenderMarcas(capa, true); mostrarLogo(i, true);
+  };
+  vid.currentTime = 0;
+  vid.play().catch(sinVideo);
+}
+function mostrarLogo(i, alFinal) {
+  const e = ETAPAS[i]; if (!e.logo) { logo3d.visible = false; return; }
+  const p = alFinal && e.logoVideo ? e.logoVideo : e.logo;
+  enPantalla(p[0], p[1], 16, logo3d.position); logo3d.visible = true; logo3d.userData.t0 = reloj.value;
+}
+const TIPO_GL = { h: [0, .0055], n: [1, .01], p: [2, .010], m: [3, .004] };   // [tipo en el shader, escala del valor → pantalla]
+const VS_GL = 'attribute vec2 a;varying vec2 v;void main(){v=vec2(a.x*.5+.5,.5-a.y*.5);gl_Position=vec4(a,0.,1.);}';
+const FS_GL = `precision mediump float;varying vec2 v;uniform sampler2D uTex;uniform float uT;uniform vec4 uR[8];uniform vec4 uP[8];
+void main(){vec2 p=v,d=vec2(0.);
+ for(int i=0;i<8;i++){vec4 r=uR[i],k=uP[i];if(k.w<.5)continue;vec2 q=(p-r.xy)/(r.zw*.5);float m=1.-smoothstep(.55,1.,length(q));if(m<=0.)continue;
+  float w=clamp(.5-q.y*.5,0.,1.),ph=k.z,a=k.y;
+  if(k.x<.5){d.x+=a*m*(.35+.65*w)*sin(uT*1.1+ph+p.y*6.+p.x*4.);d.y+=a*.35*m*sin(uT*1.7+ph+p.x*9.);
+    d+=m*.0011*vec2(sin(uT*3.1+ph+p.x*40.+p.y*30.),cos(uT*2.7+ph+p.y*37.));}
+  else if(k.x<1.5){d.x+=a*m*sin(uT*.15+ph);}
+  else if(k.x<2.5){d.x+=a*m*w*sin(uT*.9+ph);d.y+=a*.12*m*sin(uT*1.4+ph)*(1.-w);}
+  else{d+=a*m*vec2(sin(uT*7.+ph),cos(uT*6.1+ph));}}
+ gl_FragColor=texture2D(uTex,p+d);}`;
+function crearGL(capa) {
+  const c = document.createElement('canvas'); c.width = 1280; c.height = 720; c.className = 'gl-fondo';
+  const gl = c.getContext('webgl', { alpha: false, antialias: false }); if (!gl) return null;
+  const sh = (tipo, src) => { const o = gl.createShader(tipo); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS_GL)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS_GL)); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+  gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const a = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+  capa.insertBefore(c, capa.querySelector('img').nextSibling);
+  return { gl, c, tex, uT: gl.getUniformLocation(pr, 'uT'), uR: gl.getUniformLocation(pr, 'uR'), uP: gl.getUniformLocation(pr, 'uP'), R: new Float32Array(32), P: new Float32Array(32), listo: false };
+}
+function vida(capa, i) {
+  capa.querySelector('.vida')?.remove();
+  const cont = document.createElement('div'); cont.className = 'vida';
+  const g = capa._gl || (capa._gl = crearGL(capa));
+  if (g) { g.listo = false; g.R.fill(0); g.P.fill(0); g.c.style.display = ETAPAS[i].video ? 'none' : 'block'; }
+  let n = 0;
+  (ETAPAS[i].video ? [] : VIDA[i]).forEach(([t, cx, cy, w, h, v, de], k) => {
+    const d = de ?? -((k * 1.3) % 4);
+    if (t === 'l') { cont.insertAdjacentHTML('beforeend', `<svg viewBox="0 0 100 56.25" preserveAspectRatio="none"><path d="M${v.map(([x, y]) => `${x} ${y * .5625}`).join(' L')}"/></svg>`); return; }
+    if (t === 'g') { const el = document.createElement('div'); el.className = 'gl';
+      el.style.cssText = `left:${cx - w / 2}%;top:${cy - h / 2}%;width:${w}%;height:${h}%;--de:${d}s;--gc:${COL_VIDA[v]};--du:${3 + (k * .9) % 2.5}s`; cont.appendChild(el); return; }
+    if (g && n < 8) { const [tp, esc] = TIPO_GL[t]; g.R.set([cx / 100, cy / 100, w / 100, h / 100], n * 4); g.P.set([tp, v * esc, k * 1.9 + d, 1], n * 4); n++; }
+  });
+  capa.insertBefore(cont, capa.querySelector('.marcas'));
+  if (g && !ETAPAS[i].video) { const img = capa.querySelector('img'), gl = g.gl;
+    img.decode().then(() => { gl.bindTexture(gl.TEXTURE_2D, g.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); g.listo = true; }).catch(() => {}); }
+}
+requestAnimationFrame(function pintarFondos(ms) {
+  for (const capa of capas) { const g = capa._gl;
+    if (!g || !g.listo || parseFloat(capa.style.opacity || '1') < .02) continue;
+    const gl = g.gl; gl.viewport(0, 0, 1280, 720); gl.bindTexture(gl.TEXTURE_2D, g.tex);
+    gl.uniform1f(g.uT, ms / 1000); gl.uniform4fv(g.uR, g.R); gl.uniform4fv(g.uP, g.P); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+  requestAnimationFrame(pintarFondos);
+});
+// parallax suave con el mouse o el dedo
+(() => {
+  const esc = $('#escenario'); let tx = 0, ty = 0, x = 0, y = 0;
+  addEventListener('pointermove', (e) => { const r = esc.getBoundingClientRect();
+    tx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - .5) * 2)); ty = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - .5) * 2)); });
+  (function bucle() { x += (tx - x) * .05; y += (ty - y) * .05;
+    if (Math.abs(tx - x) + Math.abs(ty - y) > .001) { esc.style.setProperty('--px', x.toFixed(3)); esc.style.setProperty('--py', y.toFixed(3)); }
+    requestAnimationFrame(bucle); })();
+})();
+
+/* =========================================================
    Fondos y marcas
    ========================================================= */
 const capas = [$('#fondoA'), $('#fondoB')];
 let frente = 0;
 function cargarFondo(capa, i) {
-  const e = ETAPAS[i]; capa.querySelector('img').src = e.img; capa.style.transformOrigin = `${e.foco[0]}% ${e.foco[1]}%`;
-  capa.querySelector('.marcas').innerHTML = e.marcas.map(([x, y, txt, tipo, sub]) =>
+  const e = ETAPAS[i]; capa.querySelector('img').src = e.img; vida(capa, i); fondoVideo(capa, e); capa.style.transformOrigin = `${e.foco[0]}% ${e.foco[1]}%`;
+  pintarMarcas(capa, e.marcas);
+}
+function pintarMarcas(capa, lista) {
+  capa.querySelector('.marcas').innerHTML = lista.map(([x, y, txt, tipo, sub]) =>
     `<div class="marca-h" style="left:${x}%;top:${y}%;--c:${COLOR_MARCA[tipo]}"><b>${ICONO_MARCA[tipo]}<span>${txt}${sub ? `<small>${sub}</small>` : ''}</span></b><i></i><s></s></div>`).join('');
 }
 function encenderMarcas(capa, on) { capa.querySelectorAll('.marca-h').forEach((m, k) => { m.style.transitionDelay = on ? `${0.5 + k * 0.22}s` : '0s'; m.classList.toggle('on', on); }); }
@@ -680,9 +818,8 @@ function volar(hacia) {
 function llegar(i) {
   const v = estado.vuelo; if (v) { frente = 1 - frente; estiloCapa(v.atras, 1, 0, 0); }
   estado.etapa = i; estado.vuelo = null; estado.llegada = reloj.value;
-  encenderMarcas(capas[frente], true);
+  arrancarVideo(capas[frente], i);
   titulos.forEach((t, k) => { t.visible = k === i; if (k === i) t.userData.t0 = reloj.value; });
-  logo3d.visible = !!ETAPAS[i].logo;
   mostrarTarjeta(i); pintarRiel();
   $('#t-est').textContent = `Etapa ${i + 1}: ${ETAPAS[i].corto}`;
   $('#foco').classList.add('on');
@@ -807,7 +944,7 @@ function cuadro(ahora) {
       tt.scale.setScalar(Math.max(0.001, easeBack(Math.min(1, d / 0.7))));
       tt.visible = !(d < 0.55 && Math.sin(d * 80) > 0.55);
       tt.position.y += Math.sin(t * 1.2) * 0.0015;
-      if (logo3d.visible) { logo3d.material.opacity = Math.min(1, d / 1.2); logo3d.rotation.y = Math.sin(t * 0.6) * 0.25; }
+      if (logo3d.visible) { logo3d.material.opacity = Math.min(1, (t - logo3d.userData.t0) / 1.2); logo3d.rotation.y = Math.sin(t * 0.6) * 0.25; }
     }
   }
   animarMosquito(t, !!v);

@@ -7,6 +7,7 @@ Las imágenes se incrustan en el HTML, así la presentación es un solo archivo
 que funciona en cualquier servidor (Render, Netlify, GitHub Pages).
 """
 import base64
+import shutil
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -44,3 +45,10 @@ SALIDA.write_text(f"""<!doctype html>
 </html>
 """, encoding="utf-8")
 print(f"Listo: {SALIDA} ({SALIDA.stat().st_size // 1024} KB)")
+
+# Los fondos en video (img/eN.mp4) no se incrustan: se copian junto a index.html
+for i in range(1, 8):
+    video = AQUI / "img" / f"e{i}.mp4"
+    if video.exists():
+        shutil.copy2(video, SALIDA.parent / video.name)
+        print(f"Video: {video.name} ({video.stat().st_size // 1024} KB)")

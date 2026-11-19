@@ -11,8 +11,10 @@ Recorrido 3D en 16:9, con 7 etapas: un mosquito *Aedes aegypti* realista vuela e
 | --- | --- |
 | `plantilla.html` | Toda la presentación: diseño (CSS), contenido y motor 3D (Three.js r170). Se edita acá. |
 | `img/e1.webp` … `img/e7.webp` | Fondo hiperrealista de cada etapa (1280×720). |
+| `img/e5.mp4`, `img/e6.mp4`, `img/e7.mp4` | Fondos en video de las etapas 5, 6 y 7 (10 s, 1280×720, sin audio). Si una etapa tiene `video` en `plantilla.html`, se usa el video y la foto `eN.webp` queda de respaldo. `armar.py` los copia junto a `index.html`: hay que subirlos con él. |
 | `img/logo.webp` | Logo de CaszaMosqui. |
 | `armar.py` | Genera `presentacion/index.html` con las imágenes incrustadas. |
+| `../e5.mp4` … `../e7.mp4` | Copias de los videos para publicar (las genera `armar.py`). |
 | `../index.html` | La presentación final que se publica. No editarla a mano: se regenera con `armar.py`. |
 
 ## Cómo editar
