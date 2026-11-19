@@ -27,24 +27,31 @@ $cacheFile = $cacheDir . '/clima.json';
 
 function descargar(string $url): ?string
 {
-    $ctx = stream_context_create(['http' => ['timeout' => 6]]);
-    $r = @file_get_contents($url, false, $ctx);
-    if (is_string($r) && $r !== '') {
-        return $r;
-    }
+    // cURL primero: permite ver el código HTTP y el motivo cuando el servicio rechaza el pedido
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 6,
+            CURLOPT_TIMEOUT        => 8,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_USERAGENT      => 'CaszaMosqui/1.0 (El Colorado, Formosa)',
             // XAMPP en Windows suele no traer certificados CA; son datos públicos de clima.
             CURLOPT_SSL_VERIFYPEER => false,
         ]);
         $r = curl_exec($ch);
+        $codigo = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
         curl_close($ch);
-        if (is_string($r) && $r !== '') {
+        if (is_string($r) && $r !== '' && $codigo === 200) {
             return $r;
         }
+        error_log(sprintf('clima: fallo al consultar %s · HTTP %d · %s · %s',
+            parse_url($url, PHP_URL_HOST), $codigo, $error ?: 'sin error de red', substr(is_string($r) ? $r : '', 0, 200)));
+    }
+    $ctx = stream_context_create(['http' => ['timeout' => 8, 'user_agent' => 'CaszaMosqui/1.0', 'ignore_errors' => false]]);
+    $r = @file_get_contents($url, false, $ctx);
+    if (is_string($r) && $r !== '') {
+        return $r;
     }
     return null;
 }
