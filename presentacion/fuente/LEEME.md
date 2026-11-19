@@ -24,6 +24,7 @@ Recorrido 3D en 16:9, con 7 etapas: un mosquito *Aedes aegypti* realista vuela e
    - `notas`: lo que dice el expositor. Se ven con la tecla N.
    - `img`: el fondo (`__IMG1__` … `__IMG7__`).
    - `marcas`: los carteles holográficos sobre la foto, como `[x %, y %, 'TEXTO', tipo, 'subtexto opcional']`. El tipo es `alerta`, `ok`, `medio`, `info`, `salud` o `violeta`.
+   - En las etapas con `video`, la cámara se mueve durante los 10 segundos del video. Por eso las marcas aparecen recién cuando el video termina, en las posiciones de `marcasVideo`, medidas sobre el último cuadro. El logo del cierre usa `logoVideo`. Si cambian un video, revisen esas coordenadas con el último cuadro.
    - `hover`: dónde flota el mosquito, como `[x 0–1, y 0–1, giro en radianes]`.
    - `titulo3dPos`: posición y ancho máximo del título 3D, como `[x, y, ancho]` (fracciones de pantalla).
    - `luz`: las luces que tiñen al mosquito según la escena.
